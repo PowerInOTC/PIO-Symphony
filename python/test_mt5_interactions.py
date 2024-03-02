@@ -1,5 +1,5 @@
 # test_mt5_interactions.py
-from mt5_interaction import retrieve_inventory_amount, get_total_open_amount, is_connected, retrieve_all_symbols, retrieve_symbol_info, manage_symbol_inventory, retrieve_max_notional_for_account_leverage, retrieve_open_positions_notionals, start_mt5, initialize_symbols, place_order, reset_account, verify_trade_openable, retrieve_latest_tick, retrieve_account_margin, retrieve_account_free_margin
+from mt5_interaction import retrieve_symbol_info, retrieve_inventory_amount, get_total_open_amount, is_connected, retrieve_all_symbols, retrieve_symbol_info, manage_symbol_inventory, retrieve_max_notional_for_account_leverage, retrieve_open_positions_notionals, start_mt5, initialize_symbols, place_order, reset_account, verify_trade_openable, retrieve_latest_tick, retrieve_account_margin, retrieve_account_free_margin
 from dotenv import load_dotenv
 import os
 import json
@@ -17,10 +17,10 @@ max_notional = 0
 def update_max_notional(leverage):
     max_notional = retrieve_account_free_margin(leverage)
 
-def retrieve_max_notional(leverage):
+def retrieve_max_notional():
     return max_notional
 
-print(retrieve_account_margin())
+print(retrieve_symbol_info('EURUSD'))
 
 # call each second is_connected() // if False, call start_mt5(login_id, password, server)
 # call each 1 minutes, or after each calls update_max_notional(leverage)
@@ -32,3 +32,4 @@ print(retrieve_account_margin())
 # get_total_open_amount(symbol)
 # manage_symbol_inventory(max_notional, symbol, amount)
 # reset_account()
+# retrieve_max_notional()
