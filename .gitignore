@@ -1,0 +1,4 @@
+./legacy
+./python/__pycache__
+./python/config
+./node_modules
