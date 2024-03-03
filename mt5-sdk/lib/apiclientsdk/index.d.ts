@@ -15,6 +15,7 @@ declare module 'apiclientsdk' {
         closeWebSocket(): void;
     }
 
+    export function getPrices(prices: string[], token: string, timeout?: number): Promise<AxiosResponse | undefined>;
     export function sendRfq(rfq: import('./src/types/requests').RfqRequest, token: string, timeout?: number): Promise<AxiosResponse | undefined>;
     export function getRfqs(token: string, start?: number, end?: number, timeout?: number): Promise<AxiosResponse | undefined>;
     export function getQuotes(rfqId: string, token: string, start?: number, end?: number, timeout?: number): Promise<AxiosResponse | undefined>;

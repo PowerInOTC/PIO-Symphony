@@ -210,7 +210,7 @@ async function bullExample(): Promise<void> {
 
     const worker = new Worker('rfq', async (job) => {
         const data: RfqResponse = job.data;
-        console.log(`Processing job ${job.id}: ${JSON.stringify(data)}`);
+        //console.log(`Processing job ${job.id}: ${JSON.stringify(data)}`);
     }, {
         connection: {
             host: config.bullmqRedisHost,

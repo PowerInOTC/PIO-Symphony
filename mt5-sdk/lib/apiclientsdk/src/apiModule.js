@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createWalletAndSignIn = exports.getPayloadAndLogin = exports.login = exports.getPayload = exports.logout = exports.sendQuote = exports.getQuotes = exports.getRfqs = exports.sendRfq = void 0;
+exports.createWalletAndSignIn = exports.getPayloadAndLogin = exports.login = exports.getPayload = exports.logout = exports.sendQuote = exports.getQuotes = exports.getRfqs = exports.sendRfq = exports.getPrices = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const ethers_1 = require("ethers");
@@ -15,6 +15,26 @@ logger_1.default.info('app', 'Starting script');
 const protocol = config_1.config.https ? 'https' : 'http';
 const serverAddress = config_1.config.serverAddress;
 const serverPort = config_1.config.serverPort;
+async function getPrices(symbols, token, timeout = 3000) {
+    try {
+        let url = `${protocol}://${serverAddress}:${serverPort}/api/v1/get_prices?`;
+        url += symbols.map(symbol => `ids[]=${symbol}`).join('&');
+        console.log(url);
+        const priceResponse = await axios_1.default.get(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            timeout: timeout
+        });
+        return priceResponse;
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            logger_1.default.error('app', error.message);
+        }
+    }
+}
+exports.getPrices = getPrices;
 async function sendRfq(rfq, token, timeout = 3000) {
     try {
         const rfqResponse = await axios_1.default.post(`${protocol}://${serverAddress}:${serverPort}/api/v1/submit_rfq`, rfq, {
