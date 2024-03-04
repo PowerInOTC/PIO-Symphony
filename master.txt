@@ -170,3 +170,117 @@ GlobalParams : {
         address publicOracleAddress;
         uint256 minNotional;
     }
+
+
+
+/*
+type QueueItem = {
+    [asset: string]: {
+        [type: string]: {
+            [id: string]: {
+                amount: number;
+                price: number;
+                side: boolean;
+            };
+        };
+    };
+}
+
+// cancel function to call 
+
+const fillQueue = { // QueueItem
+
+const openQueue  = { // QueueItem
+    openContract type only
+}
+
+type inventory = {
+    [asset: string]: {
+        amount: number;
+        price: number;
+        side: boolean;
+    };
+}
+
+function cancelOpenOrders(){
+
+    }
+
+function hedgeInventory(){
+    
+    }
+
+function updatePendingHedgeOrders(){
+    // list all pending orders, and last price
+    // depending on last price is far and queue urgency high update the queue
+    }
+
+1// priorize reducing row with other types in this order of importance.
+cancelCloseQuoteContracts
+    // pioner.hedger.cancel_all_orders(symbol)
+    // verify closeQuote is open
+    // openAmount = pioner.hedger.get_open_amount(symbol)
+    // openAmount -= cancelAmount
+    // if openAmount > 0
+        pioner.hedger.add_trade(symbol, openAmount, price, side)
+    // assess how  much is filled
+cancelOpenQuoteContracts
+    // verify position is open
+cancelCloseQuoteSigneds
+    // verify closeQuote is open
+cancelOpenQuoteSigneds
+    // verify position is open
+closeQuoteContracts
+    // verify market is open
+    // verify position is open
+    // verify other closeQuoteContracts on that id
+    // pioner.hedger.add_trade(symbol, volume, price, side)
+    // ( kid ) wait for fill
+
+openQuoteContracts
+    // verify market is open
+    // verify price
+    // verify our riks level ( health balance )
+    // verify parameters
+    // pioner.hedger.add_trade(symbol, volume, price, side)
+    // pioner.blockchain.accept_quote()
+closeQuoteSigneds
+    // verify position is open
+    // pioner.hedger.add_trade(symbol, volume, price, side)
+    // pioner.blockchain.accept_signed_close_quote()
+openQuoteSigneds
+    // pioner.hedger.add_trade(symbol, volume, price, side)
+    // pioner.client.send_accept_signed_quote()
+rfq
+    // pioner.hedger.verify_trade_openable(symbol, volume, price)
+
+
+// define amount of hedge to cancel if not filled
+
+
+// check if it can fill a trade waiting in the queue
+// function to update fill on broker from new queue
+
+function inventoryCheckRoutine(){ // every minutes
+    // check contracts state onchain
+    // check contract have not been cancelled
+    // check amount to hedge, if we have enough inventory
+    // check if need to update orders in inventory
+}
+
+*/
+
+///////////////////// Inventory
+// for each asset, look in config file wich hedger.
+// For mt5 case, it can be multiple hedgers with multiple accounts.
+
+// when changing a source, verify no hedges are open, if so close them and open them on new source
+
+// convert pioner symbols to mt5 symbols
+
+
+// inventory
+
+// inventory.addTrade(trade)
+// inventory.removeTrade(trade)
+// inventory.getTrade(trade)

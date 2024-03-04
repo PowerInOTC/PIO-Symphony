@@ -152,7 +152,6 @@ async function bullExample() {
         lTimelockA: 3600,
         lTimelockB: 3600
     };
-    console.log(await apiclientsdk_1.default.getPrices(["stock.nasdaq.AAPL"], token));
     for (let i = 0; i < 10; i++) {
         await apiclientsdk_1.default.sendRfq(rfq, token);
     }
