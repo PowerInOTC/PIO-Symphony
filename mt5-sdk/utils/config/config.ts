@@ -1,21 +1,17 @@
-// File: pairTrading.ts
+// File: config.ts
 
 import { Asset, Row } from './configBuilder';
 
-const assets: Asset[] = [
-  // Array of assets
-];
-
-async function getAssetById(assetId: string): Promise<Asset | undefined> {
-  return assets.find(asset => asset.mt5Ticker === assetId);
+async function getAssetByProxyTicker(proxyTicker: string, assets: Asset[]): Promise<Asset | undefined> {
+  return assets.find(asset => asset.proxyTicker === proxyTicker);
 }
 
-async function getConfig(assetAId: string, assetBId: string, quantity: number, side: boolean, leverage: number): Promise<Row> {
-  const assetA = await getAssetById(assetAId);
-  const assetB = await getAssetById(assetBId);
+async function getConfig(assetAProxyTicker: string, assetBProxyTicker: string, quantity: number, side: boolean, leverage: number, assets: Asset[]): Promise<Row> {
+  const assetA = await getAssetByProxyTicker(assetAProxyTicker, assets);
+  const assetB = await getAssetByProxyTicker(assetBProxyTicker, assets);
 
   if (!assetA || !assetB) {
-    throw new Error('Invalid asset IDs');
+    throw new Error('Invalid asset proxy tickers');
   }
 
   const rowA = assetA.notional?.find(row => row.side === (side ? 'long' : 'short') && row.leverage === leverage);
@@ -50,7 +46,6 @@ async function getConfig(assetAId: string, assetBId: string, quantity: number, s
     kycType: Math.min(rowA.kycType ?? Infinity, rowB.kycType ?? Infinity),
     cType: Math.min(rowA.cType ?? Infinity, rowB.cType ?? Infinity),
     kycAddress: rowA.kycAddress ?? rowB.kycAddress ?? '',
-    type: rowA.type ?? rowB.type ?? '',
     brokerFee: (rowA.brokerFee ?? 0) + (rowB.brokerFee ?? 0),
     funding: (rowA.funding ?? 0) + (rowB.isAPayingApr ? -(rowB.funding ?? 0) : (rowB.funding ?? 0)),
     isAPayingApr: rowA.isAPayingApr ?? false,
@@ -59,21 +54,22 @@ async function getConfig(assetAId: string, assetBId: string, quantity: number, s
   return config;
 }
 
-async function getPairTradingConfig(assetAId: string, assetBId: string, quantity: number, side: boolean, leverage: number): Promise<Row> {
-  const config = await getConfig(assetAId, assetBId, quantity, side, leverage);
+async function getPairTradingConfig(assetAProxyTicker: string, assetBProxyTicker: string, quantity: number, side: boolean, leverage: number): Promise<Row> {
+  const assets = (await import('./symphony.json')).default.assets;
+  const config = await getConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage, assets);
   return config;
 }
 
 async function configTest() {
-  const assetAId = 'EURUSD';
-  const assetBId = 'GBPUSD';
+  const assetAProxyTicker = 'forex.EURUSD';
+  const assetBProxyTicker = 'forex.GBPUSD';
   const quantity = 100000;
   const side = true; // Long
   const leverage = 50;
 
-  const pairTradingConfig = await getPairTradingConfig(assetAId, assetBId, quantity, side, leverage);
+  const pairTradingConfig = await getPairTradingConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage);
   console.log('Pair Trading Config:', pairTradingConfig);
 }
 
-export {configTest};
 
+export { configTest}

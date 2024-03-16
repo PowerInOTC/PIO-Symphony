@@ -1,18 +1,38 @@
 "use strict";
-// File: pairTrading.ts
+// File: config.ts
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.configTest = void 0;
-const assets = [
-// Array of assets
-];
-async function getAssetById(assetId) {
-    return assets.find(asset => asset.mt5Ticker === assetId);
+async function getAssetByProxyTicker(proxyTicker, assets) {
+    return assets.find(asset => asset.proxyTicker === proxyTicker);
 }
-async function getConfig(assetAId, assetBId, quantity, side, leverage) {
-    const assetA = await getAssetById(assetAId);
-    const assetB = await getAssetById(assetBId);
+async function getConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage, assets) {
+    const assetA = await getAssetByProxyTicker(assetAProxyTicker, assets);
+    const assetB = await getAssetByProxyTicker(assetBProxyTicker, assets);
     if (!assetA || !assetB) {
-        throw new Error('Invalid asset IDs');
+        throw new Error('Invalid asset proxy tickers');
     }
     const rowA = assetA.notional?.find(row => row.side === (side ? 'long' : 'short') && row.leverage === leverage);
     const rowB = assetB.notional?.find(row => row.side === (side ? 'long' : 'short') && row.leverage === leverage);
@@ -51,17 +71,18 @@ async function getConfig(assetAId, assetBId, quantity, side, leverage) {
     };
     return config;
 }
-async function getPairTradingConfig(assetAId, assetBId, quantity, side, leverage) {
-    const config = await getConfig(assetAId, assetBId, quantity, side, leverage);
+async function getPairTradingConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage) {
+    const assets = (await Promise.resolve().then(() => __importStar(require('./symphony.json')))).default.assets;
+    const config = await getConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage, assets);
     return config;
 }
 async function configTest() {
-    const assetAId = 'EURUSD';
-    const assetBId = 'GBPUSD';
+    const assetAProxyTicker = 'forex.EURUSD';
+    const assetBProxyTicker = 'forex.GBPUSD';
     const quantity = 100000;
     const side = true; // Long
     const leverage = 50;
-    const pairTradingConfig = await getPairTradingConfig(assetAId, assetBId, quantity, side, leverage);
+    const pairTradingConfig = await getPairTradingConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage);
     console.log('Pair Trading Config:', pairTradingConfig);
 }
 exports.configTest = configTest;
