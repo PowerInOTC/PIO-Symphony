@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-const proxyCall_1 = require("./proxyCall");
+const makeApiCalls = require('./proxyCall');
 const promises_1 = require("fs/promises");
+const dotenv = require('dotenv');
+dotenv.config();
 const fastApiUrl = process.env.FAST_API;
 let callCount = 0;
 const callLimit = 100;
@@ -24,17 +26,16 @@ async function symbolStartsWithForex(symbol) {
     }
 }
 async function testProxySymbol(symbol) {
-    const abPrecision = 5;
-    const confPrecision = 5;
+    const Precision = 5;
     const maxtimestampdiff = 200000;
     console.log('Testing ' + symbol);
     try {
         let price;
         let maxRetry = 3;
         while ((!price || price.pairBid === undefined) && maxRetry > 0) {
-            price = await (0, proxyCall_1.makeApiCalls)(maxtimestampdiff, abPrecision, confPrecision, symbol, symbol);
+            price = await makeApiCalls(maxtimestampdiff, Precision, symbol, symbol);
             maxRetry--;
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 333));
         }
         if (price.pairBid === undefined) {
             console.log(symbol + ' is not available on the proxy');
@@ -58,7 +59,7 @@ async function retrieveAllSymbols() {
                 const elapsedTime = currentTime - lastCallTime;
                 if (elapsedTime < callInterval) {
                     const waitTime = callInterval - elapsedTime;
-                    await new Promise((resolve) => setTimeout(resolve, waitTime));
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
                 }
                 callCount = 0;
                 lastCallTime = new Date().getTime();
@@ -81,26 +82,26 @@ async function retrieveAllSymbols() {
                     assets.push({ mt5Ticker, proxyTicker, broker });
                 }
             } /* else if (symbol.endsWith('.MAD')) {
-                    const name = 'stock.euronext.' + symbol.replace('.MAD', '.MD');
-                    mt5Ticker = symbol;
-                    proxyTicker = name;
-                } else if (symbol.endsWith('.PAR')) {
-                    const name = 'stock.euronext.' + symbol.replace('.PAR', '.PA');
-                    mt5Ticker = symbol;
-                    proxyTicker = name;
-                } else if (symbol.endsWith('.AMS')) {
-                    const name = 'stock.euronext.' + symbol.replace('.AMS', '.AS');
-                    mt5Ticker = symbol;
-                    proxyTicker = name;
-                } else if (symbol.endsWith('.LSE')) {
-                    const name = 'stock.lse.' + symbol.replace('.LSE', '.L');
-                    mt5Ticker = symbol;
-                    proxyTicker = name;
-                } else if (symbol.endsWith('.ETR')) {
-                    const name = 'stock.xetra.' + symbol.replace('.ETR', '.DE');
-                    mt5Ticker = symbol;
-                    proxyTicker = name;
-                } */
+                const name = 'stock.euronext.' + symbol.replace('.MAD', '.MD');
+                mt5Ticker = symbol;
+                proxyTicker = name;
+            } else if (symbol.endsWith('.PAR')) {
+                const name = 'stock.euronext.' + symbol.replace('.PAR', '.PA');
+                mt5Ticker = symbol;
+                proxyTicker = name;
+            } else if (symbol.endsWith('.AMS')) {
+                const name = 'stock.euronext.' + symbol.replace('.AMS', '.AS');
+                mt5Ticker = symbol;
+                proxyTicker = name;
+            } else if (symbol.endsWith('.LSE')) {
+                const name = 'stock.lse.' + symbol.replace('.LSE', '.L');
+                mt5Ticker = symbol;
+                proxyTicker = name;
+            } else if (symbol.endsWith('.ETR')) {
+                const name = 'stock.xetra.' + symbol.replace('.ETR', '.DE');
+                mt5Ticker = symbol;
+                proxyTicker = name;
+            } */
             else {
                 const isForex = await symbolStartsWithForex(symbol);
                 if (isForex) {

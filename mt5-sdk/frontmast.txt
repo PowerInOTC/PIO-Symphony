@@ -1,0 +1,83 @@
+
+
+uxTPCheckBox : 
+uxTPPrice : 
+uxTPGainPercent :
+uxTPGainUSD :
+
+uxSLCheckBox :
+uxSLPrice :
+uxSLLossPercent :
+uxSLLossUSD :
+uxRiskReward :
+
+uxState : Limit, Maket
+uxLimitPriceLong :
+uxLimitPriceShort :
+uxLeverage :
+uxAsset1 :
+uxAsset2 :
+uxAmountNativeLong :
+uxAmountUsdLong :
+uxCostUsdLong :
+uxAmountNativeShort :
+uxAmountUsdShort :
+uxCostUsdShort :
+
+uxSelectedPair : ( for close quote )
+
+uxReduceOnlyCheckBox :
+uxPostOnlyCheckBox :
+uxIOCCheckbox
+
+uxSelectedConfig : ( Default, Custom in cookie )
+
+uiBalance :
+uiFreeBalance :
+UiDFShare :
+uiMarginFraction : ( sum(OI)/balance )
+uiNonDepositedBalance :
+uiInWithdrawingBalance :
+uiLimitGlobalPnl :
+uiAccountLeverage :
+uiMaxPositionLeverage :
+
+
+uiOpen{ uiOpenType : ( Long / Short )
+	,uiOpenAssetLong :
+	,uiOpenAssetShort :
+	,uiOpenSize :
+	,uiOpenPrice:
+	,uiOpenPnL :
+	,uiOpenEstLiq :
+	,uiOpenBreakEven :
+	,uiOpenMarkPrice :
+	,uxOpenClosePrice :
+	,uxOpenCloseSize :
+
+	
+uiLimit{ 
+	uiLimitType: ( OpenLong, OpenShort, SL, TP )
+	,uiLimitSize: 
+	,uiLimitPrice:
+	,uiIsLimitReduceOnly :
+	,uiLimitStatus : ( Open, Close )
+	,uiLimitFillPercent :
+	,uiLimitFIllAmount : 
+	,uiLimitTimestampOpen :
+
+uiAssetInfo{
+	uiMaxOpen
+	,uiAssetInfoMarketPrice :
+	,uiAssetInfoOI :
+	,uiAssetInfoBid :
+	,uiAssetInfoAsk :
+	,uiAssetInfo24Volume
+	,uiAssetInfo24hVolume :
+	,uiAssetInfoFunding :
+	,uiAssetInfoMinSize :
+	,uiAssetInfoMinTickSize
+	,uiAssetInfoMarketFee,
+	,uiAssetInfoMarketFee,
+	
+
