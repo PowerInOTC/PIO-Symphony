@@ -1,16 +1,36 @@
+
+
 import dotenv from 'dotenv';
+import { ethers } from 'ethers';
 dotenv.config();
 
-import {bullExample} from "./utils/bullmq/bullRFQ";
-import { configTest } from './utils/config/config';
+import {RfqReq, RfqResp} from '@pionerfriends/api-client';
 
+import { getPayloadAndLogin } from '@pionerfriends/api-client';
+import { testSendRfqs } from './utils/bullmq/test';
+import { setupBullMQ } from './utils/bullmq/bullRFQ';
 
+async function main() {
+  const rpcURL = 'https://rpc.sonic.fantom.network/';
+  const rpcKey = '';
+  const provider: ethers.Provider = new ethers.JsonRpcProvider(
+    `${rpcURL}${rpcKey}`,
+  );
+  const wallet = new ethers.Wallet(
+    'YOUR-PRIVATE-KEY',
+    provider,
+  );
 
-async function main(): Promise<void> {
-  configTest();
+  const token = await getPayloadAndLogin(wallet);
 
-  //bullExample();
+  if (!wallet || !token) {
+    console.log('login failed');
+    return;
+  }
+
+  await setupBullMQ(token);
+  await testSendRfqs();
 
 }
-main();
 
+main()

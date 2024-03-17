@@ -14,18 +14,23 @@
     "lint": "eslint \"./**/*.ts\" --fix && npx prettier --write \"./**/*.ts\""
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^7.1.1",
-    "@typescript-eslint/parser": "^7.1.1",
+    "@types/chai": "^4.3.12",
+    "@types/mocha": "^10.0.6",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "chai": "^5.1.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
+    "mocha": "^10.3.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.3.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@pionerfriends/api-client": "^1.0.0",
-    "axios": "^1.6.7",
-    "bullmq": "^5.4.1",
+    "@pionerfriends/api-client": "^1.0.3",
+    "axios": "^1.6.8",
+    "bullmq": "^5.4.2",
     "dotenv": "^16.4.5",
     "redis": "^4.6.13"
   }

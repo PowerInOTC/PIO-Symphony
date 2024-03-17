@@ -2,6 +2,7 @@
 
 import { Asset, Row } from './configBuilder';
 
+
 async function getAssetByProxyTicker(proxyTicker: string, assets: Asset[]): Promise<Asset | undefined> {
   return assets.find(asset => asset.proxyTicker === proxyTicker);
 }
@@ -46,6 +47,7 @@ async function getConfig(assetAProxyTicker: string, assetBProxyTicker: string, q
     kycType: Math.min(rowA.kycType ?? Infinity, rowB.kycType ?? Infinity),
     cType: Math.min(rowA.cType ?? Infinity, rowB.cType ?? Infinity),
     kycAddress: rowA.kycAddress ?? rowB.kycAddress ?? '',
+    type: rowA.type ?? rowB.type ?? '',
     brokerFee: (rowA.brokerFee ?? 0) + (rowB.brokerFee ?? 0),
     funding: (rowA.funding ?? 0) + (rowB.isAPayingApr ? -(rowB.funding ?? 0) : (rowB.funding ?? 0)),
     isAPayingApr: rowA.isAPayingApr ?? false,
@@ -55,21 +57,11 @@ async function getConfig(assetAProxyTicker: string, assetBProxyTicker: string, q
 }
 
 async function getPairTradingConfig(assetAProxyTicker: string, assetBProxyTicker: string, quantity: number, side: boolean, leverage: number): Promise<Row> {
-  const assets = (await import('./symphony.json')).default.assets;
+  const assets = require('./symphony.json').assets;
   const config = await getConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage, assets);
   return config;
 }
 
-async function configTest() {
-  const assetAProxyTicker = 'forex.EURUSD';
-  const assetBProxyTicker = 'forex.GBPUSD';
-  const quantity = 100000;
-  const side = true; // Long
-  const leverage = 50;
-
-  const pairTradingConfig = await getPairTradingConfig(assetAProxyTicker, assetBProxyTicker, quantity, side, leverage);
-  console.log('Pair Trading Config:', pairTradingConfig);
-}
 
 
-export { configTest}
+export {  getPairTradingConfig}

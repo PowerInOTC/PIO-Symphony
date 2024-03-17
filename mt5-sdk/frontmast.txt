@@ -1,47 +1,115 @@
+how to do that in redux, where on change of an element, we recompute everything with the new ellement.
+Using slice and selector. Use zustand imer.
 
-
-uxTPCheckBox : 
+uxTPCheckBox : // if checked, then TPPrice is enabled
 uxTPPrice : 
-uxTPGainPercent :
-uxTPGainUSD :
+uxTPGainPercent :  
+uxTPGainUSD : 
+
+updateTPComponent() 
+	//uxTPGainPercent = upnl(open, uxTPPrice, uxAmountNativeLong) 
+	// uxTPGainUSD =  uxTPGainPercent * uxAmountUsdLong
 
 uxSLCheckBox :
 uxSLPrice :
 uxSLLossPercent :
 uxSLLossUSD :
-uxRiskReward :
+uxRiskReward :// abs(uxTPGainUSD) / abs(uxSLLossUSD)
 
-uxState : Limit, Maket
-uxLimitPriceLong :
-uxLimitPriceShort :
-uxLeverage :
-uxAsset1 :
-uxAsset2 :
-uxAmountNativeLong :
-uxAmountUsdLong :
-uxCostUsdLong :
-uxAmountNativeShort :
-uxAmountUsdShort :
-uxCostUsdShort :
+updateSLComponent() 
+	//uxSLLossPercent = upnl(open, uxSLPrice, uxAmountNativeLong) 
+	// uxSLLossUSD =  uxSLLossPercent * uxAmountUsdLong
+	// uxRiskReward = abs(uxTPGainUSD) / abs(uxSLLossUSD)
 
-uxSelectedPair : ( for close quote )
+updateRiskRewardComponent() // call on any field above change
+	updateTPComponent() 
+	updateSLComponent() 
 
-uxReduceOnlyCheckBox :
-uxPostOnlyCheckBox :
-uxIOCCheckbox
 
-uxSelectedConfig : ( Default, Custom in cookie )
+uxState : Limit, Maket 
+uxLimitPriceLong : // if uxState==market use bid
+uxLimitPriceShort :  // if uxState==market use ask
+uxLeverage : 
+uiMaxLeverage : 
+uxMaxSlippage :
+uxMaxFunding :
+uxSelectedConfig : ( Symphony )
 
-uiBalance :
-uiFreeBalance :
-UiDFShare :
-uiMarginFraction : ( sum(OI)/balance )
-uiNonDepositedBalance :
-uiInWithdrawingBalance :
-uiLimitGlobalPnl :
-uiAccountLeverage :
-uiMaxPositionLeverage :
+uxAmountNativeLong : // uxAmountUsdLong / ask
+uxAmountUsdLong : // lQuantity * ask 
+uxCostUsdLong : // lQuantity * ask / leverage
 
+uxAmountNativeShort : // uxAmountUsdShort / bid
+uxAmountUsdShort : // sQuantity * bid
+uxCostUsdShort : // sQuantity * bid / leverage
+
+chainId: // set by wallet
+expiration: // 10 seconds
+assetAId: // on update update bid ask and every value using price
+assetBId: // on update update bid ask and every value using price
+sPrice: // if uxState==market use ask, if uxState==limit use uxLimitPriceShort, if uxLimitPriceShort
+uxSQuantity: uxAmountNativeLong
+sInterestRate: config(assetAId, assetBId, Quantity, Leverage).sInterestRate
+sIsPayingApr: config(assetAId, assetBId, Quantity, Leverage).sIsPayingApr
+sImA: config(assetAId, assetBId, Quantity, Leverage).sImA
+sImB: config(assetAId, assetBId, Quantity, Leverage).sImB
+sDfA: config(assetAId, assetBId, Quantity, Leverage).sDfA
+sDfB: config(assetAId, assetBId, Quantity, Leverage).sDfB
+sExpirationA: config(assetAId, assetBId, Quantity, Leverage).sExpirationA
+sExpirationB: config(assetAId, assetBId, Quantity, Leverage).sExpirationB
+sTimelockA: config(assetAId, assetBId, Quantity, Leverage).lTimelockA
+sTimelockB: config(assetAId, assetBId, Quantity, Leverage).lTimelockA
+uxLPrice:  // if uxState==market use ask, if uxState==limit use uxLimitPriceShort
+uxLQuantity:uxAmountNativeShort
+lInterestRate: config(assetAId, assetBId, Quantity, Leverage).lInterestRate
+lIsPayingApr: config(assetAId, assetBId, Quantity, Leverage).lIsPayingApr
+lImA: config(assetAId, assetBId, Quantity, Leverage).lImA
+lImB: config(assetAId, assetBId, Quantity, Leverage).lImB
+lDfA: config(assetAId, assetBId, Quantity, Leverage).lDfA
+lDfB: config(assetAId, assetBId, Quantity, Leverage).lDfB
+lExpirationA: config(assetAId, assetBId, Quantity, Leverage).lExpirationA
+lExpirationB: config(assetAId, assetBId, Quantity, Leverage).lExpirationB
+lTimelockA: config(assetAId, assetBId, Quantity, Leverage).sTimelockA
+lTimelockB: config(assetAId, assetBId, Quantity, Leverage).sTimelockA
+
+
+type QuoteResponse = { // will receive a large list of these from wss, and we will filter them // getQuote( start: end:last)
+  id: string;
+  chainId: number;
+  createdAt: number;
+  rfqId: string;
+  expiration: number; 
+  sMarketPrice: string;
+  sPrice: string;
+  sQuantity: string; 
+  lMarketPrice: string;
+  lPrice: string;
+  lQuantity: string;
+};
+
+QuoteResponse[] 
+uiSelectedQuoteResponseLongId : // select the Quote response not expired, with the enough quantity to fill us, and the best price in that quantity and in uxMaxSlippage
+uiSelectedQuoteResponseLongLimitPrice :
+uiSelectedQuoteResponseLongMarketPrice :
+uiSelectedQuoteResponseLongLimitSize :
+uiSelectedQuoteResponseShortId : // select the Quote response not expired, with the enough quantity to fill us, and the best price in that quantity and in uxMaxSlippage
+uiSelectedQuoteResponseShortLimitPrice :
+uiSelectedQuoteResponseShortMarketPrice :
+uiSelectedQuoteResponseShortLimitSize :
+uiDephtChartAsk[] : [ { price, size } ] // from all the quote response, we will create a depht chart using sPrice and sQuantity, sMarketPrice and sQuantity
+uiDephtChartBid[] : [ { price, size } ] // from all the quote response, we will create a depht chart using lPrice and lQuantity, lMarketPrice and lQuantity
+
+
+// from config file
+uiAssetInfoMinSize :
+uiAssetInfoMinTickSize :
+uiAssetInfoMarketFee :
+uiAssetInfoLimitFee :
+
+
+///////////////// TODO on API side
+
+uxSelectedOpenBContractId : 
 
 uiOpen{ uiOpenType : ( Long / Short )
 	,uiOpenAssetLong :
@@ -56,7 +124,7 @@ uiOpen{ uiOpenType : ( Long / Short )
 	,uxOpenCloseSize :
 
 	
-uiLimit{ 
+uiOpenSign{ 
 	uiLimitType: ( OpenLong, OpenShort, SL, TP )
 	,uiLimitSize: 
 	,uiLimitPrice:
@@ -66,18 +134,27 @@ uiLimit{
 	,uiLimitFIllAmount : 
 	,uiLimitTimestampOpen :
 
-uiAssetInfo{
-	uiMaxOpen
-	,uiAssetInfoMarketPrice :
-	,uiAssetInfoOI :
-	,uiAssetInfoBid :
-	,uiAssetInfoAsk :
-	,uiAssetInfo24Volume
-	,uiAssetInfo24hVolume :
-	,uiAssetInfoFunding :
-	,uiAssetInfoMinSize :
-	,uiAssetInfoMinTickSize
-	,uiAssetInfoMarketFee,
-	,uiAssetInfoMarketFee,
-	
 
+
+
+
+
+
+
+
+
+
+///////////////////// later
+uiBalance :
+uiFreeBalance :
+UiDFShare :
+uiMarginFraction : ( sum(OI)/balance )
+uiNonDepositedBalance :
+uiInWithdrawingBalance :
+uiLimitGlobalPnl :
+uiAccountLeverage :
+uiMaxPositionLeverage :
+
+uxReduceOnlyCheckBox :
+uxPostOnlyCheckBox :
+uxIOCCheckbox
