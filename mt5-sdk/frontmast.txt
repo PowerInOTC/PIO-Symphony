@@ -72,7 +72,6 @@ lExpirationB: config(assetAId, assetBId, Quantity, Leverage).lExpirationB
 lTimelockA: config(assetAId, assetBId, Quantity, Leverage).sTimelockA
 lTimelockB: config(assetAId, assetBId, Quantity, Leverage).sTimelockA
 
-
 type QuoteResponse = { // will receive a large list of these from wss, and we will filter them // getQuote( start: end:last)
   id: string;
   chainId: number;

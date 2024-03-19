@@ -1,39 +1,43 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testSendRfqs = void 0;
 const api_client_1 = require("@pionerfriends/api-client");
+const ethers_1 = require("ethers");
 async function testSendRfqs() {
-    const { wallet: wallet, token: token } = await (0, api_client_1.createWalletAndSignIn)();
+    const rpcURL = 'https://rpc.sonic.fantom.network/';
+    const rpcKey = '';
+    const provider = new ethers_1.ethers.JsonRpcProvider(`${rpcURL}${rpcKey}`);
+    const wallet = new ethers_1.ethers.Wallet('YOUR-PRIVATE-KEY', provider);
+    const token = await (0, api_client_1.getPayloadAndLogin)(wallet);
     if (!wallet || !token) {
         console.log('login failed');
         return;
     }
     const rfq = {
-        chainId: 80001,
-        expiration: 315360000,
-        assetAId: 'crypto.BTC',
-        assetBId: 'crypto.ETH',
-        sPrice: '99.99',
-        sQuantity: '99.99',
-        sInterestRate: '9.99',
+        chainId: 64165,
+        expiration: 100,
+        assetAId: 'forex.EURUSD',
+        assetBId: 'forex.GBPUSD',
+        sPrice: '100',
+        sQuantity: '10',
+        sInterestRate: '20',
         sIsPayingApr: true,
-        sImA: '9.99',
-        sImB: '9.99',
+        sImA: '0.2',
+        sImB: '0.2',
         sDfA: '9.99',
         sDfB: '9.99',
         sExpirationA: 3600,
-        sExpirationB: 3600,
+        sExpirationB: 60,
         sTimelockA: 3600,
         sTimelockB: 3600,
-        lPrice: '99.99',
-        lQuantity: '99.99',
-        lInterestRate: '9.99',
+        lPrice: '100',
+        lQuantity: '10',
+        lInterestRate: '20',
         lIsPayingApr: true,
-        lImA: '9.99',
-        lImB: '9.99',
-        lDfA: '9.99',
-        lDfB: '9.99',
-        lExpirationA: 3600,
+        lImA: '0.29',
+        lImB: '0.2',
+        lDfA: '0.05',
+        lDfB: '0.059',
+        lExpirationA: 60,
         lExpirationB: 3600,
         lTimelockA: 3600,
         lTimelockB: 3600,
@@ -42,4 +46,4 @@ async function testSendRfqs() {
         await (0, api_client_1.sendRfq)(rfq, token);
     }
 }
-exports.testSendRfqs = testSendRfqs;
+testSendRfqs();
