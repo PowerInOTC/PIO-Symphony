@@ -7,7 +7,6 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bullmq_1 = require("bullmq");
 const config_1 = require("./config");
-const getConfig = require('./lib/configBuilder/configBuilder');
 const api_client_1 = require("@pionerfriends/api-client");
 const ethers_1 = require("ethers");
 let token = '';
@@ -32,9 +31,11 @@ const rfqQueue = new bullmq_1.Queue('rfq', {
 });
 async function bullExample() {
     if (typeof pk === 'string') {
+        console.log('pk', pk);
         const wallet = new ethers_1.ethers.Wallet(pk, provider);
-        token = (await (0, api_client_1.getPayloadAndLogin)(wallet)?.toString()) ?? '';
+        token = (await (0, api_client_1.getPayloadAndLogin)(wallet)) ?? '';
     }
+    console.log(token);
     await websocketClient.startWebSocket(token);
     const rfq = {
         chainId: 80001,

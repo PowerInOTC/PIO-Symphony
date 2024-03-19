@@ -4,7 +4,6 @@ dotenv.config();
 import axios, { AxiosResponse } from 'axios';
 import { Queue, Worker } from 'bullmq';
 import { config } from './config';
-const getConfig = require('./lib/configBuilder/configBuilder');
 import {
   getPayloadAndLogin,
   RfqResponse,
@@ -47,10 +46,12 @@ const rfqQueue = new Queue('rfq', {
 
 async function bullExample(): Promise<void> {
   if (typeof pk === 'string') {
+    console.log('pk', pk);
     const wallet = new ethers.Wallet(pk, provider);
-    token = (await getPayloadAndLogin(wallet)?.toString()) ?? '';
+    token = (await getPayloadAndLogin(wallet)) ?? '';
   }
 
+  console.log(token);
   await websocketClient.startWebSocket(token);
 
   const rfq = {
