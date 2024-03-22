@@ -9,8 +9,8 @@ import {
   RfqWebsocketClient,
   RfqResponse,
   getPayloadAndLogin,
-  sendQuote,
-  QuoteRequest,
+  QuoteWebsocketClient,
+  QuoteResponse,
 } from '@pionerfriends/api-client';
 
 const rfqQueue = new Queue('rfq', {
@@ -21,9 +21,8 @@ const rfqQueue = new Queue('rfq', {
   },
 });
 
-console.log('rfqQueue', rfqQueue);
-
 async function bullExample(): Promise<void> {
+  console.log('test');
   const rpcURL = 'https://rpc.sonic.fantom.network/';
   const rpcKey = '';
   const provider: ethers.Provider = new ethers.JsonRpcProvider(
@@ -40,9 +39,9 @@ async function bullExample(): Promise<void> {
     return;
   }
 
-  const websocketClient = new RfqWebsocketClient(
-    (message: RfqResponse) => {
-      rfqQueue.add('rfq', message);
+  const websocketClient = new QuoteWebsocketClient(
+    (message: QuoteResponse) => {
+      console.log(message);
     },
     (error) => {
       console.error('WebSocket error:', error);
@@ -50,39 +49,40 @@ async function bullExample(): Promise<void> {
   );
   await websocketClient.startWebSocket(token);
 
-  new Worker(
-    'rfq',
-    async (job) => {
-      const data: RfqResponse = job.data;
-      const quote: QuoteRequest = await rfqToQuote(data);
-
-      sendQuote(quote, token);
-      console.log(`Processing job ${job.id}: ${JSON.stringify(data)}`);
-    },
-    {
-      connection: {
-        host: config.bullmqRedisHost,
-        port: config.bullmqRedisPort,
-        password: config.bullmqRedisPassword,
-      },
-      removeOnComplete: { count: 0 },
-      //removeOnFail: { count: 0 }
-    },
-  );
-
-  const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
-    return {
-      chainId: rfq.chainId,
-      rfqId: rfq.id,
-      expiration: rfq.expiration,
-      sMarketPrice: '1',
-      sPrice: rfq.sPrice,
-      sQuantity: rfq.sQuantity,
-      lMarketPrice: '1',
-      lPrice: rfq.lPrice,
-      lQuantity: rfq.lQuantity,
-    };
+  const rfq = {
+    chainId: 80001,
+    expiration: 315360000,
+    assetAId: 'crypto.BTC',
+    assetBId: 'crypto.ETH',
+    sPrice: '99.99',
+    sQuantity: '99.99',
+    sInterestRate: '9.99',
+    sIsPayingApr: true,
+    sImA: '9.99',
+    sImB: '9.99',
+    sDfA: '9.99',
+    sDfB: '9.99',
+    sExpirationA: 3600,
+    sExpirationB: 3600,
+    sTimelockA: 3600,
+    sTimelockB: 3600,
+    lPrice: '99.99',
+    lQuantity: '99.99',
+    lInterestRate: '9.99',
+    lIsPayingApr: true,
+    lImA: '9.99',
+    lImB: '9.99',
+    lDfA: '9.99',
+    lDfB: '9.99',
+    lExpirationA: 3600,
+    lExpirationB: 3600,
+    lTimelockA: 3600,
+    lTimelockB: 3600,
   };
+
+  for (let i = 0; i < 10; i++) {
+    await sendRfq(rfq, token);
+  }
 }
 
 bullExample();

@@ -11,6 +11,7 @@
   },
   "scripts": {
     "start": "tsc && node dist/index.js",
+    "test": "tsc && node dist/test.js",
     "lint": "eslint \"./**/*.ts\" --fix && npx prettier --write \"./**/*.ts\""
   },
   "dependencies": {
