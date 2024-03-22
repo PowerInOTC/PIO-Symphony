@@ -32,11 +32,15 @@ async def update_max_notional_task():
     global max_notional
     while True:
         max_notional = retrieve_account_free_margin()
+        print(max_notional)
         await asyncio.sleep(60)
 
 async def stay_connected_task():
     while True:
-        if not is_connected():
+        if is_connected():
+            print("MT5 is connected")
+        else:
+            print("MT5 is not connected. Reconnecting...")
             start_mt5(login_id, password, server)
         await asyncio.sleep(1)
 
@@ -94,8 +98,33 @@ async def min_amount_symbol_endpoint(symbol: str):
 @app.get("/symbol_info/{symbol}")
 async def symbol_info_endpoint(symbol: str):
     symbol_info = retrieve_symbol_info(symbol)
+    print(symbol_info)
     return symbol_info
 
+@app.get("/precision_info/{symbol}")
+async def symbol_info_endpoint(symbol: str):
+    symbol_info = retrieve_symbol_info(symbol)
+    return symbol_info.trade_tick_size
+
+@app.get("/funding_long_info/{symbol}")
+async def symbol_info_endpoint(symbol: str):
+    symbol_info = retrieve_symbol_info(symbol)
+    return symbol_info.swap_short
+
+@app.get("/funding_short_info/{symbol}")
+async def symbol_info_endpoint(symbol: str):
+    symbol_info = retrieve_symbol_info(symbol)
+    return symbol_info.swap_short
+
+@app.get("/min_ammount_asset_info/{symbol}")
+async def symbol_info_endpoint(symbol: str):
+    symbol_info = retrieve_symbol_info(symbol)
+    return symbol_info.volume_min * symbol_info.trade_contract_size
+
+@app.get("/max_ammount_asset_info/{symbol}")
+async def symbol_info_endpoint(symbol: str):
+    symbol_info = retrieve_symbol_info(symbol)
+    return symbol_info.volume_max * symbol_info.trade_contract_size
 
 # Allow requests from all origins
 app.add_middleware(
@@ -106,7 +135,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Your other route definitions here...
 
 if __name__ == "__main__":
     import uvicorn

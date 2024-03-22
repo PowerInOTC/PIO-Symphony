@@ -26,12 +26,18 @@ def start_mt5(username, password, server):
         metaTrader_init = MetaTrader5.initialize(login=uname, password=pword, server=trading_server)
     except Exception as e:
         print(f"Error initializing MetaTrader: {e}")
+        return False
 
     # Attempt to login to MT5
     if metaTrader_init:
-        metaTrader_login = MetaTrader5.login(login=uname, password=pword, server=trading_server)
-    else :
-        print(f"Error loging in to MetaTrader")
+        try:
+            metaTrader_login = MetaTrader5.login(login=uname, password=pword, server=trading_server)
+        except Exception as e:
+            print(f"Error logging in to MetaTrader: {e}")
+            return False
+    else:
+        print(f"Error initializing MetaTrader")
+        return False
 
     # Return True if initialization and login are successful
     if metaTrader_login:
