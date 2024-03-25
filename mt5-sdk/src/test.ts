@@ -11,15 +11,14 @@ import {
   getPayloadAndLogin,
   QuoteWebsocketClient,
   QuoteResponse,
+  RfqRequest,
+  getPrices,
 } from '@pionerfriends/api-client';
-
-const rfqQueue = new Queue('rfq', {
-  connection: {
-    host: config.bullmqRedisHost,
-    port: config.bullmqRedisPort,
-    password: config.bullmqRedisPassword,
-  },
-});
+import { sendErrorToTelegram } from './utils/telegram';
+import { sendMessage } from './utils/telegram';
+import { logger } from './utils/init';
+import { adjustQuantities, getPairConfig } from './configBuilder/configRead';
+import { calculatePairPrices } from './forSDK';
 
 async function bullExample(): Promise<void> {
   console.log('test');
@@ -29,7 +28,7 @@ async function bullExample(): Promise<void> {
     `${rpcURL}${rpcKey}`,
   );
   const wallet = new ethers.Wallet(
-    'b63a221a15a6e40e2a79449c0d05b9a1750440f383b0a41b4d6719d7611607b4',
+    '578c436136413ec3626d3451e89ce5e633b249677851954dff6b56fad50ac6fe',
     provider,
   );
 
@@ -45,17 +44,62 @@ async function bullExample(): Promise<void> {
     },
     (error) => {
       console.error('WebSocket error:', error);
+      sendErrorToTelegram(error);
     },
   );
   await websocketClient.startWebSocket(token);
 
-  const rfq = {
-    chainId: 80001,
-    expiration: 315360000,
-    assetAId: 'crypto.BTC',
-    assetBId: 'crypto.ETH',
-    sPrice: '99.99',
-    sQuantity: '99.99',
+  const chainId = 64165;
+  const assetAId = 'forex.EURUSD';
+  const assetBId = 'stock.nasdaq.AAPL';
+
+  const Leverage = 100;
+
+  let bid = 0;
+  let ask = 0;
+  let sQuantity = 100;
+  let lQuantity = 101;
+
+  const assetHex = `${assetAId}/${assetBId}`;
+
+  const pairs: string[] = [assetHex, 'forex.EURUSD/stock.nasdaq.AI'];
+
+  logger.info('hi');
+  const pairPrices = await calculatePairPrices(pairs, token);
+
+  logger.info(pairPrices, 'Pair Prices');
+
+  const adjustedQuantities = await adjustQuantities(
+    bid,
+    ask,
+    sQuantity,
+    lQuantity,
+    assetAId,
+    assetBId,
+    Leverage,
+  );
+
+  // Retrieve adjusted quantities
+  sQuantity = adjustedQuantities.sQuantity;
+  lQuantity = adjustedQuantities.lQuantity;
+
+  const pairConfig = getPairConfig(
+    assetAId,
+    assetBId,
+    'long',
+    Leverage,
+    ask * lQuantity,
+  );
+
+  //logger.info(pairConfig, 'RFQ');
+
+  const rfq: RfqRequest = {
+    chainId: chainId,
+    expiration: Math.floor((Date.now() + 3600) / 1000),
+    assetAId: assetAId,
+    assetBId: assetBId,
+    sPrice: String(bid),
+    sQuantity: String(sQuantity),
     sInterestRate: '9.99',
     sIsPayingApr: true,
     sImA: '9.99',
@@ -66,8 +110,8 @@ async function bullExample(): Promise<void> {
     sExpirationB: 3600,
     sTimelockA: 3600,
     sTimelockB: 3600,
-    lPrice: '99.99',
-    lQuantity: '99.99',
+    lPrice: String(ask),
+    lQuantity: String(lQuantity),
     lInterestRate: '9.99',
     lIsPayingApr: true,
     lImA: '9.99',
@@ -80,8 +124,19 @@ async function bullExample(): Promise<void> {
     lTimelockB: 3600,
   };
 
-  for (let i = 0; i < 10; i++) {
-    await sendRfq(rfq, token);
+  try {
+    let counter = 0;
+    const interval = setInterval(() => {
+      logger.info(counter);
+      sendRfq(rfq, token);
+      counter++;
+    }, 5000);
+  } catch (error: any) {
+    if (error instanceof Error) {
+      logger.error(error);
+    } else {
+      logger.error('An unknown error occurred');
+    }
   }
 }
 

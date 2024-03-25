@@ -26,6 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getFieldFromAsset = void 0;
 const fs = __importStar(require("fs"));
 const axios_1 = __importDefault(require("axios"));
 const config_1 = require("../config");
@@ -262,7 +263,7 @@ function updateSymphonyJSON(symphonyJSONPath, mt5SymbolList) {
     const symphonyJSONData = JSON.stringify(mt5SymbolList, null, 2);
     fs.writeFileSync(symphonyJSONPath, symphonyJSONData);
 }
-const symphonyJSONPath = 'symphony.json';
+const symphonyJSONPath = './symphony.json';
 const mt5SymbolList = processSymphonyJSON(symphonyJSONPath);
 async function symbolStartsWithForex(symbol) {
     try {
@@ -343,6 +344,7 @@ function getFieldFromAsset(mt5SymbolList, broker, proxyTicker, key, fieldName) {
     }
     return undefined;
 }
+exports.getFieldFromAsset = getFieldFromAsset;
 function forEachAsset(mt5SymbolList, callback) {
     mt5SymbolList.assets.forEach((asset) => {
         callback(asset, asset.broker, asset.proxyTicker);
@@ -451,33 +453,3 @@ async function main() {
     updateSymphonyJSON(symphonyJSONPath, mt5SymbolList);
 }
 main();
-/*
-
-processAllAssets(mt5SymbolList);
-*/
-/*
-
-const key: NotionalKey = {
-    side: 'LONG',
-    leverage: 10,
-};
-const fieldName: keyof Row = 'maxConfidence';
-const fieldValue = 0.8;
-
-addFieldToAsset(mt5SymbolList, broker, proxyTicker, key, fieldName, fieldValue);
-updateSymphonyJSON(symphonyJSONPath, mt5SymbolList);
-
-const retrievedValue = getFieldFromAsset(mt5SymbolList, broker, proxyTicker, key, fieldName);
-console.log(`Retrieved value: ${retrievedValue}`);
-
-*/
-// make a function that takes a proxyTicker and get it's hedger
-// make a metaFunction that redirect subFunciton based on hedger name.
-// make a symbol that gets mt5Ticker for it's proxyTicker
-// configBuilder.getPionerSymbolFromMt5Symbol(symbolMt5)
-// configBuilder.testMt5SymbolOnProxy(symbolMt5)
-// configBuilder.addHedger(hedger)
-// configBuilder.removeHedger(hedger)
-// configBuilder.getHedger(hedger)
-// configBuilder.addHedgerToAsset(hedger, asset)
-// configBuilder.removeHedgerToAsset(hedger, asset)

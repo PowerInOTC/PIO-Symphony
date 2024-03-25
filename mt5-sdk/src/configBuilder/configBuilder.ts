@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import axios from 'axios';
 import { config } from '../config';
+import { Asset, NotionalKey, Row } from '../types/config';
 
 const apiBaseUrl = config.fastApiHost;
 
@@ -288,7 +289,7 @@ function updateSymphonyJSON(
   fs.writeFileSync(symphonyJSONPath, symphonyJSONData);
 }
 
-const symphonyJSONPath: string = 'symphony.json';
+const symphonyJSONPath = './symphony.json';
 const mt5SymbolList: MT5SymbolList = processSymphonyJSON(symphonyJSONPath);
 
 async function symbolStartsWithForex(symbol: string): Promise<boolean> {
@@ -302,11 +303,6 @@ async function symbolStartsWithForex(symbol: string): Promise<boolean> {
     console.error('Error retrieving symbol info:', error);
     return false;
   }
-}
-
-interface NotionalKey {
-  side: string;
-  leverage: number;
 }
 
 function createFieldInAsset(
@@ -470,48 +466,6 @@ function getMt5TickerForProxyTicker(
   return asset?.mt5Ticker;
 }
 
-export default interface Row extends NotionalKey {
-  maxNotional?: number;
-  minAmount?: number;
-  maxAmount?: number;
-  precision?: number;
-  maxLeverageDeltaGlobalNotional?: number;
-  maxLeverageLongGlobalNotional?: number;
-  maxLeverageShortGlobalNotional?: number;
-  imA?: number;
-  imB?: number;
-  dfA?: number;
-  dfB?: number;
-  ir?: number;
-  expiryA?: number;
-  expiryB?: number;
-  timeLockA?: number;
-  timeLockB?: number;
-  maxConfidence?: number;
-  maxDelay?: number;
-  forceCloseType?: number;
-  kycType?: number;
-  cType?: number;
-  kycAddress?: string;
-  type?: string;
-  brokerMinimalNotional?: number;
-  brokerFee?: number;
-  funding?: number;
-  isAPayingApr?: boolean;
-}
-
-interface Asset {
-  mt5Ticker: string;
-  proxyTicker: string;
-  broker: string;
-  fmpTicker?: string;
-  tiingoTicker?: string;
-  alpacaTicker?: string;
-  tradingViewId?: string;
-  precision?: number;
-  notional?: Row[];
-}
-
 function processAllAssetsExample(mt5SymbolList: MT5SymbolList): void {
   forEachAsset(mt5SymbolList, (asset, broker, proxyTicker) => {
     console.log(
@@ -641,3 +595,5 @@ console.log(`Retrieved value: ${retrievedValue}`);
 
 // configBuilder.addHedgerToAsset(hedger, asset)
 // configBuilder.removeHedgerToAsset(hedger, asset)
+
+export { getFieldFromAsset };
