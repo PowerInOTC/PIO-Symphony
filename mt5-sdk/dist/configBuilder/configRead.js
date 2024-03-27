@@ -3,9 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adjustQuantities = exports.getAllProxyTickers = exports.getPairConfig = exports.getFieldFromAsset = void 0;
+exports.writeProxyTickersToFile = exports.adjustQuantities = exports.getAllProxyTickers = exports.getPairConfig = exports.getFieldFromAsset = void 0;
 const fs_1 = __importDefault(require("fs"));
-const init_1 = require("../utils/init");
 function processSymphonyJSON(symphonyJSONPath) {
     const rawData = fs_1.default.readFileSync(symphonyJSONPath, 'utf-8');
     const jsonData = JSON.parse(rawData);
@@ -19,7 +18,6 @@ function getFieldFromAsset(broker, proxyTicker, side, leverage, notional) {
         const row = asset.notional?.find((r) => r.side === side &&
             r.leverage < leverage &&
             (r.maxNotional ?? Infinity) > notional);
-        init_1.logger.info(row, 'Notional row');
         return row;
     }
     return undefined;
@@ -35,6 +33,41 @@ function getAllProxyTickers() {
     return symbolList.map((a) => a.proxyTicker);
 }
 exports.getAllProxyTickers = getAllProxyTickers;
+function writeProxyTickersToFile() {
+    if (!Array.isArray(symbolList)) {
+        throw new Error('symbolList is not an array');
+    }
+    const filename = 'assets.json'; // Hardcoded filename
+    const output = {};
+    symbolList.forEach((symbol) => {
+        const parts = symbol.proxyTicker.split('.');
+        if (parts.length >= 2) {
+            const category = parts[0];
+            let subcategory = '';
+            let asset = '';
+            if (category === 'stock') {
+                if (parts.length >= 3) {
+                    subcategory = parts[1];
+                    asset = parts[2];
+                }
+            }
+            else {
+                subcategory = parts[1];
+                asset = parts.slice(2).join('.');
+            }
+            if (!output[category]) {
+                output[category] = {};
+            }
+            if (!output[category][subcategory]) {
+                output[category][subcategory] = {};
+            }
+            output[category][subcategory][asset] = {};
+        }
+    });
+    const json = JSON.stringify(output, null, 2);
+    fs_1.default.writeFileSync(filename, json);
+}
+exports.writeProxyTickersToFile = writeProxyTickersToFile;
 function getMaxNotionalForMaxLeverage(proxyTicker, side, maxLeverage) {
     const asset = findAssetByProxyTicker(proxyTicker);
     if (asset) {

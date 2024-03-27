@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const apiBaseUrl = process.env.FAST_API;
+//const apiBaseUrl = process.env.FAST_API;
+const apiBaseUrl = 'http://20.55.0.76:8000';
 
 async function getTotalOpenAmount(
   symbol: string,

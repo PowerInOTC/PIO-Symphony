@@ -32,7 +32,7 @@ async function calculatePairPrices(pairs, token) {
                     const bid = bidB !== 0 ? bidA / bidB : 0;
                     const ask = askB !== 0 ? askA / askB : 0;
                     pairPrices[pair] = { bid, ask };
-                    init_1.logger.info(`${pair} - bid: ${bid}, ask: ${ask}`);
+                    //logger.info(`${pair} - bid: ${bid}, ask: ${ask}`);
                 }
                 else {
                     pairPrices[pair] = { bid: 0, ask: 0 };

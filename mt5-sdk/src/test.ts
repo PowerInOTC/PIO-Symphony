@@ -17,11 +17,15 @@ import {
 import { sendErrorToTelegram } from './utils/telegram';
 import { sendMessage } from './utils/telegram';
 import { logger } from './utils/init';
-import { adjustQuantities, getPairConfig } from './configBuilder/configRead';
+import {
+  adjustQuantities,
+  getPairConfig,
+  // writeProxyTickersToFile,
+} from './configBuilder/configRead';
 import { calculatePairPrices } from './forSDK';
+import { mt5Price } from './broker/mt5Price';
 
 async function bullExample(): Promise<void> {
-  console.log('test');
   const rpcURL = 'https://rpc.sonic.fantom.network/';
   const rpcKey = '';
   const provider: ethers.Provider = new ethers.JsonRpcProvider(
@@ -31,22 +35,25 @@ async function bullExample(): Promise<void> {
     '578c436136413ec3626d3451e89ce5e633b249677851954dff6b56fad50ac6fe',
     provider,
   );
+  logger.info('hi');
 
   const token = await getPayloadAndLogin(wallet);
   if (!wallet || !token) {
     console.log('login failed');
     return;
   }
+  logger.info('hi');
 
   const websocketClient = new QuoteWebsocketClient(
     (message: QuoteResponse) => {
-      console.log(message);
+      //console.log(message);
     },
     (error) => {
       console.error('WebSocket error:', error);
       sendErrorToTelegram(error);
     },
   );
+
   await websocketClient.startWebSocket(token);
 
   const chainId = 64165;
@@ -63,11 +70,10 @@ async function bullExample(): Promise<void> {
   const assetHex = `${assetAId}/${assetBId}`;
 
   const pairs: string[] = [assetHex, 'forex.EURUSD/stock.nasdaq.AI'];
-
-  logger.info('hi');
   const pairPrices = await calculatePairPrices(pairs, token);
 
-  logger.info(pairPrices, 'Pair Prices');
+  bid = pairPrices[assetHex]['bid'];
+  ask = pairPrices[assetHex]['ask'];
 
   const adjustedQuantities = await adjustQuantities(
     bid,
@@ -78,12 +84,18 @@ async function bullExample(): Promise<void> {
     assetBId,
     Leverage,
   );
-
-  // Retrieve adjusted quantities
+  logger.info('hi');
   sQuantity = adjustedQuantities.sQuantity;
   lQuantity = adjustedQuantities.lQuantity;
 
-  const pairConfig = getPairConfig(
+  const lConfig = await getPairConfig(
+    assetAId,
+    assetBId,
+    'long',
+    Leverage,
+    ask * lQuantity,
+  );
+  const sConfig = await getPairConfig(
     assetAId,
     assetBId,
     'long',
@@ -91,33 +103,34 @@ async function bullExample(): Promise<void> {
     ask * lQuantity,
   );
 
-  //logger.info(pairConfig, 'RFQ');
+  let lInterestRate = lConfig.funding;
+  let sInterestRate = sConfig.funding;
 
   const rfq: RfqRequest = {
     chainId: chainId,
-    expiration: Math.floor((Date.now() + 3600) / 1000),
+    expiration: 10,
     assetAId: assetAId,
     assetBId: assetBId,
     sPrice: String(bid),
     sQuantity: String(sQuantity),
-    sInterestRate: '9.99',
+    sInterestRate: String(sInterestRate),
     sIsPayingApr: true,
-    sImA: '9.99',
-    sImB: '9.99',
-    sDfA: '9.99',
-    sDfB: '9.99',
+    sImA: String(sConfig.imA),
+    sImB: String(sConfig.imA),
+    sDfA: String(sConfig.imA),
+    sDfB: String(sConfig.imA),
     sExpirationA: 3600,
     sExpirationB: 3600,
     sTimelockA: 3600,
     sTimelockB: 3600,
     lPrice: String(ask),
     lQuantity: String(lQuantity),
-    lInterestRate: '9.99',
+    lInterestRate: String(lInterestRate),
     lIsPayingApr: true,
-    lImA: '9.99',
-    lImB: '9.99',
-    lDfA: '9.99',
-    lDfB: '9.99',
+    lImA: String(lConfig.imA),
+    lImB: String(lConfig.imB),
+    lDfA: String(lConfig.dfA),
+    lDfB: String(lConfig.dfB),
     lExpirationA: 3600,
     lExpirationB: 3600,
     lTimelockA: 3600,
@@ -128,9 +141,10 @@ async function bullExample(): Promise<void> {
     let counter = 0;
     const interval = setInterval(() => {
       logger.info(counter);
-      sendRfq(rfq, token);
+      mt5Price('forex.EURUSD', 200, 60000, 'user1');
+      //sendRfq(rfq, token);
       counter++;
-    }, 5000);
+    }, 1000);
   } catch (error: any) {
     if (error instanceof Error) {
       logger.error(error);

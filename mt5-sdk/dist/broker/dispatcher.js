@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.maxAmountAssetInfo = exports.minAmountAssetInfo = exports.fundingShortInfo = exports.fundingLongInfo = exports.precisionInfo = exports.symbolInfo = exports.minAmountSymbol = exports.retrieveMaxNotional = exports.resetAccount = exports.manageSymbolInventory = exports.retrieveAllSymbols = exports.retrieveLatestTick = exports.getTotalOpenAmount = void 0;
 const axios_1 = __importDefault(require("axios"));
-const apiBaseUrl = process.env.FAST_API;
+//const apiBaseUrl = process.env.FAST_API;
+const apiBaseUrl = 'http://20.55.0.76:8000';
 async function getTotalOpenAmount(symbol, broker) {
     switch (broker) {
         case 'mt5.ICMarkets':

@@ -32,7 +32,6 @@ function getFieldFromAsset(
         r.leverage < leverage &&
         (r.maxNotional ?? Infinity) > notional,
     );
-    logger.info(row, 'Notional row');
 
     return row;
   }
@@ -48,6 +47,49 @@ function getAllProxyTickers(): string[] {
     throw new Error('symbolList is not an array');
   }
   return symbolList.map((a) => a.proxyTicker);
+}
+
+function writeProxyTickersToFile(): void {
+  if (!Array.isArray(symbolList)) {
+    throw new Error('symbolList is not an array');
+  }
+
+  const filename = 'assets.json'; // Hardcoded filename
+
+  const output: Record<string, Record<string, Record<string, unknown>>> = {};
+
+  symbolList.forEach((symbol) => {
+    const parts = symbol.proxyTicker.split('.');
+
+    if (parts.length >= 2) {
+      const category = parts[0];
+      let subcategory = '';
+      let asset = '';
+
+      if (category === 'stock') {
+        if (parts.length >= 3) {
+          subcategory = parts[1];
+          asset = parts[2];
+        }
+      } else {
+        subcategory = parts[1];
+        asset = parts.slice(2).join('.');
+      }
+
+      if (!output[category]) {
+        output[category] = {};
+      }
+
+      if (!output[category][subcategory]) {
+        output[category][subcategory] = {};
+      }
+
+      output[category][subcategory][asset] = {};
+    }
+  });
+
+  const json = JSON.stringify(output, null, 2);
+  fs.writeFileSync(filename, json);
 }
 
 function getMaxNotionalForMaxLeverage(
@@ -206,4 +248,5 @@ export {
   getPairConfig,
   getAllProxyTickers,
   adjustQuantities,
+  writeProxyTickersToFile,
 };
