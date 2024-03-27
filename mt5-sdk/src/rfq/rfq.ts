@@ -52,8 +52,8 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
     if (
       Date.now() - checkRFQ.rfqCheckUpdateTime < 60000 &&
       checkRFQ.chainId === rfq.chainId &&
-      checkRFQ.AssetAId === rfq.AssetAId &&
-      checkRFQ.AssetBId === rfq.AssetBId &&
+      checkRFQ.AssetAId === rfq.assetAId &&
+      checkRFQ.AssetBId === rfq.assetBId &&
       checkRFQ.sPrice === rfq.sPrice &&
       checkRFQ.sQuantity === rfq.sQuantity &&
       checkRFQ.sInterestRate === rfq.sInterestRate &&
@@ -95,9 +95,9 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
     checkBrokerSelfLeverage: false,
     checkCounterpartySelfLeverage: false,
     expiration: rfq.expiration,
-    AssetAId: rfq.AssetAId,
+    AssetAId: rfq.assetAId,
     checkAssetAId: false,
-    AssetBId: rfq.AssetBId,
+    AssetBId: rfq.assetBId,
     checkAssetBId: false,
     sPrice: rfq.sPrice,
     checkSPrice: false,
@@ -153,7 +153,7 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
     checkRFQ.AssetBId,
     'long',
     (parseFloat(checkRFQ.lImA) + parseFloat(checkRFQ.lDfA)) /
-      (parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity)),
+    (parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity)),
     parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity),
   );
   logger.info(configRfqL, 'configRfqL');

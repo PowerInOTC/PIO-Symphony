@@ -1,15 +1,30 @@
-version: '3.8'
-
 services:
+  app:
+    build: .
+    container_name: mt5sdk_container
+    restart: always
+    volumes:
+      - ./.env:/app/.env
+    depends_on:
+      - redis
+    command: sh -c "pnpm start"
+    networks:
+      - symphonynetwork
   redis:
     image: redis:latest
-    container_name: redisBullMQ
+    container_name: redisBullMQ_container
     ports:
-      - "${BULLMQ_REDIS_PORT}:6379"
+      - "127.0.0.1:${BULLMQ_REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
     command: redis-server --requirepass ${BULLMQ_REDIS_PASSWORD}
     restart: always
+    networks:
+      - symphonynetwork
+
+networks:
+  symphonynetwork:
+    driver: bridge
 
 volumes:
   redis_data:
