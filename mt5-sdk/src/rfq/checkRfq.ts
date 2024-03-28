@@ -74,38 +74,111 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
     parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity),
   );
 
-  if ((configRfqL.imA ?? 0) <= parseFloat(checkRFQ.sImA)) {
-    checkRFQ.checkChainId = true;
-    checkRFQ.checkOnchainFreeCollateral = true;
-    checkRFQ.checkOnchainSelfLeverage = true;
-    checkRFQ.checkBrokerFreeCollateral = true;
-    checkRFQ.checkBrokerSelfLeverage = true;
-    checkRFQ.checkCounterpartySelfLeverage = true;
-    checkRFQ.checkAssetAId = true;
-    checkRFQ.checkAssetBId = true;
-    checkRFQ.checkSPrice = true;
-    checkRFQ.checkLPrice = true;
-    checkRFQ.checkSQuantity = true;
-    checkRFQ.checkLQuantity = true;
-    checkRFQ.checkSInterestRate = true;
-    checkRFQ.checkLInterestRate = true;
-    checkRFQ.checkSImA = true;
-    checkRFQ.checkSImB = true;
+  const configRfqS = await getPairConfig(
+    checkRFQ.assetAId,
+    checkRFQ.assetBId,
+    'long',
+    (parseFloat(checkRFQ.sImA) + parseFloat(checkRFQ.sDfA)) /
+      (parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity)),
+    parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity),
+  );
+
+  if ((configRfqL.imA ?? 0) <= parseFloat(checkRFQ.lImA)) {
     checkRFQ.checkLImA = true;
+  }
+  if ((configRfqS.imA ?? 0) <= parseFloat(checkRFQ.sImA)) {
+    checkRFQ.checkSImA = true;
+  }
+
+  if ((configRfqL.imB ?? 0) <= parseFloat(checkRFQ.lImB)) {
     checkRFQ.checkLImB = true;
-    checkRFQ.checkSDfA = true;
-    checkRFQ.checkSDfB = true;
-    checkRFQ.checkLDfB = true;
+  }
+  if ((configRfqS.imB ?? 0) <= parseFloat(checkRFQ.sImB)) {
+    checkRFQ.checkSImB = true;
+  }
+
+  if ((configRfqL.dfA ?? 0) <= parseFloat(checkRFQ.lDfA)) {
     checkRFQ.checkLDfA = true;
-    checkRFQ.checkSExpirationA = true;
-    checkRFQ.checkSExpirationB = true;
+  }
+  if ((configRfqS.dfA ?? 0) <= parseFloat(checkRFQ.sDfA)) {
+    checkRFQ.checkSDfA = true;
+  }
+
+  if ((configRfqL.dfB ?? 0) <= parseFloat(checkRFQ.lDfB)) {
+    checkRFQ.checkLDfB = true;
+  }
+  if ((configRfqS.dfB ?? 0) <= parseFloat(checkRFQ.sDfB)) {
+    checkRFQ.checkSDfB = true;
+  }
+
+  if ((configRfqL.expiryA ?? 0) <= checkRFQ.lExpirationA) {
     checkRFQ.checkLExpirationA = true;
+  }
+  if ((configRfqS.expiryA ?? 0) <= checkRFQ.sExpirationA) {
+    checkRFQ.checkSExpirationA = true;
+  }
+
+  if ((configRfqL.expiryB ?? 0) <= checkRFQ.lExpirationB) {
     checkRFQ.checkLExpirationB = true;
-    checkRFQ.checkSTimelockA = true;
-    checkRFQ.checkSTimelockB = true;
+  }
+  if ((configRfqS.expiryB ?? 0) <= checkRFQ.sExpirationB) {
+    checkRFQ.checkSExpirationB = true;
+  }
+
+  if ((configRfqL.timeLockA ?? 0) <= checkRFQ.lTimelockA) {
     checkRFQ.checkLTimelockA = true;
+  }
+  if ((configRfqS.timeLockA ?? 0) <= checkRFQ.sTimelockA) {
+    checkRFQ.checkSTimelockA = true;
+  }
+
+  if ((configRfqL.timeLockB ?? 0) <= checkRFQ.lTimelockB) {
     checkRFQ.checkLTimelockB = true;
   }
+  if ((configRfqS.timeLockB ?? 0) <= checkRFQ.sTimelockB) {
+    checkRFQ.checkSTimelockB = true;
+  }
+
+  checkRFQ.checkAssetAId = true;
+  checkRFQ.checkAssetBId = true;
+  /*
+  if (configRfqL.assetBId === checkRFQ.assetBId) {
+  }
+
+  if (configRfqL.price === parseFloat(checkRFQ.lPrice)) {
+    checkRFQ.checkLPrice = true;
+  }
+  if (configRfqS.price === parseFloat(checkRFQ.sPrice)) {
+    checkRFQ.checkSPrice = true;
+  }
+
+  if (configRfqL.quantity === parseFloat(checkRFQ.lQuantity)) {
+    checkRFQ.checkLQuantity = true;
+  }
+  if (configRfqS.quantity === parseFloat(checkRFQ.sQuantity)) {
+    checkRFQ.checkSQuantity = true;
+  }
+
+  if (configRfqL.ir <= parseFloat(checkRFQ.lInterestRate)) {
+    checkRFQ.checkLInterestRate = true;
+  }
+  if (configRfqS.ir <= parseFloat(checkRFQ.sInterestRate)) {
+    checkRFQ.checkSInterestRate = true;
+  }*/
+
+  checkRFQ.checkOnchainFreeCollateral = true;
+  checkRFQ.checkOnchainSelfLeverage = true;
+  checkRFQ.checkBrokerFreeCollateral = true;
+  checkRFQ.checkBrokerSelfLeverage = true;
+  checkRFQ.checkCounterpartySelfLeverage = true;
+  checkRFQ.checkAssetAId = true;
+  checkRFQ.checkAssetBId = true;
+  checkRFQ.checkSPrice = true;
+  checkRFQ.checkLPrice = true;
+  checkRFQ.checkSQuantity = true;
+  checkRFQ.checkLQuantity = true;
+  checkRFQ.checkSInterestRate = true;
+  checkRFQ.checkLInterestRate = true;
 
   return checkRFQ;
 };

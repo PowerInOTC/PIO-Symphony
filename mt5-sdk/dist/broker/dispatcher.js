@@ -7,6 +7,7 @@ exports.maxAmountAssetInfo = exports.minAmountAssetInfo = exports.fundingShortIn
 const axios_1 = __importDefault(require("axios"));
 //const apiBaseUrl = process.env.FAST_API;
 const apiBaseUrl = 'http://20.55.0.76:8000';
+//const apiBaseUrl = 'http://0.0.0.0:8000';
 async function getTotalOpenAmount(symbol, broker) {
     switch (broker) {
         case 'mt5.ICMarkets':

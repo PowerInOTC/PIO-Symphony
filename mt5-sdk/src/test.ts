@@ -23,7 +23,7 @@ import {
   // writeProxyTickersToFile,
 } from './configBuilder/configRead';
 import { calculatePairPrices } from './forSDK';
-import { mt5Price } from './broker/mt5Price';
+import { mt5Price, getLatestPrice } from './broker/mt5Price';
 
 async function bullExample(): Promise<void> {
   const rpcURL = 'https://rpc.sonic.fantom.network/';
@@ -141,7 +141,9 @@ async function bullExample(): Promise<void> {
     let counter = 0;
     const interval = setInterval(() => {
       logger.info(counter);
-      mt5Price('forex.EURUSD', 200, 60000, 'user1');
+      mt5Price('EURUSD', 200, 60000, 'user1');
+      logger.info(getLatestPrice('user1', 'EURUSD'));
+
       //sendRfq(rfq, token);
       counter++;
     }, 1000);

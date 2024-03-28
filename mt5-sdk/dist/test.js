@@ -86,7 +86,8 @@ async function bullExample() {
         let counter = 0;
         const interval = setInterval(() => {
             init_1.logger.info(counter);
-            (0, mt5Price_1.mt5Price)('forex.EURUSD', 200, 60000, 'user1');
+            (0, mt5Price_1.mt5Price)('EURUSD', 200, 60000, 'user1');
+            init_1.logger.info((0, mt5Price_1.getLatestPrice)('user1', 'EURUSD'));
             //sendRfq(rfq, token);
             counter++;
         }, 1000);
