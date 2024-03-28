@@ -1,6 +1,8 @@
 import { RfqResponse } from '@pionerfriends/api-client';
 import { getPairConfig } from '../configBuilder/configRead';
 import { rfqCheck } from '../types/rfqCheck';
+import { getAllocatedBroker } from '../configBuilder/configRead';
+import { get } from 'http';
 
 const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   const checkRFQ: rfqCheck = {
@@ -82,6 +84,9 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
       (parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity)),
     parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity),
   );
+
+  const brokerA = getAllocatedBroker(checkRFQ.assetAId);
+  const brokerB = getAllocatedBroker(checkRFQ.assetBId);
 
   if ((configRfqL.imA ?? 0) <= parseFloat(checkRFQ.lImA)) {
     checkRFQ.checkLImA = true;

@@ -1,25 +1,26 @@
 import { Queue, Worker, QueueEvents, Job } from 'bullmq';
 import { config } from '../config';
-import { retrieveLatestTicks } from './dispatcher';
+import { retrieveMaxNotional } from './dispatcher';
 
 interface WorkerData {
-  symbol: string;
+  broker: string;
   updateSpeed: number;
   updateLength: number;
-  userAddress: string;
 }
 
-interface Mt5PriceConfig {
+interface BrokerHealthConfig {
   bullmqRedisHost: string;
   bullmqRedisPort: number;
   bullmqRedisPassword: string;
 }
 
-const latestPriceData: { [key: string]: { bid: number; ask: number } } = {};
+const latestMaxNotionalData: { [key: string]: number } = {};
 const jobKeys: { [key: string]: string | undefined } = {};
 
-async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
-  const queueName = 'mt5PriceQueue';
+async function startBrokerHealthWorker(
+  config: BrokerHealthConfig,
+): Promise<void> {
+  const queueName = 'brokerHealthQueue';
 
   const queue = new Queue<WorkerData>(queueName, {
     connection: {
@@ -41,23 +42,15 @@ async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
     queueName,
     async (job: Job<WorkerData>) => {
       try {
-        const symbols = Object.keys(jobKeys);
-        const ticks = await retrieveLatestTicks(symbols, 'mt5.ICMarkets');
-
-        for (const [symbol, prices] of Object.entries(ticks)) {
-          const userAddress = jobKeys[symbol]?.split('_')[2] || '';
-          if (prices.bid && prices.ask) {
-            latestPriceData[`${userAddress}_${symbol}`] = {
-              bid: prices.bid,
-              ask: prices.ask,
-            };
-            console.log(
-              `Price for ${symbol} (${userAddress}): Bid=${prices.bid}, Ask=${prices.ask}`,
-            );
-          }
-        }
+        const { broker } = job.data;
+        const maxNotional = await retrieveMaxNotional(broker);
+        latestMaxNotionalData[broker] = maxNotional;
+        console.log(`Max notional for ${broker}: ${maxNotional}`);
       } catch (error) {
-        console.error('Error processing job:', error);
+        console.error(
+          `Error processing job for broker ${job.data.broker}:`,
+          error,
+        );
       }
     },
     {
@@ -70,19 +63,18 @@ async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
     },
   );
 
-  console.log('Mt5Price worker started');
+  console.log('BrokerHealth worker started');
 }
 
-async function mt5Price(
-  symbol: string,
+async function brokerHealth(
+  broker: string,
   updateSpeedMs: number,
   updateLengthMin: number,
-  userAddress: string,
 ): Promise<void> {
   const updateSpeed = updateSpeedMs;
   const updateLength = updateLengthMin;
 
-  const queue = new Queue<WorkerData>('mt5PriceQueue', {
+  const queue = new Queue<WorkerData>('brokerHealthQueue', {
     connection: {
       host: config.bullmqRedisHost,
       port: config.bullmqRedisPort,
@@ -90,7 +82,7 @@ async function mt5Price(
     },
   });
 
-  const jobKey = `mt5PriceJob_${userAddress}_${symbol}`;
+  const jobKey = `brokerHealthJob_${broker}`;
 
   if (jobKeys[jobKey]) {
     const existingJobId = jobKeys[jobKey];
@@ -128,10 +120,9 @@ async function mt5Price(
   }
 
   const workerData: WorkerData = {
-    symbol,
+    broker,
     updateSpeed,
     updateLength,
-    userAddress,
   };
 
   const job = await queue.add(jobKey, workerData, {
@@ -143,21 +134,17 @@ async function mt5Price(
   jobKeys[jobKey] = job.id;
 }
 
-function getLatestPrice(
-  userAddress: string,
-  symbol: string,
-): { bid: number; ask: number } | null {
-  const key = `${userAddress}_${symbol}`;
-  return latestPriceData[key] || null;
+function getLatestMaxNotional(broker: string): number | null {
+  return latestMaxNotionalData[broker] || null;
 }
 
-// Start the Mt5Price worker automatically
-startMt5PriceWorker(config)
+// Start the BrokerHealth worker automatically
+startBrokerHealthWorker(config)
   .then(() => {
-    console.log('Mt5Price worker started successfully');
+    console.log('BrokerHealth worker started successfully');
   })
   .catch((error) => {
-    console.error('Error starting Mt5Price worker:', error);
+    console.error('Error starting BrokerHealth worker:', error);
   });
 
-export { mt5Price, getLatestPrice };
+export { brokerHealth, getLatestMaxNotional };

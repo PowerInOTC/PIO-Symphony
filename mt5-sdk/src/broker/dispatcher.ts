@@ -43,6 +43,30 @@ async function retrieveLatestTick(
   }
 }
 
+async function retrieveLatestTicks(
+  symbols: string[],
+  broker: string,
+): Promise<{ [key: string]: { bid: number; ask: number } }> {
+  switch (broker) {
+    case 'mt5.ICMarkets':
+      try {
+        const response = await axios.get(
+          `${apiBaseUrl}/retrieve_latest_ticks`,
+          {
+            params: { symbols: symbols },
+          },
+        );
+        return response.data;
+      } catch (error) {
+        console.error('Error retrieving latest ticks:', error);
+        return {};
+      }
+    default:
+      console.error('Unsupported broker for retrieveLatestTicks');
+      return {};
+  }
+}
+
 async function retrieveAllSymbols(broker: string): Promise<string[]> {
   switch (broker) {
     case 'mt5.ICMarkets':
@@ -257,4 +281,5 @@ export {
   fundingShortInfo,
   minAmountAssetInfo,
   maxAmountAssetInfo,
+  retrieveLatestTicks,
 };

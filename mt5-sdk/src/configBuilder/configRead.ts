@@ -42,6 +42,14 @@ function findAssetByProxyTicker(proxyTicker: string): Asset | undefined {
   return symbolList.find((a) => a.proxyTicker === proxyTicker);
 }
 
+function getAllocatedBroker(proxyTicker: string): string | undefined {
+  const asset = symbolList.find((a) => a.proxyTicker === proxyTicker);
+  if (!asset) {
+    return undefined;
+  }
+  return asset.broker;
+}
+
 function getAllProxyTickers(): string[] {
   if (!Array.isArray(symbolList)) {
     throw new Error('symbolList is not an array');
@@ -249,4 +257,5 @@ export {
   getAllProxyTickers,
   adjustQuantities,
   writeProxyTickersToFile,
+  getAllocatedBroker,
 };
