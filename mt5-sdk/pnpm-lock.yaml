@@ -7,13 +7,13 @@ settings:
 dependencies:
   '@pionerfriends/api-client':
     specifier: ^1.0.14
-    version: 1.0.14(@types/node@20.11.30)
+    version: 1.0.14(@types/node@20.12.2)
   '@pionerfriends/blockchain-client':
     specifier: ^1.0.14
-    version: 1.0.14(@types/node@20.11.30)
+    version: 1.0.14(@types/node@20.12.2)
   '@types/node':
     specifier: ^20.11.25
-    version: 20.11.30
+    version: 20.12.2
   axios:
     specifier: ^1.6.8
     version: 1.6.8
@@ -211,12 +211,12 @@ packages:
       fastq: 1.17.1
     dev: true
 
-  /@pionerfriends/api-client@1.0.14(@types/node@20.11.30):
+  /@pionerfriends/api-client@1.0.14(@types/node@20.12.2):
     resolution: {integrity: sha512-+PisBkogeNrU56LHpqZPIT9X1x7lee1Lz5uguukKWlz2De0HZ8x/bA5UvYSTuNiRGFVoFZjJfhBtikyU0vUHRg==}
     peerDependencies:
       '@types/node': ^20.11.25
     dependencies:
-      '@types/node': 20.11.30
+      '@types/node': 20.12.2
       axios: 1.6.8
       ethers: 6.11.1
       ws: 8.16.0
@@ -226,12 +226,12 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@pionerfriends/blockchain-client@1.0.14(@types/node@20.11.30):
+  /@pionerfriends/blockchain-client@1.0.14(@types/node@20.12.2):
     resolution: {integrity: sha512-/gTyloH1yz0mZqKmM2el345dhiu6+hDgGQsbfYz9g5UAt9PumLiJxBOpHhNLHgNVDXV5VLzrfSsiBU5jCU85ag==}
     peerDependencies:
       '@types/node': ^20.11.25
     dependencies:
-      '@types/node': 20.11.30
+      '@types/node': 20.12.2
       ethers: 6.11.1
     transitivePeerDependencies:
       - bufferutil
@@ -300,8 +300,8 @@ packages:
     resolution: {integrity: sha512-N+0kuo9KgrUQ1Sn/ifDXsvg0TTleP7rIy4zOBGECxAljqvqfqpTfzx0Q1NUedOixRMBfe2Whhb056a42cWs26Q==}
     dev: false
 
-  /@types/node@20.11.30:
-    resolution: {integrity: sha512-dHM6ZxwlmuZaRmUPfv1p+KrdD1Dci04FbdEm/9wEMouFqxYoFl5aMkt0VMAUtYRQDyYvD41WJLukhq/ha3YuTw==}
+  /@types/node@20.12.2:
+    resolution: {integrity: sha512-zQ0NYO87hyN6Xrclcqp7f8ZbXNbRfoGWNcMvHTPQp9UUrwI0mI7XBz+cu7/W6/VClYo2g63B0cjull/srU7LgQ==}
     dependencies:
       undici-types: 5.26.5
     dev: false

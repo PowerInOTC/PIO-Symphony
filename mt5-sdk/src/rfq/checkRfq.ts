@@ -3,6 +3,11 @@ import { getPairConfig } from '../configBuilder/configRead';
 import { rfqCheck } from '../types/rfqCheck';
 import { getAllocatedBroker } from '../configBuilder/configRead';
 import { get } from 'http';
+import { brokerHealth, getLatestMaxNotional } from '../broker/brokerHealth';
+import {
+  startTotalOpenAmountInfo,
+  getTotalOpenAmount,
+} from '../broker/openAmount';
 
 const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   const checkRFQ: rfqCheck = {
@@ -86,8 +91,31 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
     parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity),
   );
 
-  const brokerA = getAllocatedBroker(checkRFQ.assetAId);
-  const brokerB = getAllocatedBroker(checkRFQ.assetBId);
+  const brokerL = getAllocatedBroker(checkRFQ.assetAId);
+  const brokerS = getAllocatedBroker(checkRFQ.assetBId);
+
+  let maxNotionalL, maxNotionalS, openAmountL, openAmountS;
+
+  if (brokerL != brokerS) {
+    brokerHealth(brokerL, 1000, 32000);
+    maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets')) || 0;
+    brokerHealth(brokerS, 1000, 32000);
+    maxNotionalS = (await getLatestMaxNotional('mt5.ICMarkets')) || 0;
+    startTotalOpenAmountInfo(checkRFQ.assetAId, brokerL, 1000, 32000);
+    openAmountL =
+      (await getTotalOpenAmount(checkRFQ.assetAId, brokerL)) || 100_000_000_000;
+    startTotalOpenAmountInfo(checkRFQ.assetAId, brokerS, 1000, 32000);
+    openAmountS =
+      (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) || 100_000_000_000;
+  } else {
+    brokerHealth(brokerL, 1000, 32000);
+    maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets')) || 0;
+    maxNotionalS = maxNotionalL;
+    startTotalOpenAmountInfo(checkRFQ.assetAId, brokerS, 1000, 32000);
+    openAmountL =
+      (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) || 100_000_000_000;
+    openAmountS = openAmountL;
+  }
 
   if ((configRfqL.imA ?? 0) <= parseFloat(checkRFQ.lImA)) {
     checkRFQ.checkLImA = true;
@@ -145,51 +173,68 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
     checkRFQ.checkSTimelockB = true;
   }
 
-  checkRFQ.checkAssetAId = true;
-  checkRFQ.checkAssetBId = true;
-  checkRFQ.checkBrokerFreeCollateral = true;
-
-  /*
-  if (configRfqL.assetBId === checkRFQ.assetBId) {
+  if (
+    ((configRfqS.funding ?? 0) <= Number(checkRFQ.sInterestRate) &&
+      (configRfqS.isAPayingApr == checkRFQ.sIsPayingApr ||
+        (configRfqS.isAPayingApr == true && checkRFQ.sIsPayingApr == false))) ||
+    (Number(configRfqS.funding) <= 0 &&
+      Math.abs(Number(configRfqS.funding ?? 0)) <=
+        Math.abs(Number(checkRFQ.sInterestRate)))
+  ) {
+    checkRFQ.checkSInterestRate = true;
   }
 
-  if (configRfqL.price === parseFloat(checkRFQ.lPrice)) {
-    checkRFQ.checkLPrice = true;
-  }
-  if (configRfqS.price === parseFloat(checkRFQ.sPrice)) {
-    checkRFQ.checkSPrice = true;
-  }
-
-  if (configRfqL.quantity === parseFloat(checkRFQ.lQuantity)) {
-    checkRFQ.checkLQuantity = true;
-  }
-  if (configRfqS.quantity === parseFloat(checkRFQ.sQuantity)) {
-    checkRFQ.checkSQuantity = true;
-  }
-
-  if (configRfqL.ir <= parseFloat(checkRFQ.lInterestRate)) {
+  if (
+    ((configRfqL.funding ?? 0) <= Number(checkRFQ.lInterestRate) &&
+      (configRfqL.isAPayingApr == checkRFQ.lIsPayingApr ||
+        (configRfqL.isAPayingApr == true && checkRFQ.lIsPayingApr == false))) ||
+    (Number(configRfqL.funding) <= 0 &&
+      Math.abs(Number(configRfqL.funding ?? 0)) <=
+        Math.abs(Number(checkRFQ.lInterestRate)))
+  ) {
     checkRFQ.checkLInterestRate = true;
   }
-  if (configRfqS.ir <= parseFloat(checkRFQ.sInterestRate)) {
-    checkRFQ.checkSInterestRate = true;
-  }*/
+
+  if (
+    Number(maxNotionalL) <=
+      Number(checkRFQ.checkSPrice) * Number(checkRFQ.sQuantity) &&
+    Number(maxNotionalS) <=
+      Number(checkRFQ.checkLPrice) * Number(checkRFQ.lQuantity)
+  ) {
+    checkRFQ.checkBrokerFreeCollateral = true;
+  }
+
+  if (
+    Number(configRfqS.minAmount) <= Number(checkRFQ.sQuantity) &&
+    Number(configRfqS.minAmount) <= Number(checkRFQ.lQuantity) &&
+    Number(configRfqS.maxAmount) <= Number(checkRFQ.sQuantity) &&
+    Number(configRfqS.maxAmount) <= Number(checkRFQ.lQuantity) &&
+    Number(configRfqS.maxNotional) <=
+      Number(checkRFQ.checkSPrice) * Number(checkRFQ.sQuantity) &&
+    Number(configRfqS.maxNotional) <=
+      Number(checkRFQ.checkLPrice) * Number(checkRFQ.lQuantity) &&
+    Number(configRfqS.maxLeverageShortGlobalNotional) <= openAmountS &&
+    Number(configRfqS.maxLeverageLongGlobalNotional) <= openAmountL &&
+    Number(configRfqS.maxLeverageDeltaGlobalNotional) <=
+      Math.abs(openAmountS - openAmountL)
+  ) {
+    checkRFQ.checkBrokerFreeCollateral = true;
+    checkRFQ.checkSQuantity = true;
+    checkRFQ.checkLQuantity = true;
+  }
 
   checkRFQ.checkOnchainFreeCollateral = true;
   checkRFQ.checkOnchainSelfLeverage = true;
   checkRFQ.checkCounterpartySelfLeverage = true;
 
-  checkRFQ.checkBrokerSelfLeverage = true;
+  checkRFQ.checkMarketIsOpen = true;
+
+  // disabled
   checkRFQ.checkSPrice = true;
   checkRFQ.checkLPrice = true;
-  checkRFQ.checkSQuantity = true;
-  checkRFQ.checkLQuantity = true;
-
-  if ((configRfqS.funding ?? 0) <= checkRFQ.sTimelockB) {
-    checkRFQ.checkSTimelockB = true;
-  }
-  checkRFQ.checkSInterestRate = true;
-  checkRFQ.checkLInterestRate = true;
-  checkRFQ.checkMarketIsOpen = true;
+  checkRFQ.checkAssetAId = true;
+  checkRFQ.checkAssetBId = true;
+  checkRFQ.checkBrokerSelfLeverage = true;
 
   return checkRFQ;
 };

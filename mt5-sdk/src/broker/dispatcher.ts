@@ -109,21 +109,6 @@ async function manageSymbolInventory(
   }
 }
 
-async function resetAccount(broker: string): Promise<boolean> {
-  switch (broker) {
-    case 'mt5.ICMarkets':
-      try {
-        return (await axios.post(`${apiBaseUrl}/reset_account`)).status === 200;
-      } catch (error) {
-        console.error('Error resetting account:', error);
-        return false;
-      }
-    default:
-      console.error('Unsupported broker for resetAccount');
-      return false;
-  }
-}
-
 async function retrieveMaxNotional(broker: string): Promise<number> {
   switch (broker) {
     case 'mt5.ICMarkets':
@@ -267,12 +252,32 @@ async function maxAmountAssetInfo(
   }
 }
 
+async function totalOpenAmountInfo(
+  symbol: string,
+  broker: string,
+): Promise<number> {
+  switch (broker) {
+    case 'mt5.ICMarkets':
+      try {
+        return (
+          await axios.get(`${apiBaseUrl}/get_total_open_amount/${symbol}`)
+        ).data;
+      } catch (error) {
+        console.error('Error retrieving total open amount info:', error);
+        return 0;
+      }
+    default:
+      console.error('Unsupported broker for totalOpenAmountInfo');
+      return 0;
+  }
+}
+
 export {
+  totalOpenAmountInfo,
   getTotalOpenAmount,
   retrieveLatestTick,
   retrieveAllSymbols,
   manageSymbolInventory,
-  resetAccount,
   retrieveMaxNotional,
   minAmountSymbol,
   symbolInfo,
