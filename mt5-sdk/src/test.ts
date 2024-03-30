@@ -24,25 +24,11 @@ import {
 } from './configBuilder/configRead';
 import { calculatePairPrices } from './forSDK';
 import { mt5Price, getLatestPrice } from './broker/mt5Price';
-import { test } from './blockchain/open';
-
+import { test } from './blockchain/fake';
+//import { test } from './blockchain/open';
+//
 async function bullExample(): Promise<void> {
   test();
-  try {
-    let counter = 0;
-    const interval = setInterval(() => {
-      logger.info(counter);
-
-      //sendRfq(rfq, token);
-      counter++;
-    }, 1000);
-  } catch (error: any) {
-    if (error instanceof Error) {
-      logger.error(error);
-    } else {
-      logger.error('An unknown error occurred');
-    }
-  }
 }
 
 bullExample();

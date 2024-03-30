@@ -33,46 +33,6 @@ const blockchainInterface = new BlockchainInterface(
 );
 
 async function test() {
-  let gasLimit: BigNumberish;
-  const gasPriceQ = await blockchainInterface.estimateGasPrice();
-  if (!gasPriceQ) {
-    return;
-  }
-  const gasPrice = gasPriceQ['maxPriorityFeePerGas'];
-
-  const mint = await blockchainInterface.mint(ethers.parseUnits('10000', 18));
-  const approve = await blockchainInterface.approve(
-    contracts.PionerV1Compliance.name,
-    ethers.parseUnits('10000', 18),
-  );
-  const deposit = await blockchainInterface.deposit(
-    ethers.parseUnits('10000', 18),
-    1,
-    wallet1.address,
-  );
-
-  /*
-  gasLimit = await blockchainInterface.estimateGasLimit(
-    contracts.PionerV1Compliance.name,
-    contracts.PionerV1Compliance.functions.deposit,
-    ethers.parseUnits('10000', 18),
-    1,
-    wallet1.address,
-  );
-  if (!gasLimit) {
-    return;
-  }
-  const deposit = await blockchainInterface.deposit(
-    ethers.parseUnits('10000', 18),
-    1,
-    wallet1.address,
-    gasLimit,
-    gasPrice!,
-  );
-
-  logger.info(gasLimit);
-
-  /*
   const pionerV1OpenDomain = getTypedDataDomain(
     contracts.PionerV1Open,
     networks.sonic.pionerChainId,
@@ -172,7 +132,7 @@ async function test() {
   );
 
   const receipt = await tx.wait();
-  console.log(receipt); */
+  console.log(receipt);
 }
 
 export { test };

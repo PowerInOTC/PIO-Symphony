@@ -1,28 +1,16 @@
-{
-  "networks": [
-    {
-      "networkId": 1,
-      "rpcURL": "https://rpc.network1.com/",
-      "rpcKey": ""
-    },
-    {
-      "networkId": 2,
-      "rpcURL": "https://rpc.network2.com/",
-      "rpcKey": "abc123"
-    }
-  ],
-  "wallets": {
-    "wallet1": "578c436136413ec3626d3451e89ce5e633b249677851954dff6b56fad50ac6fe",
-    "wallet2": "b63a221a15a6e40e2a79449c0d05b9a1750440f383b0a41b4d6719d7611607b4"
+[
+  {
+    "chainId": 64165,
+    "chainKey": "sonic",
+    "rpcURL": "https://rpc.sonic.fantom.network/",
+    "rpcKey": "",
+    "privateKeyIndex": 0
   },
-  "blockchainInterfaces": [
-    {
-      "networkId": 1,
-      "wallet": "wallet1"
-    },
-    {
-      "networkId": 2,
-      "wallet": "wallet2"
-    }
-  ]
-}
+  {
+    "chainId": 43113,
+    "chainKey": "fuji",
+    "rpcURL": "https://api.avax-test.network/ext/bc/C/rpc",
+    "rpcKey": "",
+    "privateKeyIndex": 1
+  }
+]

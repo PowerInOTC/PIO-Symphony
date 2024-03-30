@@ -1,3 +1,4 @@
+/*
 import { redisClient } from '../utils/init';
 import { TransactionResponse, BigNumberish } from 'ethers';
 import { BigNumber } from '@ethersproject/bignumber';
@@ -57,7 +58,8 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
           parsedLog.name === 'CancelWithdrawEvent'
         ) {
           const user = parsedLog.args.user;
-          const balance: BigNumber = await blockchainInterface.getBalance(user);
+          const balanceData: TransactionResponse = await blockchainInterface.getBalance(user);
+          const balance: string = balanceData.data;
           await redisClient.hSet(`user:${user}`, 'balance', balance.toString());
         }
       }
@@ -70,8 +72,9 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
           parsedLog.name === 'acceptQuoteEvent'
         ) {
           const bContractId: BigNumberish = parsedLog.args.bContractId;
-          const contract: BContract =
+          const contractData: TransactionResponse =
             await blockchainInterface.getContract(bContractId);
+          const contract: BContract = contractData.data;
           await redisClient.hSet(`contract:${bContractId.toString()}`, {
             pA: contract.pA,
             pB: contract.pB,
@@ -170,3 +173,4 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
     },
   );
 }
+*/

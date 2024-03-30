@@ -147,6 +147,8 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
 
   checkRFQ.checkAssetAId = true;
   checkRFQ.checkAssetBId = true;
+  checkRFQ.checkBrokerFreeCollateral = true;
+
   /*
   if (configRfqL.assetBId === checkRFQ.assetBId) {
   }
@@ -174,15 +176,17 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
 
   checkRFQ.checkOnchainFreeCollateral = true;
   checkRFQ.checkOnchainSelfLeverage = true;
-  checkRFQ.checkBrokerFreeCollateral = true;
-  checkRFQ.checkBrokerSelfLeverage = true;
   checkRFQ.checkCounterpartySelfLeverage = true;
-  checkRFQ.checkAssetAId = true;
-  checkRFQ.checkAssetBId = true;
+
+  checkRFQ.checkBrokerSelfLeverage = true;
   checkRFQ.checkSPrice = true;
   checkRFQ.checkLPrice = true;
   checkRFQ.checkSQuantity = true;
   checkRFQ.checkLQuantity = true;
+
+  if ((configRfqS.funding ?? 0) <= checkRFQ.sTimelockB) {
+    checkRFQ.checkSTimelockB = true;
+  }
   checkRFQ.checkSInterestRate = true;
   checkRFQ.checkLInterestRate = true;
   checkRFQ.checkMarketIsOpen = true;
