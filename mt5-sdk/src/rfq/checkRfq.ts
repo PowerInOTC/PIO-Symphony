@@ -19,6 +19,7 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
     checkAssetAId: false,
     assetBId: rfq.assetBId,
     checkAssetBId: false,
+    checkMarketIsOpen: false,
     sPrice: rfq.sPrice,
     checkSPrice: false,
     sQuantity: rfq.sQuantity,
@@ -184,6 +185,7 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   checkRFQ.checkLQuantity = true;
   checkRFQ.checkSInterestRate = true;
   checkRFQ.checkLInterestRate = true;
+  checkRFQ.checkMarketIsOpen = true;
 
   return checkRFQ;
 };

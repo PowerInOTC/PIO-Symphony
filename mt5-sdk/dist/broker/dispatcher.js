@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.maxAmountAssetInfo = exports.minAmountAssetInfo = exports.fundingShortInfo = exports.fundingLongInfo = exports.precisionInfo = exports.symbolInfo = exports.minAmountSymbol = exports.retrieveMaxNotional = exports.resetAccount = exports.manageSymbolInventory = exports.retrieveAllSymbols = exports.retrieveLatestTick = exports.getTotalOpenAmount = void 0;
+exports.retrieveLatestTicks = exports.maxAmountAssetInfo = exports.minAmountAssetInfo = exports.fundingShortInfo = exports.fundingLongInfo = exports.precisionInfo = exports.symbolInfo = exports.minAmountSymbol = exports.retrieveMaxNotional = exports.resetAccount = exports.manageSymbolInventory = exports.retrieveAllSymbols = exports.retrieveLatestTick = exports.getTotalOpenAmount = void 0;
 const axios_1 = __importDefault(require("axios"));
 //const apiBaseUrl = process.env.FAST_API;
 const apiBaseUrl = 'http://20.55.0.76:8000';
@@ -41,6 +41,25 @@ async function retrieveLatestTick(symbol, broker) {
     }
 }
 exports.retrieveLatestTick = retrieveLatestTick;
+async function retrieveLatestTicks(symbols, broker) {
+    switch (broker) {
+        case 'mt5.ICMarkets':
+            try {
+                const response = await axios_1.default.get(`${apiBaseUrl}/retrieve_latest_ticks`, {
+                    params: { symbols: symbols },
+                });
+                return response.data;
+            }
+            catch (error) {
+                console.error('Error retrieving latest ticks:', error);
+                return {};
+            }
+        default:
+            console.error('Unsupported broker for retrieveLatestTicks');
+            return {};
+    }
+}
+exports.retrieveLatestTicks = retrieveLatestTicks;
 async function retrieveAllSymbols(broker) {
     switch (broker) {
         case 'mt5.ICMarkets':

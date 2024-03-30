@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.writeProxyTickersToFile = exports.adjustQuantities = exports.getAllProxyTickers = exports.getPairConfig = exports.getFieldFromAsset = void 0;
+exports.getAllocatedBroker = exports.writeProxyTickersToFile = exports.adjustQuantities = exports.getAllProxyTickers = exports.getPairConfig = exports.getFieldFromAsset = void 0;
 const fs_1 = __importDefault(require("fs"));
 function processSymphonyJSON(symphonyJSONPath) {
     const rawData = fs_1.default.readFileSync(symphonyJSONPath, 'utf-8');
@@ -26,6 +26,14 @@ exports.getFieldFromAsset = getFieldFromAsset;
 function findAssetByProxyTicker(proxyTicker) {
     return symbolList.find((a) => a.proxyTicker === proxyTicker);
 }
+function getAllocatedBroker(proxyTicker) {
+    const asset = symbolList.find((a) => a.proxyTicker === proxyTicker);
+    if (!asset) {
+        return undefined;
+    }
+    return asset.broker;
+}
+exports.getAllocatedBroker = getAllocatedBroker;
 function getAllProxyTickers() {
     if (!Array.isArray(symbolList)) {
         throw new Error('symbolList is not an array');

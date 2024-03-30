@@ -12,6 +12,7 @@ type rfqCheck = {
   checkAssetAId: boolean;
   assetBId: string;
   checkAssetBId: boolean;
+  checkMarketIsOpen: boolean;
   sPrice: string;
   checkSPrice: boolean;
   sQuantity: string;

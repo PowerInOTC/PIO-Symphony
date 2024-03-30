@@ -1,6 +1,6 @@
 //import { wrapperOpenQuoteMM } from
 
-import { ethers } from 'ethers';
+import { BigNumberish, ethers } from 'ethers';
 import {
   networks,
   BOracleSign,
@@ -9,9 +9,11 @@ import {
   contracts,
   getTypedDataDomain,
 } from '@pionerfriends/blockchain-client';
+import { logger } from '../utils/init';
 
 const rpcURL = 'https://rpc.sonic.fantom.network/';
 const rpcKey = '';
+
 const provider: ethers.Provider = new ethers.JsonRpcProvider(
   `${rpcURL}${rpcKey}`,
 );
@@ -20,7 +22,10 @@ const wallet1 = new ethers.Wallet(
   provider,
 );
 
-const wallet2 = ethers.Wallet.createRandom();
+const wallet2 = new ethers.Wallet(
+  'b63a221a15a6e40e2a79449c0d05b9a1750440f383b0a41b4d6719d7611607b4',
+  provider,
+);
 
 const blockchainInterface = new BlockchainInterface(
   networks.sonic.pionerChainId,
@@ -28,6 +33,46 @@ const blockchainInterface = new BlockchainInterface(
 );
 
 async function test() {
+  let gasLimit: BigNumberish;
+  const gasPriceQ = await blockchainInterface.estimateGasPrice();
+  if (!gasPriceQ) {
+    return;
+  }
+  const gasPrice = gasPriceQ['maxPriorityFeePerGas'];
+
+  const mint = await blockchainInterface.mint(ethers.parseUnits('10000', 18));
+  const approve = await blockchainInterface.approve(
+    contracts.PionerV1Compliance.name,
+    ethers.parseUnits('10000', 18),
+  );
+  const deposit = await blockchainInterface.deposit(
+    ethers.parseUnits('10000', 18),
+    1,
+    wallet1.address,
+  );
+
+  /*
+  gasLimit = await blockchainInterface.estimateGasLimit(
+    contracts.PionerV1Compliance.name,
+    contracts.PionerV1Compliance.functions.deposit,
+    ethers.parseUnits('10000', 18),
+    1,
+    wallet1.address,
+  );
+  if (!gasLimit) {
+    return;
+  }
+  const deposit = await blockchainInterface.deposit(
+    ethers.parseUnits('10000', 18),
+    1,
+    wallet1.address,
+    gasLimit,
+    gasPrice!,
+  );
+
+  logger.info(gasLimit);
+
+  /*
   const pionerV1OpenDomain = getTypedDataDomain(
     contracts.PionerV1Open,
     networks.sonic.pionerChainId,
@@ -127,7 +172,7 @@ async function test() {
   );
 
   const receipt = await tx.wait();
-  console.log(receipt);
+  console.log(receipt); */
 }
 
-test();
+export { test };
