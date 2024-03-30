@@ -8,10 +8,11 @@ type rfqCheck = {
   checkBrokerSelfLeverage: boolean;
   checkCounterpartySelfLeverage: boolean;
   expiration: number;
-  AssetAId: string;
+  assetAId: string;
   checkAssetAId: boolean;
-  AssetBId: string;
+  assetBId: string;
   checkAssetBId: boolean;
+  checkMarketIsOpen: boolean;
   sPrice: string;
   checkSPrice: boolean;
   sQuantity: string;

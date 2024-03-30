@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const apiBaseUrl = process.env.FAST_API;
+//const apiBaseUrl = process.env.FAST_API;
+const apiBaseUrl = 'http://20.55.0.76:8000';
+//const apiBaseUrl = 'http://0.0.0.0:8000';
 
 async function getTotalOpenAmount(
   symbol: string,
@@ -38,6 +40,30 @@ async function retrieveLatestTick(
     default:
       console.error('Unsupported broker for retrieveLatestTick');
       return { bid: 0, ask: 0 };
+  }
+}
+
+async function retrieveLatestTicks(
+  symbols: string[],
+  broker: string,
+): Promise<{ [key: string]: { bid: number; ask: number } }> {
+  switch (broker) {
+    case 'mt5.ICMarkets':
+      try {
+        const response = await axios.get(
+          `${apiBaseUrl}/retrieve_latest_ticks`,
+          {
+            params: { symbols: symbols },
+          },
+        );
+        return response.data;
+      } catch (error) {
+        console.error('Error retrieving latest ticks:', error);
+        return {};
+      }
+    default:
+      console.error('Unsupported broker for retrieveLatestTicks');
+      return {};
   }
 }
 
@@ -79,21 +105,6 @@ async function manageSymbolInventory(
       }
     default:
       console.error('Unsupported broker for manageSymbolInventory');
-      return false;
-  }
-}
-
-async function resetAccount(broker: string): Promise<boolean> {
-  switch (broker) {
-    case 'mt5.ICMarkets':
-      try {
-        return (await axios.post(`${apiBaseUrl}/reset_account`)).status === 200;
-      } catch (error) {
-        console.error('Error resetting account:', error);
-        return false;
-      }
-    default:
-      console.error('Unsupported broker for resetAccount');
       return false;
   }
 }
@@ -241,12 +252,32 @@ async function maxAmountAssetInfo(
   }
 }
 
+async function totalOpenAmountInfo(
+  symbol: string,
+  broker: string,
+): Promise<number> {
+  switch (broker) {
+    case 'mt5.ICMarkets':
+      try {
+        return (
+          await axios.get(`${apiBaseUrl}/get_total_open_amount/${symbol}`)
+        ).data;
+      } catch (error) {
+        console.error('Error retrieving total open amount info:', error);
+        return 0;
+      }
+    default:
+      console.error('Unsupported broker for totalOpenAmountInfo');
+      return 0;
+  }
+}
+
 export {
+  totalOpenAmountInfo,
   getTotalOpenAmount,
   retrieveLatestTick,
   retrieveAllSymbols,
   manageSymbolInventory,
-  resetAccount,
   retrieveMaxNotional,
   minAmountSymbol,
   symbolInfo,
@@ -255,4 +286,5 @@ export {
   fundingShortInfo,
   minAmountAssetInfo,
   maxAmountAssetInfo,
+  retrieveLatestTicks,
 };

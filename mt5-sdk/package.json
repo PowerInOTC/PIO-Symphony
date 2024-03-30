@@ -15,8 +15,8 @@
     "lint": "eslint \"./**/*.ts\" --fix && npx prettier --write \"./**/*.ts\""
   },
   "dependencies": {
-    "@pionerfriends/api-client": "^1.0.10",
-    "@pionerfriends/blockchain-client": "^1.0.10",
+    "@pionerfriends/api-client": "^1.0.14",
+    "@pionerfriends/blockchain-client": "^1.0.14",
     "axios": "^1.6.8",
     "bullmq": "^5.4.6",
     "dotenv": "^16.4.5",

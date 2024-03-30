@@ -12,7 +12,8 @@ services:
     image: redis:latest
     container_name: redisBullMQ_container
     ports:
-      - "127.0.0.1:${BULLMQ_REDIS_PORT}:${BULLMQ_REDIS_PORT}"
+      - '${BULLMQ_REDIS_PORT}:6379'
+      - '127.0.0.1:${BULLMQ_REDIS_PORT}:${BULLMQ_REDIS_PORT}'
     volumes:
       - redis_data:/data
     command: redis-server --port ${BULLMQ_REDIS_PORT} --requirepass ${BULLMQ_REDIS_PASSWORD}

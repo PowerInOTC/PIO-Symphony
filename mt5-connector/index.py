@@ -81,11 +81,6 @@ async def manage_symbol_inventory_endpoint(symbol: str, amount: float):
         raise HTTPException(status_code=400, detail="Failed to manage inventory")
     return {"success": True}
 
-@app.post("/reset_account")
-async def reset_account_endpoint():
-    reset_account()
-    return {"success": True}
-
 @app.get("/retrieve_max_notional")
 async def retrieve_max_notional_endpoint():
     return {"max_notional": max_notional}
@@ -125,6 +120,11 @@ async def symbol_info_endpoint(symbol: str):
 async def symbol_info_endpoint(symbol: str):
     symbol_info = retrieve_symbol_info(symbol)
     return symbol_info.volume_max * symbol_info.trade_contract_size
+
+@app.get("/get_total_open_amount/{symbol}")
+async def total_open_amount_endpoint(symbol: str):
+    total_open_amount = get_total_open_amount(symbol)
+    return total_open_amount
 
 # Allow requests from all origins
 app.add_middleware(

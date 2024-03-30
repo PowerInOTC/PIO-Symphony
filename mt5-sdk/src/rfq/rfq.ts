@@ -5,6 +5,7 @@ import { redisClient } from '../utils/init';
 import { getFieldFromAsset, getPairConfig } from '../configBuilder/configRead';
 import { rfqCheck } from '../types/rfqCheck';
 import { logger } from '../utils/init';
+import { checkRFQCore } from './checkRfq';
 
 const RFQ_CHECK_PREFIX = 'rfqCheck:';
 
@@ -21,15 +22,14 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
   logger.info(checkRFQ, 'checkRFQ');
   const isRFQValid = verifyCheckRFQ(checkRFQ);
   if (isRFQValid) {
-    logger.info('RFQ is valid');
     return {
       chainId: rfq.chainId,
       rfqId: rfq.id,
       expiration: rfq.expiration,
-      sMarketPrice: '1',
+      sMarketPrice: (Number(rfq.sPrice) * 1.001).toString(),
       sPrice: rfq.sPrice,
       sQuantity: rfq.sQuantity,
-      lMarketPrice: '1',
+      lMarketPrice: (Number(rfq.lPrice) * 0.999).toString(),
       lPrice: rfq.lPrice,
       lQuantity: rfq.lQuantity,
     };
@@ -39,21 +39,19 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
 };
 
 const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
-  logger.info('getCheckRFQ');
   let checkRFQ: rfqCheck;
   const cacheKey = `${RFQ_CHECK_PREFIX}${rfq.id}`;
   if (!redisClient.isOpen) {
     await redisClient.connect();
   }
   const cachedCheckRFQ = await redisClient.get(cacheKey);
-  logger.info(cachedCheckRFQ, 'cachedCheckRFQ');
   if (cachedCheckRFQ) {
     checkRFQ = JSON.parse(cachedCheckRFQ) as rfqCheck;
     if (
       Date.now() - checkRFQ.rfqCheckUpdateTime < 60000 &&
       checkRFQ.chainId === rfq.chainId &&
-      checkRFQ.AssetAId === rfq.assetAId &&
-      checkRFQ.AssetBId === rfq.assetBId &&
+      checkRFQ.assetAId === rfq.assetAId &&
+      checkRFQ.assetBId === rfq.assetBId &&
       checkRFQ.sPrice === rfq.sPrice &&
       checkRFQ.sQuantity === rfq.sQuantity &&
       checkRFQ.sInterestRate === rfq.sInterestRate &&
@@ -85,86 +83,13 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
     }
   }
 
-  checkRFQ = {
-    rfqCheckUpdateTime: Date.now(),
-    chainId: rfq.chainId,
-    checkChainId: false,
-    checkOnchainFreeCollateral: false,
-    checkOnchainSelfLeverage: false,
-    checkBrokerFreeCollateral: false,
-    checkBrokerSelfLeverage: false,
-    checkCounterpartySelfLeverage: false,
-    expiration: rfq.expiration,
-    AssetAId: rfq.assetAId,
-    checkAssetAId: false,
-    AssetBId: rfq.assetBId,
-    checkAssetBId: false,
-    sPrice: rfq.sPrice,
-    checkSPrice: false,
-    sQuantity: rfq.sQuantity,
-    checkSQuantity: false,
-    sInterestRate: rfq.sInterestRate,
-    checkSInterestRate: false,
-    sIsPayingApr: rfq.sIsPayingApr,
-    sImA: rfq.sImA,
-    checkSImA: false,
-    sImB: rfq.sImB,
-    checkSImB: false,
-    sDfA: rfq.sDfA,
-    checkSDfA: false,
-    sDfB: rfq.sDfB,
-    checkSDfB: false,
-    sExpirationA: rfq.sExpirationA,
-    checkSExpirationA: false,
-    sExpirationB: rfq.sExpirationB,
-    checkSExpirationB: false,
-    sTimelockA: rfq.sTimelockA,
-    checkSTimelockA: false,
-    sTimelockB: rfq.sTimelockB,
-    checkSTimelockB: false,
-    lPrice: rfq.lPrice,
-    checkLPrice: false,
-    lQuantity: rfq.lQuantity,
-    checkLQuantity: false,
-    lInterestRate: rfq.lInterestRate,
-    checkLInterestRate: false,
-    lIsPayingApr: rfq.lIsPayingApr,
-    lImA: rfq.lImA,
-    checkLImA: false,
-    lImB: rfq.lImB,
-    checkLImB: false,
-    lDfA: rfq.lDfA,
-    checkLDfA: false,
-    lDfB: rfq.lDfB,
-    checkLDfB: false,
-    lExpirationA: rfq.lExpirationA,
-    checkLExpirationA: false,
-    lExpirationB: rfq.lExpirationB,
-    checkLExpirationB: false,
-    lTimelockA: rfq.lTimelockA,
-    checkLTimelockA: false,
-    lTimelockB: rfq.lTimelockB,
-    checkLTimelockB: false,
-  };
+  checkRFQ = await checkRFQCore(rfq);
   cacheManager();
-
-  const configRfqL = getPairConfig(
-    checkRFQ.AssetAId,
-    checkRFQ.AssetBId,
-    'long',
-    (parseFloat(checkRFQ.lImA) + parseFloat(checkRFQ.lDfA)) /
-    (parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity)),
-    parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity),
-  );
-  logger.info(configRfqL, 'configRfqL');
-
-  if ((configRfqL.imA ?? 0) <= parseFloat(checkRFQ.sImA)) {
-    checkRFQ.checkSImA = true;
-  }
 
   const setOptions: SetOptions = {
     EX: 60,
   };
+
   await redisClient.set(cacheKey, JSON.stringify(checkRFQ), setOptions);
   logger.info('RFQ is not cached');
 
