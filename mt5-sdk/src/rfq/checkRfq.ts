@@ -94,28 +94,32 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   const brokerL = getAllocatedBroker(checkRFQ.assetAId);
   const brokerS = getAllocatedBroker(checkRFQ.assetBId);
 
-  let maxNotionalL, maxNotionalS, openAmountL, openAmountS;
-
+  let maxNotionalL = 0,
+    maxNotionalS = 0,
+    openAmountL = 100_000_000_000,
+    openAmountS = 100_000_000_000;
+  /*
   if (brokerL != brokerS) {
     brokerHealth(brokerL, 1000, 32000);
-    maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets')) || 0;
+    maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets')) 
     brokerHealth(brokerS, 1000, 32000);
-    maxNotionalS = (await getLatestMaxNotional('mt5.ICMarkets')) || 0;
+    maxNotionalS = (await getLatestMaxNotional('mt5.ICMarkets')) 
     startTotalOpenAmountInfo(checkRFQ.assetAId, brokerL, 1000, 32000);
     openAmountL =
-      (await getTotalOpenAmount(checkRFQ.assetAId, brokerL)) || 100_000_000_000;
+      (await getTotalOpenAmount(checkRFQ.assetAId, brokerL)) ;
     startTotalOpenAmountInfo(checkRFQ.assetAId, brokerS, 1000, 32000);
     openAmountS =
-      (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) || 100_000_000_000;
+      (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) || ;
   } else {
     brokerHealth(brokerL, 1000, 32000);
-    maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets')) || 0;
+    maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets')) 
     maxNotionalS = maxNotionalL;
     startTotalOpenAmountInfo(checkRFQ.assetAId, brokerS, 1000, 32000);
     openAmountL =
-      (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) || 100_000_000_000;
+      (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) ;
     openAmountS = openAmountL;
   }
+  */
 
   if ((configRfqL.imA ?? 0) <= parseFloat(checkRFQ.lImA)) {
     checkRFQ.checkLImA = true;

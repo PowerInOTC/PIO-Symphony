@@ -54,11 +54,15 @@ const retryWorker = new Worker(
       logger.info(` ${functionName} succeeded: ${JSON.stringify(result)}`);
     } catch (error) {
       logger.error(
-        `Transaction failed in ${functionName} function: ${(error as Error).message}`,
+        `Transaction failed in ${functionName} function: ${error as Error}`,
       );
       if (job.attemptsMade >= 5) {
+        // Log the full error details when the maximum number of attempts is reached
+        logger.error(
+          `Transaction failed in ${functionName} function after 5 attempts: ${error}`,
+        );
         throw new Error(
-          `Transaction failed in ${functionName} function after 5 attempts`,
+          `Transaction failed in ${functionName} function after 5 attempts: ${error}`,
         );
       }
       throw error;

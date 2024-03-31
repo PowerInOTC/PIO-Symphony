@@ -2,6 +2,7 @@ import {
   BlockchainInterface,
   networks,
   Networks,
+  NetworkKey,
 } from '@pionerfriends/blockchain-client';
 import * as dotenv from 'dotenv';
 import { Network, ethers } from 'ethers';
@@ -18,29 +19,37 @@ interface BlockchainConfig {
   privateKeyIndex: number;
 }
 
-class BlockchainInterfaceLib {
-  private interfaces: { [chainId: number]: BlockchainInterface } = {};
+class CustomBlockchainInterface extends BlockchainInterface {
+  public chainId: NetworkKey;
 
-  constructor() {
+  constructor(chainId: NetworkKey, wallet: ethers.Wallet) {
+    super(chainId, wallet);
+    this.chainId = chainId;
+  }
+}
+
+class BlockchainInterfaceLib {
+  private interfaces: { [chainId: number]: CustomBlockchainInterface } = {};
+  private blockchainConfigs: BlockchainConfig[];
+
+  constructor(jsonFilePath: string) {
+    this.blockchainConfigs = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
     this.initInterfaces();
   }
 
   private initInterfaces(): void {
-    const blockchainConfigs: BlockchainConfig[] = JSON.parse(
-      fs.readFileSync('blockchain.json', 'utf-8'),
-    );
     const privateKeys = process.env.PRIVATE_KEYS?.split(',') || [];
 
-    blockchainConfigs.forEach((config) => {
+    this.blockchainConfigs.forEach((config) => {
       const provider: ethers.Provider = new ethers.JsonRpcProvider(
         `${config.rpcURL}${config.rpcKey}`,
       );
       const privateKey = privateKeys[config.privateKeyIndex];
       const wallet = new ethers.Wallet(privateKey, provider);
       const pionerChainId = (networks as Record<string, any>)[config.chainKey]
-        .pionerChainId;
+        .pionerChainId as NetworkKey;
       logger.info(`pionerChainId: ${pionerChainId}`);
-      const blockchainInterface = new BlockchainInterface(
+      const blockchainInterface = new CustomBlockchainInterface(
         pionerChainId,
         wallet,
       );
@@ -48,44 +57,34 @@ class BlockchainInterfaceLib {
     });
   }
 
-  public getInterfaceByIndex(index: number): BlockchainInterface {
-    const blockchainConfigs: BlockchainConfig[] = JSON.parse(
-      fs.readFileSync('blockchain.json', 'utf-8'),
-    );
-    const chainId = blockchainConfigs[index].chainId;
+  public getInterfaceByIndex(index: number): CustomBlockchainInterface {
+    const chainId = this.blockchainConfigs[index].chainId;
     return this.interfaces[chainId];
   }
 
-  public getInterfaceByChainId(chainId: number): BlockchainInterface {
+  public getInterfaceByChainId(chainId: number): CustomBlockchainInterface {
     return this.interfaces[chainId];
   }
 
   public forEachInterface(
-    callback: (blockchainInterface: BlockchainInterface, index: number) => void,
+    callback: (
+      blockchainInterface: CustomBlockchainInterface,
+      index: number,
+    ) => void,
   ): void {
-    const blockchainConfigs: BlockchainConfig[] = JSON.parse(
-      fs.readFileSync('blockchain.json', 'utf-8'),
-    );
-
-    blockchainConfigs.forEach((config, index) => {
+    this.blockchainConfigs.forEach((config, index) => {
       const blockchainInterface = this.interfaces[config.chainId];
       callback(blockchainInterface, index);
     });
   }
 }
 
-const blockchainInterfaceLib = new BlockchainInterfaceLib();
+const blockchainInterfaceLib = new BlockchainInterfaceLib('blockchain.json');
+
+const interface1 = blockchainInterfaceLib.getInterfaceByIndex(0);
+console.log(`Interface 1 Chain ID: ${interface1.chainId}`);
+
+const interface2 = blockchainInterfaceLib.getInterfaceByChainId(2);
+console.log(`Interface 2 Chain ID: ${interface2.chainId}`);
 
 export { blockchainInterfaceLib };
-
-/* ex
-    blockchainInterfaceLib.forEachInterface((blockchainInterface, index) => {
-    blockchainInterface.mint(1);
-    console.log(`Blockchain Interface ${index}:`);
-    console.log('---');
-    });
-
-    const interface1 = blockchainInterfaceLib.getInterfaceByIndex(0);
-
-    const interface2 = blockchainInterfaceLib.getInterfaceByChainId(2);
-    */

@@ -25,10 +25,19 @@ import {
 import { calculatePairPrices } from './forSDK';
 import { mt5Price, getLatestPrice } from './broker/mt5Price';
 import { test } from './blockchain/fake';
+import {
+  resetRedisData,
+  fetchEvents,
+  getBalanceByUser,
+} from './blockchain/event';
 //import { test } from './blockchain/open';
 //
 async function bullExample(): Promise<void> {
-  test();
+  sendMessage('Tu es le meilleur des devs. Je suis fier de toi');
+
+  resetRedisData();
+  fetchEvents();
+  getBalanceByUser('0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8');
 }
 
 bullExample();

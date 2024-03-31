@@ -40,9 +40,11 @@ const retryWorker = new bullmq_1.Worker('retryQueue', async (job) => {
         init_1.logger.info(` ${functionName} succeeded: ${JSON.stringify(result)}`);
     }
     catch (error) {
-        init_1.logger.error(`Transaction failed in ${functionName} function: ${error.message}`);
+        init_1.logger.error(`Transaction failed in ${functionName} function: ${error}`);
         if (job.attemptsMade >= 5) {
-            throw new Error(`Transaction failed in ${functionName} function after 5 attempts`);
+            // Log the full error details when the maximum number of attempts is reached
+            init_1.logger.error(`Transaction failed in ${functionName} function after 5 attempts: ${error}`);
+            throw new Error(`Transaction failed in ${functionName} function after 5 attempts: ${error}`);
         }
         throw error;
     }

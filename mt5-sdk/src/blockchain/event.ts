@@ -1,7 +1,5 @@
-/*
-import { redisClient } from '../utils/init';
+import { createClient } from 'redis';
 import { TransactionResponse, BigNumberish } from 'ethers';
-import { BigNumber } from '@ethersproject/bignumber';
 import {
   BlockchainInterface,
   BOracle,
@@ -10,9 +8,31 @@ import {
   UserRelatedInfo,
 } from '@pionerfriends/blockchain-client';
 import { logger } from '../utils/init';
-import { forEachBlockchainInterface } from './blockchainInterfaces';
+import { blockchainInterfaceLib } from './blockchainInterface';
+import { ethers } from 'ethers';
+import { config } from '../config';
+
+let redisClient: ReturnType<typeof createClient>;
+
+async function connectToRedis(): Promise<void> {
+  redisClient = createClient({
+    socket: {
+      host: config.bullmqRedisHost,
+      port: config.bullmqRedisPort,
+    },
+    password: config.bullmqRedisPassword,
+  });
+
+  redisClient.on('error', (err: Error) => {
+    logger.error('Redis connection error:', err);
+    // Handle the error appropriately (e.g., retry, notify, etc.)
+  });
+
+  await redisClient.connect();
+}
 
 async function resetRedisData(): Promise<void> {
+  await connectToRedis();
   await redisClient.del([
     'user:*',
     'contract:*',
@@ -22,33 +42,45 @@ async function resetRedisData(): Promise<void> {
   ]);
 }
 
-async function fetchEvents(start: number, finish: number): Promise<void> {
-  await forEachBlockchainInterface(
+async function fetchEvents(
+  earliest: number | 'earliest' = 'earliest',
+  latest: number | 'latest' = 'latest',
+  manualStart?: number,
+  manualFinish?: number,
+): Promise<void> {
+  await connectToRedis();
+  await blockchainInterfaceLib.forEachInterface(
     async (blockchainInterface: BlockchainInterface) => {
-      const compliance = await blockchainInterface.fetchEvent(
-        'PionerV1Compliance',
-        '*',
-        start.toString(),
-        finish.toString(),
-      );
-      const open = await blockchainInterface.fetchEvent(
-        'PionerV1Open',
-        '*',
-        start.toString(),
-        finish.toString(),
-      );
-      const close = await blockchainInterface.fetchEvent(
-        'PionerV1Close',
-        '*',
-        start.toString(),
-        finish.toString(),
-      );
-      const _default = await blockchainInterface.fetchEvent(
-        'PionerV1Default',
-        '*',
-        start.toString(),
-        finish.toString(),
-      );
+      const start = manualStart ?? earliest;
+      const finish = manualFinish ?? latest;
+
+      const [compliance, open, close, _default] = await Promise.all([
+        logger.info(`Fetching complianceeee events from ${start} to ${finish}`),
+        blockchainInterface.fetchEvent(
+          'PionerV1Compliance',
+          '*',
+          start.toString(),
+          finish,
+        ),
+        blockchainInterface.fetchEvent(
+          'PionerV1Open',
+          '*',
+          start.toString(),
+          finish,
+        ),
+        blockchainInterface.fetchEvent(
+          'PionerV1Close',
+          '*',
+          start.toString(),
+          finish,
+        ),
+        blockchainInterface.fetchEvent(
+          'PionerV1Default',
+          '*',
+          start.toString(),
+          finish,
+        ),
+      ]);
 
       for (const log of compliance) {
         const parsedLog = log as any;
@@ -58,9 +90,7 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
           parsedLog.name === 'CancelWithdrawEvent'
         ) {
           const user = parsedLog.args.user;
-          const balanceData: TransactionResponse = await blockchainInterface.getBalance(user);
-          const balance: string = balanceData.data;
-          await redisClient.hSet(`user:${user}`, 'balance', balance.toString());
+          await updateUserBalance(blockchainInterface, user);
         }
       }
 
@@ -72,25 +102,7 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
           parsedLog.name === 'acceptQuoteEvent'
         ) {
           const bContractId: BigNumberish = parsedLog.args.bContractId;
-          const contractData: TransactionResponse =
-            await blockchainInterface.getContract(bContractId);
-          const contract: BContract = contractData.data;
-          await redisClient.hSet(`contract:${bContractId.toString()}`, {
-            pA: contract.pA,
-            pB: contract.pB,
-            oracleId: contract.oracleId.toString(),
-            initiator: contract.initiator,
-            price: contract.price.toString(),
-            amount: contract.amount.toString(),
-            interestRate: contract.interestRate.toString(),
-            isAPayingAPR: contract.isAPayingAPR ? '1' : '0',
-            openTime: contract.openTime.toString(),
-            state: contract.state.toString(),
-            frontEnd: contract.frontEnd,
-            hedger: contract.hedger,
-            affiliate: contract.affiliate,
-            cancelTime: contract.cancelTime.toString(),
-          });
+          await updateContractData(blockchainInterface, bContractId);
         }
       }
 
@@ -101,24 +113,7 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
           parsedLog.name === 'liquidatedEvent'
         ) {
           const bContractId: BigNumberish = parsedLog.args.bContractId;
-          const contract: BContract =
-            await blockchainInterface.getContract(bContractId);
-          await redisClient.hSet(`contract:${bContractId.toString()}`, {
-            pA: contract.pA,
-            pB: contract.pB,
-            oracleId: contract.oracleId.toString(),
-            initiator: contract.initiator,
-            price: contract.price.toString(),
-            amount: contract.amount.toString(),
-            interestRate: contract.interestRate.toString(),
-            isAPayingAPR: contract.isAPayingAPR ? '1' : '0',
-            openTime: contract.openTime.toString(),
-            state: contract.state.toString(),
-            frontEnd: contract.frontEnd,
-            hedger: contract.hedger,
-            affiliate: contract.affiliate,
-            cancelTime: contract.cancelTime.toString(),
-          });
+          await updateContractData(blockchainInterface, bContractId);
         }
       }
 
@@ -130,27 +125,14 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
           parsedLog.name === 'closeMarketEvent'
         ) {
           const bCloseQuoteId: BigNumberish = parsedLog.args.bCloseQuoteId;
-          const closeQuote: BCloseQuote =
-            await blockchainInterface.getCloseQuote(bCloseQuoteId);
-          await redisClient.hSet(`closeQuote:${bCloseQuoteId.toString()}`, {
-            bContractIds: JSON.stringify(closeQuote.bContractIds),
-            price: JSON.stringify(closeQuote.price),
-            amount: JSON.stringify(closeQuote.amount),
-            limitOrStop: JSON.stringify(closeQuote.limitOrStop),
-            expiry: JSON.stringify(closeQuote.expiry),
-            initiator: closeQuote.initiator,
-            cancelTime: closeQuote.cancelTime.toString(),
-            openTime: closeQuote.openTime.toString(),
-            state: closeQuote.state.toString(),
-          });
+          await updateCloseQuoteData(blockchainInterface, bCloseQuoteId);
         }
       }
 
-      const userRelatedInfo: UserRelatedInfo =
-        await blockchainInterface.getUserRelatedInfo(
-          'user_address',
-          'counterparty_address',
-        );
+      const userRelatedInfo = await blockchainInterface.getUserRelatedInfo(
+        'user_address',
+        'counterparty_address',
+      );
       await redisClient.hSet(
         `userRelatedInfo:user_address:counterparty_address`,
         {
@@ -173,4 +155,86 @@ async function fetchEvents(start: number, finish: number): Promise<void> {
     },
   );
 }
-*/
+
+async function updateUserBalance(
+  blockchainInterface: BlockchainInterface,
+  user: string,
+): Promise<void> {
+  try {
+    const balance: bigint = await blockchainInterface.getBalance(user);
+    await redisClient.hSet(`user:${user}`, 'balance', balance.toString());
+    logger.info(`Updated balance for user ${user}: ${balance}`);
+  } catch (error) {
+    logger.error(`Error updating balance for user ${user}:`, error);
+    // Handle the error appropriately (e.g., retry, notify, etc.)
+  }
+}
+
+async function updateContractData(
+  blockchainInterface: BlockchainInterface,
+  bContractId: BigNumberish,
+): Promise<void> {
+  try {
+    const contract: BContract =
+      await blockchainInterface.getContract(bContractId);
+    await redisClient.hSet(`contract:${bContractId.toString()}`, {
+      pA: contract.pA,
+      pB: contract.pB,
+      oracleId: contract.oracleId.toString(),
+      initiator: contract.initiator,
+      price: contract.price.toString(),
+      amount: contract.amount.toString(),
+      interestRate: contract.interestRate.toString(),
+      isAPayingAPR: contract.isAPayingAPR ? '1' : '0',
+      openTime: contract.openTime.toString(),
+      state: contract.state.toString(),
+      frontEnd: contract.frontEnd,
+      hedger: contract.hedger,
+      affiliate: contract.affiliate,
+      cancelTime: contract.cancelTime.toString(),
+    });
+    logger.info(`Updated contract data for bContractId ${bContractId}`);
+  } catch (error) {
+    logger.error(
+      `Error updating contract data for bContractId ${bContractId}:`,
+      error,
+    );
+    // Handle the error appropriately (e.g., retry, notify, etc.)
+  }
+}
+
+async function updateCloseQuoteData(
+  blockchainInterface: BlockchainInterface,
+  bCloseQuoteId: BigNumberish,
+): Promise<void> {
+  try {
+    const closeQuote: BCloseQuote =
+      await blockchainInterface.getCloseQuote(bCloseQuoteId);
+    await redisClient.hSet(`closeQuote:${bCloseQuoteId.toString()}`, {
+      bContractIds: JSON.stringify(closeQuote.bContractIds),
+      price: JSON.stringify(closeQuote.price),
+      amount: JSON.stringify(closeQuote.amount),
+      limitOrStop: JSON.stringify(closeQuote.limitOrStop),
+      expiry: JSON.stringify(closeQuote.expiry),
+      initiator: closeQuote.initiator,
+      cancelTime: closeQuote.cancelTime.toString(),
+      openTime: closeQuote.openTime.toString(),
+      state: closeQuote.state.toString(),
+    });
+    logger.info(`Updated close quote data for bCloseQuoteId ${bCloseQuoteId}`);
+  } catch (error) {
+    logger.error(
+      `Error updating close quote data for bCloseQuoteId ${bCloseQuoteId}:`,
+      error,
+    );
+    // Handle the error appropriately (e.g., retry, notify, etc.)
+  }
+}
+
+async function getBalanceByUser(user: string): Promise<bigint> {
+  await connectToRedis();
+  const balance = await redisClient.hGet(`user:${user}`, 'balance');
+  return balance ? BigInt(balance) : BigInt(0);
+}
+
+export { resetRedisData, fetchEvents, getBalanceByUser };
