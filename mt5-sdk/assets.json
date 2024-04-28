@@ -1,188 +1,66 @@
 {
   "forex": {
-    "EURUSD": {
-      "": {}
-    },
-    "GBPUSD": {
-      "": {}
-    },
-    "USDCHF": {
-      "": {}
-    },
-    "USDJPY": {
-      "": {}
-    },
-    "USDCAD": {
-      "": {}
-    },
-    "AUDUSD": {
-      "": {}
-    },
-    "AUDNZD": {
-      "": {}
-    },
-    "AUDCAD": {
-      "": {}
-    },
-    "AUDCHF": {
-      "": {}
-    },
-    "AUDJPY": {
-      "": {}
-    },
-    "CHFJPY": {
-      "": {}
-    },
-    "EURGBP": {
-      "": {}
-    },
-    "EURAUD": {
-      "": {}
-    },
-    "EURJPY": {
-      "": {}
-    },
-    "EURCHF": {
-      "": {}
-    },
-    "EURNZD": {
-      "": {}
-    },
-    "EURCAD": {
-      "": {}
-    },
-    "GBPCHF": {
-      "": {}
-    },
-    "GBPJPY": {
-      "": {}
-    },
-    "CADCHF": {
-      "": {}
-    },
-    "CADJPY": {
-      "": {}
-    },
-    "GBPAUD": {
-      "": {}
-    },
-    "GBPCAD": {
-      "": {}
-    },
-    "GBPNZD": {
-      "": {}
-    },
-    "NZDCAD": {
-      "": {}
-    },
-    "NZDCHF": {
-      "": {}
-    },
-    "NZDJPY": {
-      "": {}
-    },
-    "NZDUSD": {
-      "": {}
-    },
-    "USDSGD": {
-      "": {}
-    },
-    "AUDSGD": {
-      "": {}
-    },
-    "CHFSGD": {
-      "": {}
-    },
-    "EURDKK": {
-      "": {}
-    },
-    "EURHKD": {
-      "": {}
-    },
-    "EURNOK": {
-      "": {}
-    },
-    "EURPLN": {
-      "": {}
-    },
-    "EURSEK": {
-      "": {}
-    },
-    "EURSGD": {
-      "": {}
-    },
-    "EURTRY": {
-      "": {}
-    },
-    "EURZAR": {
-      "": {}
-    },
-    "GBPDKK": {
-      "": {}
-    },
-    "GBPNOK": {
-      "": {}
-    },
-    "GBPSEK": {
-      "": {}
-    },
-    "GBPSGD": {
-      "": {}
-    },
-    "GBPTRY": {
-      "": {}
-    },
-    "NOKJPY": {
-      "": {}
-    },
-    "NOKSEK": {
-      "": {}
-    },
-    "SEKJPY": {
-      "": {}
-    },
-    "SGDJPY": {
-      "": {}
-    },
-    "USDCNH": {
-      "": {}
-    },
-    "USDCZK": {
-      "": {}
-    },
-    "USDDKK": {
-      "": {}
-    },
-    "USDHKD": {
-      "": {}
-    },
-    "USDHUF": {
-      "": {}
-    },
-    "USDMXN": {
-      "": {}
-    },
-    "USDNOK": {
-      "": {}
-    },
-    "USDPLN": {
-      "": {}
-    },
-    "USDRUB": {
-      "": {}
-    },
-    "USDSEK": {
-      "": {}
-    },
-    "USDTHB": {
-      "": {}
-    },
-    "USDTRY": {
-      "": {}
-    },
-    "USDZAR": {
-      "": {}
-    }
+    "EURUSD": {},
+    "GBPUSD": {},
+    "USDCHF": {},
+    "USDJPY": {},
+    "USDCAD": {},
+    "AUDUSD": {},
+    "AUDNZD": {},
+    "AUDCAD": {},
+    "AUDCHF": {},
+    "AUDJPY": {},
+    "CHFJPY": {},
+    "EURGBP": {},
+    "EURAUD": {},
+    "EURJPY": {},
+    "EURCHF": {},
+    "EURNZD": {},
+    "EURCAD": {},
+    "GBPCHF": {},
+    "GBPJPY": {},
+    "CADCHF": {},
+    "CADJPY": {},
+    "GBPAUD": {},
+    "GBPCAD": {},
+    "GBPNZD": {},
+    "NZDCAD": {},
+    "NZDCHF": {},
+    "NZDJPY": {},
+    "NZDUSD": {},
+    "USDSGD": {},
+    "AUDSGD": {},
+    "CHFSGD": {},
+    "EURDKK": {},
+    "EURHKD": {},
+    "EURNOK": {},
+    "EURPLN": {},
+    "EURSEK": {},
+    "EURSGD": {},
+    "EURTRY": {},
+    "EURZAR": {},
+    "GBPDKK": {},
+    "GBPNOK": {},
+    "GBPSEK": {},
+    "GBPSGD": {},
+    "GBPTRY": {},
+    "NOKJPY": {},
+    "NOKSEK": {},
+    "SEKJPY": {},
+    "SGDJPY": {},
+    "USDCNH": {},
+    "USDCZK": {},
+    "USDDKK": {},
+    "USDHKD": {},
+    "USDHUF": {},
+    "USDMXN": {},
+    "USDNOK": {},
+    "USDPLN": {},
+    "USDRUB": {},
+    "USDSEK": {},
+    "USDTHB": {},
+    "USDTRY": {},
+    "USDZAR": {}
   },
   "stock": {
     "nasdaq": {

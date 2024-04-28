@@ -31,13 +31,15 @@ async function calculatePairPrices(
         const [assetAId, assetBId] = pair.split('/');
 
         if (prices.data[assetAId] && prices.data[assetBId]) {
-          const bidA = prices.data[assetAId]['bidPrice'] || 0;
-          const bidB = prices.data[assetBId]['bidPrice'] || 0;
-          const askA = prices.data[assetAId]['askPrice'] || 0;
-          const askB = prices.data[assetBId]['askPrice'] || 0;
+          const bidA = prices.data[assetAId]['bidPrice'] || '0';
+          const bidB = prices.data[assetBId]['bidPrice'] || '0';
+          const askA = prices.data[assetAId]['askPrice'] || '0';
+          const askB = prices.data[assetBId]['askPrice'] || '0';
 
-          const bid = bidB !== 0 ? bidA / bidB : 0;
-          const ask = askB !== 0 ? askA / askB : 0;
+          const bid =
+            parseFloat(bidB) !== 0 ? parseFloat(bidA) / parseFloat(bidB) : 0;
+          const ask =
+            parseFloat(askB) !== 0 ? parseFloat(askA) / parseFloat(askB) : 0;
 
           pairPrices[pair] = { bid, ask };
 

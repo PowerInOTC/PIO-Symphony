@@ -17,7 +17,10 @@ export const config = {
   ),
   pionAppId: parseInt(process.env.PION_APP_ID || '0'),
   privateKeys: process.env.PRIVATE_KEYS || '0',
+  publicKeys: process.env.PUBLIC_KEYS || '0',
+
   botToken: process.env.BOT_TOKEN || '0',
   chatId: process.env.CHAT_ID || 'abc',
   activeChainIds: process.env.ACTIVE_CHAIN_IDS || '64165',
+  apiBaseUrl: process.env.API_BASE_URL || '',
 };

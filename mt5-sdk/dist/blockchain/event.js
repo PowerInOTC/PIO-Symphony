@@ -28,69 +28,55 @@ async function resetRedisData() {
         'closeQuote:*',
         'oracle:*',
         'userRelatedInfo:*',
-        'lastProcessedBlock',
     ]);
 }
 exports.resetRedisData = resetRedisData;
-async function fetchEvents(deploymentDate = new Date('2023-05-15T00:00:00Z'), latest = 'latest', batchSize = 2048) {
+async function fetchEvents(earliest = 'earliest', latest = 'latest', manualStart, manualFinish) {
     await connectToRedis();
     await blockchainInterface_1.blockchainInterfaceLib.forEachInterface(async (blockchainInterface) => {
-        let lastProcessedBlock = await redisClient.get('lastProcessedBlock');
-        let start = lastProcessedBlock
-            ? parseInt(lastProcessedBlock) + 1
-            : await getBlockNumberByDate(blockchainInterface, deploymentDate);
-        let finish = start + batchSize - 1;
-        while (start <=
-            (typeof latest === 'number'
-                ? latest
-                : await blockchainInterface.getLatestBlockNumber())) {
-            const [compliance, open, close, _default] = await Promise.all([
-                init_1.logger.info(`Fetching compliance events from ${start} to ${finish}`),
-                blockchainInterface.fetchEvent('PionerV1Compliance', '*', start.toString(), finish.toString()),
-                blockchainInterface.fetchEvent('PionerV1Open', '*', start.toString(), finish.toString()),
-                blockchainInterface.fetchEvent('PionerV1Close', '*', start.toString(), finish.toString()),
-                blockchainInterface.fetchEvent('PionerV1Default', '*', start.toString(), finish.toString()),
-            ]);
-            for (const log of compliance) {
-                const parsedLog = log;
-                if (parsedLog.name === 'DepositEvent' ||
-                    parsedLog.name === 'WithdrawEvent' ||
-                    parsedLog.name === 'CancelWithdrawEvent') {
-                    const user = parsedLog.args.user;
-                    await updateUserBalance(blockchainInterface, user);
-                }
+        const start = manualStart ?? earliest;
+        const finish = manualFinish ?? latest;
+        const [compliance, open, close, _default] = await Promise.all([
+            init_1.logger.info(`Fetching complianceeee events from ${start} to ${finish}`),
+            blockchainInterface.fetchEvent('PionerV1Compliance', '*', start.toString(), finish),
+            blockchainInterface.fetchEvent('PionerV1Open', '*', start.toString(), finish),
+            blockchainInterface.fetchEvent('PionerV1Close', '*', start.toString(), finish),
+            blockchainInterface.fetchEvent('PionerV1Default', '*', start.toString(), finish),
+        ]);
+        for (const log of compliance) {
+            const parsedLog = log;
+            if (parsedLog.name === 'DepositEvent' ||
+                parsedLog.name === 'WithdrawEvent' ||
+                parsedLog.name === 'CancelWithdrawEvent') {
+                const user = parsedLog.args.user;
+                await updateUserBalance(blockchainInterface, user);
             }
-            for (const log of open) {
-                const parsedLog = log;
-                if (parsedLog.name === 'openQuoteEvent' ||
-                    parsedLog.name === 'openQuoteSignedEvent' ||
-                    parsedLog.name === 'acceptQuoteEvent') {
-                    const bContractId = parsedLog.args.bContractId;
-                    await updateContractData(blockchainInterface, bContractId);
-                }
+        }
+        for (const log of open) {
+            const parsedLog = log;
+            if (parsedLog.name === 'openQuoteEvent' ||
+                parsedLog.name === 'openQuoteSignedEvent' ||
+                parsedLog.name === 'acceptQuoteEvent') {
+                const bContractId = parsedLog.args.bContractId;
+                await updateContractData(blockchainInterface, bContractId);
             }
-            for (const log of _default) {
-                const parsedLog = log;
-                if (parsedLog.name === 'settledEvent' ||
-                    parsedLog.name === 'liquidatedEvent') {
-                    const bContractId = parsedLog.args.bContractId;
-                    await updateContractData(blockchainInterface, bContractId);
-                }
+        }
+        for (const log of _default) {
+            const parsedLog = log;
+            if (parsedLog.name === 'settledEvent' ||
+                parsedLog.name === 'liquidatedEvent') {
+                const bContractId = parsedLog.args.bContractId;
+                await updateContractData(blockchainInterface, bContractId);
             }
-            for (const log of close) {
-                const parsedLog = log;
-                if (parsedLog.name === 'openCloseQuoteEvent' ||
-                    parsedLog.name === 'acceptCloseQuoteEvent' ||
-                    parsedLog.name === 'closeMarketEvent') {
-                    const bCloseQuoteId = parsedLog.args.bCloseQuoteId;
-                    await updateCloseQuoteData(blockchainInterface, bCloseQuoteId);
-                }
+        }
+        for (const log of close) {
+            const parsedLog = log;
+            if (parsedLog.name === 'openCloseQuoteEvent' ||
+                parsedLog.name === 'acceptCloseQuoteEvent' ||
+                parsedLog.name === 'closeMarketEvent') {
+                const bCloseQuoteId = parsedLog.args.bCloseQuoteId;
+                await updateCloseQuoteData(blockchainInterface, bCloseQuoteId);
             }
-            await redisClient.set('lastProcessedBlock', finish.toString());
-            start = finish + 1;
-            finish = Math.min(start + batchSize - 1, typeof latest === 'number'
-                ? latest
-                : await blockchainInterface.getLatestBlockNumber());
         }
         const userRelatedInfo = await blockchainInterface.getUserRelatedInfo('user_address', 'counterparty_address');
         await redisClient.hSet(`userRelatedInfo:user_address:counterparty_address`, {
@@ -109,14 +95,6 @@ async function fetchEvents(deploymentDate = new Date('2023-05-15T00:00:00Z'), la
     });
 }
 exports.fetchEvents = fetchEvents;
-async function getBlockNumberByDate(blockchainInterface, date) {
-    const latestBlock = await blockchainInterface.getLatestBlock();
-    const latestBlockTimestamp = new Date(latestBlock.timestamp * 1000);
-    const secondsPerBlock = 15; // Assuming an average block time of 15 seconds (adjust as needed)
-    const secondsDiff = Math.floor((latestBlockTimestamp.getTime() - date.getTime()) / 1000);
-    const blocksDiff = Math.floor(secondsDiff / secondsPerBlock);
-    return latestBlock.number - blocksDiff;
-}
 async function updateUserBalance(blockchainInterface, user) {
     try {
         const balance = await blockchainInterface.getBalance(user);

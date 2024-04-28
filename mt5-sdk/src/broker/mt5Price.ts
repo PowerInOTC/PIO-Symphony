@@ -1,9 +1,9 @@
 import { Queue, Worker, QueueEvents, Job } from 'bullmq';
 import { config } from '../config';
-import { retrieveLatestTicks } from './dispatcher';
+import axios from 'axios';
 
 interface WorkerData {
-  symbol: string;
+  symbolPair: string;
   updateSpeed: number;
   updateLength: number;
   userAddress: string;
@@ -17,6 +17,20 @@ interface Mt5PriceConfig {
 
 const latestPriceData: { [key: string]: { bid: number; ask: number } } = {};
 const jobKeys: { [key: string]: string | undefined } = {};
+
+async function retrieveLatestTick(
+  symbol: string,
+): Promise<{ bid: number; ask: number }> {
+  try {
+    const response = await axios.get(
+      `${config.apiBaseUrl}/retrieve_latest_tick/${symbol}`,
+    );
+    return response.data as { bid: number; ask: number };
+  } catch (error) {
+    console.error(`Error retrieving latest tick for ${symbol}:`, error);
+    return { bid: 0, ask: 0 };
+  }
+}
 
 async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
   const queueName = 'mt5PriceQueue';
@@ -41,19 +55,24 @@ async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
     queueName,
     async (job: Job<WorkerData>) => {
       try {
-        const symbols = Object.keys(jobKeys);
-        const ticks = await retrieveLatestTicks(symbols, 'mt5.ICMarkets');
+        const { symbolPair, userAddress } = job.data;
 
-        for (const [symbol, prices] of Object.entries(ticks)) {
-          const userAddress = jobKeys[symbol]?.split('_')[2] || '';
-          if (prices.bid && prices.ask) {
-            latestPriceData[`${userAddress}_${symbol}`] = {
-              bid: prices.bid,
-              ask: prices.ask,
-            };
-            console.log(
-              `Price for ${symbol} (${userAddress}): Bid=${prices.bid}, Ask=${prices.ask}`,
-            );
+        if (symbolPair) {
+          const [symbol1, symbol2] = symbolPair.split('/');
+
+          if (symbol1 && symbol2) {
+            const tick1 = await retrieveLatestTick(symbol1);
+            const tick2 = await retrieveLatestTick(symbol2);
+
+            if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
+              const bidRatio = tick1.bid / tick2.bid;
+              const askRatio = tick1.ask / tick2.ask;
+
+              latestPriceData[`${userAddress}_${symbolPair}`] = {
+                bid: bidRatio,
+                ask: askRatio,
+              };
+            }
           }
         }
       } catch (error) {
@@ -70,11 +89,11 @@ async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
     },
   );
 
-  console.log('Mt5Price worker started');
+  console.log(`Mt5Price worker started`);
 }
 
 async function mt5Price(
-  symbol: string,
+  symbolPair: string,
   updateSpeedMs: number,
   updateLengthMin: number,
   userAddress: string,
@@ -90,7 +109,7 @@ async function mt5Price(
     },
   });
 
-  const jobKey = `mt5PriceJob_${userAddress}_${symbol}`;
+  const jobKey = `mt5PriceJob_${userAddress}_${symbolPair}`;
 
   if (jobKeys[jobKey]) {
     const existingJobId = jobKeys[jobKey];
@@ -98,37 +117,16 @@ async function mt5Price(
       const existingJob = await queue.getJob(existingJobId);
       if (existingJob) {
         try {
-          const failedError = new Error('Job updated');
-          await existingJob.moveToFailed(failedError, 'Job updated');
+          await existingJob.remove();
         } catch (error) {
-          if (error instanceof Error) {
-            if (error.message.includes('Lock mismatch')) {
-              console.warn(
-                `Lock mismatch for job ${existingJobId}. Skipping move to failed state.`,
-              );
-            } else if (error.message.includes('Missing lock')) {
-              console.warn(
-                `Missing lock for job ${existingJobId}. Skipping move to failed state.`,
-              );
-            } else {
-              console.error(
-                `Error moving job ${existingJobId} to failed state:`,
-                error,
-              );
-            }
-          } else {
-            console.error(
-              `Unknown error moving job ${existingJobId} to failed state:`,
-              error,
-            );
-          }
+          console.error(`Error removing existing job ${existingJobId}:`, error);
         }
       }
     }
   }
 
   const workerData: WorkerData = {
-    symbol,
+    symbolPair,
     updateSpeed,
     updateLength,
     userAddress,
@@ -145,9 +143,9 @@ async function mt5Price(
 
 function getLatestPrice(
   userAddress: string,
-  symbol: string,
+  symbolPair: string,
 ): { bid: number; ask: number } | null {
-  const key = `${userAddress}_${symbol}`;
+  const key = `${userAddress}_${symbolPair}`;
   return latestPriceData[key] || null;
 }
 

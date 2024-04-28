@@ -60,10 +60,10 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
       checkRFQ.sImB === rfq.sImB &&
       checkRFQ.sDfA === rfq.sDfA &&
       checkRFQ.sDfB === rfq.sDfB &&
-      checkRFQ.sExpirationA === rfq.sExpirationA &&
-      checkRFQ.sExpirationB === rfq.sExpirationB &&
-      checkRFQ.sTimelockA === rfq.sTimelockA &&
-      checkRFQ.sTimelockB === rfq.sTimelockB &&
+      checkRFQ.sExpirationA === parseFloat(rfq.sExpirationA) &&
+      checkRFQ.sExpirationB === parseFloat(rfq.sExpirationB) &&
+      checkRFQ.sTimelockA === parseFloat(rfq.sTimelockA) &&
+      checkRFQ.sTimelockB === parseFloat(rfq.sTimelockB) &&
       checkRFQ.lPrice === rfq.lPrice &&
       checkRFQ.lQuantity === rfq.lQuantity &&
       checkRFQ.lInterestRate === rfq.lInterestRate &&
@@ -72,10 +72,10 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
       checkRFQ.lImB === rfq.lImB &&
       checkRFQ.lDfA === rfq.lDfA &&
       checkRFQ.lDfB === rfq.lDfB &&
-      checkRFQ.lExpirationA === rfq.lExpirationA &&
-      checkRFQ.lExpirationB === rfq.lExpirationB &&
-      checkRFQ.lTimelockA === rfq.lTimelockA &&
-      checkRFQ.lTimelockB === rfq.lTimelockB
+      checkRFQ.lExpirationA === parseFloat(rfq.lExpirationA) &&
+      checkRFQ.lExpirationB === parseFloat(rfq.lExpirationB) &&
+      checkRFQ.lTimelockA === parseFloat(rfq.lTimelockA) &&
+      checkRFQ.lTimelockB === parseFloat(rfq.lTimelockB)
     ) {
       logger.info('RFQ is cached');
 

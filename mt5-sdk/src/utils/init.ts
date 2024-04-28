@@ -37,4 +37,31 @@ const stream = pretty({
 });
 const logger = pino(stream);
 
-export { client as redisClient, rfqQueue, logger };
+import { privateKeyToAccount } from 'viem/accounts';
+import { createWalletClient, http } from 'viem';
+import { defineChain, Address } from 'viem';
+
+const fantomSonicTestnet = defineChain({
+  id: 64165,
+  name: 'Fantom Sonic Testnet',
+  network: 'fantom-sonic-testnet',
+  nativeCurrency: {
+    name: 'Fantom',
+    symbol: 'FTM',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: { http: ['https://rpcapi.sonic.fantom.network/'] },
+    public: { http: ['https://rpcapi.sonic.fantom.network/'] },
+  },
+});
+
+const account = privateKeyToAccount(config.privateKeys[0] as Address);
+
+const wallet = createWalletClient({
+  account,
+  chain: fantomSonicTestnet,
+  transport: http(),
+});
+
+export { client as redisClient, rfqQueue, logger, fantomSonicTestnet, wallet };

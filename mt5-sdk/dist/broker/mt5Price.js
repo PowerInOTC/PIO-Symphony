@@ -1,11 +1,24 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLatestPrice = exports.mt5Price = void 0;
 const bullmq_1 = require("bullmq");
 const config_1 = require("../config");
-const dispatcher_1 = require("./dispatcher");
+const axios_1 = __importDefault(require("axios"));
 const latestPriceData = {};
 const jobKeys = {};
+async function retrieveLatestTick(symbol) {
+    try {
+        const response = await axios_1.default.get(`${config_1.config.apiBaseUrl}/retrieve_latest_tick/${symbol}`);
+        return response.data;
+    }
+    catch (error) {
+        console.error(`Error retrieving latest tick for ${symbol}:`, error);
+        return { bid: 0, ask: 0 };
+    }
+}
 async function startMt5PriceWorker(config) {
     const queueName = 'mt5PriceQueue';
     const queue = new bullmq_1.Queue(queueName, {
@@ -24,16 +37,20 @@ async function startMt5PriceWorker(config) {
     });
     const worker = new bullmq_1.Worker(queueName, async (job) => {
         try {
-            const symbols = Object.keys(jobKeys);
-            const ticks = await (0, dispatcher_1.retrieveLatestTicks)(symbols, 'mt5.ICMarkets');
-            for (const [symbol, prices] of Object.entries(ticks)) {
-                const userAddress = jobKeys[symbol]?.split('_')[2] || '';
-                if (prices.bid && prices.ask) {
-                    latestPriceData[`${userAddress}_${symbol}`] = {
-                        bid: prices.bid,
-                        ask: prices.ask,
-                    };
-                    console.log(`Price for ${symbol} (${userAddress}): Bid=${prices.bid}, Ask=${prices.ask}`);
+            const { symbolPair, userAddress } = job.data;
+            if (symbolPair) {
+                const [symbol1, symbol2] = symbolPair.split('/');
+                if (symbol1 && symbol2) {
+                    const tick1 = await retrieveLatestTick(symbol1);
+                    const tick2 = await retrieveLatestTick(symbol2);
+                    if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
+                        const bidRatio = tick1.bid / tick2.bid;
+                        const askRatio = tick1.ask / tick2.ask;
+                        latestPriceData[`${userAddress}_${symbolPair}`] = {
+                            bid: bidRatio,
+                            ask: askRatio,
+                        };
+                    }
                 }
             }
         }
@@ -48,9 +65,9 @@ async function startMt5PriceWorker(config) {
         },
         concurrency: 1, // Process one job at a time
     });
-    console.log('Mt5Price worker started');
+    console.log(`Mt5Price worker started`);
 }
-async function mt5Price(symbol, updateSpeedMs, updateLengthMin, userAddress) {
+async function mt5Price(symbolPair, updateSpeedMs, updateLengthMin, userAddress) {
     const updateSpeed = updateSpeedMs;
     const updateLength = updateLengthMin;
     const queue = new bullmq_1.Queue('mt5PriceQueue', {
@@ -60,37 +77,23 @@ async function mt5Price(symbol, updateSpeedMs, updateLengthMin, userAddress) {
             password: config_1.config.bullmqRedisPassword,
         },
     });
-    const jobKey = `mt5PriceJob_${userAddress}_${symbol}`;
+    const jobKey = `mt5PriceJob_${userAddress}_${symbolPair}`;
     if (jobKeys[jobKey]) {
         const existingJobId = jobKeys[jobKey];
         if (existingJobId) {
             const existingJob = await queue.getJob(existingJobId);
             if (existingJob) {
                 try {
-                    const failedError = new Error('Job updated');
-                    await existingJob.moveToFailed(failedError, 'Job updated');
+                    await existingJob.remove();
                 }
                 catch (error) {
-                    if (error instanceof Error) {
-                        if (error.message.includes('Lock mismatch')) {
-                            console.warn(`Lock mismatch for job ${existingJobId}. Skipping move to failed state.`);
-                        }
-                        else if (error.message.includes('Missing lock')) {
-                            console.warn(`Missing lock for job ${existingJobId}. Skipping move to failed state.`);
-                        }
-                        else {
-                            console.error(`Error moving job ${existingJobId} to failed state:`, error);
-                        }
-                    }
-                    else {
-                        console.error(`Unknown error moving job ${existingJobId} to failed state:`, error);
-                    }
+                    console.error(`Error removing existing job ${existingJobId}:`, error);
                 }
             }
         }
     }
     const workerData = {
-        symbol,
+        symbolPair,
         updateSpeed,
         updateLength,
         userAddress,
@@ -103,8 +106,8 @@ async function mt5Price(symbol, updateSpeedMs, updateLengthMin, userAddress) {
     jobKeys[jobKey] = job.id;
 }
 exports.mt5Price = mt5Price;
-function getLatestPrice(userAddress, symbol) {
-    const key = `${userAddress}_${symbol}`;
+function getLatestPrice(userAddress, symbolPair) {
+    const key = `${userAddress}_${symbolPair}`;
     return latestPriceData[key] || null;
 }
 exports.getLatestPrice = getLatestPrice;

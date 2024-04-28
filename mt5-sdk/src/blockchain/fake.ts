@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+/*import { ethers } from 'ethers';
 import {
   networks,
   BlockchainInterface,
@@ -188,3 +188,4 @@ async function test() {
 }
 
 export { test };
+*/
