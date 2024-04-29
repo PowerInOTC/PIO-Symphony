@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkRFQCore = void 0;
 const configRead_1 = require("../configBuilder/configRead");
 const configRead_2 = require("../configBuilder/configRead");
+const tripartyPrice_1 = require("../broker/tripartyPrice");
 const checkRFQCore = async (rfq) => {
     const checkRFQ = {
         rfqCheckUpdateTime: Date.now(),
@@ -185,11 +186,16 @@ const checkRFQCore = async (rfq) => {
     checkRFQ.checkOnchainSelfLeverage = true;
     checkRFQ.checkCounterpartySelfLeverage = true;
     checkRFQ.checkMarketIsOpen = true;
-    // disabled
+    (0, tripartyPrice_1.tripartyPrice)(`${checkRFQ.assetAId}/${checkRFQ.assetAId}`, 800, 60000, 'user1');
+    const tripartyLatestPrice = (0, tripartyPrice_1.getTripartyLatestPrice)('user1', `${checkRFQ.assetAId}/${checkRFQ.assetAId}`);
+    if (tripartyLatestPrice != null &&
+        tripartyLatestPrice.bid > 0 &&
+        tripartyLatestPrice.ask > 0) {
+        checkRFQ.checkAssetAId = true;
+        checkRFQ.checkAssetBId = true;
+    }
     checkRFQ.checkSPrice = true;
     checkRFQ.checkLPrice = true;
-    checkRFQ.checkAssetAId = true;
-    checkRFQ.checkAssetBId = true;
     checkRFQ.checkBrokerSelfLeverage = true;
     return checkRFQ;
 };

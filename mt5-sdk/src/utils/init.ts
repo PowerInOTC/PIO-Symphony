@@ -56,7 +56,9 @@ const fantomSonicTestnet = defineChain({
   },
 });
 
-const account = privateKeyToAccount(config.privateKeys[0] as Address);
+const account = privateKeyToAccount(
+  config.privateKeys?.split(',')[0] as Address,
+);
 
 const wallet = createWalletClient({
   account,

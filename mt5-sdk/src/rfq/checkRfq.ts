@@ -3,11 +3,15 @@ import { getPairConfig } from '../configBuilder/configRead';
 import { rfqCheck } from '../types/rfqCheck';
 import { getAllocatedBroker } from '../configBuilder/configRead';
 import { get } from 'http';
-import { brokerHealth, getLatestMaxNotional } from '../broker/brokerHealth';
+import {
+  brokerHealth,
+  getLatestMaxNotional,
+} from '../broker/brokerHealthModule';
 import {
   startTotalOpenAmountInfo,
   getTotalOpenAmount,
-} from '../broker/openAmount';
+} from '../broker/totalOpenAmountModule';
+import { tripartyPrice, getTripartyLatestPrice } from '../broker/tripartyPrice';
 
 const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   const checkRFQ: rfqCheck = {
@@ -233,11 +237,29 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
 
   checkRFQ.checkMarketIsOpen = true;
 
-  // disabled
+  tripartyPrice(
+    `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
+    800,
+    60000,
+    'user1',
+  );
+  const tripartyLatestPrice = getTripartyLatestPrice(
+    'user1',
+    `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
+  );
+
+  if (
+    tripartyLatestPrice != null &&
+    tripartyLatestPrice.bid > 0 &&
+    tripartyLatestPrice.ask > 0
+  ) {
+    checkRFQ.checkAssetAId = true;
+    checkRFQ.checkAssetBId = true;
+  }
+
   checkRFQ.checkSPrice = true;
   checkRFQ.checkLPrice = true;
-  checkRFQ.checkAssetAId = true;
-  checkRFQ.checkAssetBId = true;
+
   checkRFQ.checkBrokerSelfLeverage = true;
 
   return checkRFQ;

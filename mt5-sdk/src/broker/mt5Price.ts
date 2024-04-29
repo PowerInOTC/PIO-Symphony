@@ -1,22 +1,14 @@
-import { Queue, Worker, QueueEvents, Job } from 'bullmq';
 import { config } from '../config';
 import axios from 'axios';
-
-interface WorkerData {
-  symbolPair: string;
-  updateSpeed: number;
-  updateLength: number;
-  userAddress: string;
-}
+import NodeCache from 'node-cache';
 
 interface Mt5PriceConfig {
-  bullmqRedisHost: string;
-  bullmqRedisPort: number;
-  bullmqRedisPassword: string;
+  cacheHost: string;
+  cachePort: number;
+  cachePassword: string;
 }
 
-const latestPriceData: { [key: string]: { bid: number; ask: number } } = {};
-const jobKeys: { [key: string]: string | undefined } = {};
+const cache = new NodeCache({ stdTTL: 15 * 60 }); // 15 minutes TTL
 
 async function retrieveLatestTick(
   symbol: string,
@@ -33,123 +25,67 @@ async function retrieveLatestTick(
 }
 
 async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
-  const queueName = 'mt5PriceQueue';
-
-  const queue = new Queue<WorkerData>(queueName, {
-    connection: {
-      host: config.bullmqRedisHost,
-      port: config.bullmqRedisPort,
-      password: config.bullmqRedisPassword,
-    },
-  });
-
-  const queueEvents = new QueueEvents(queueName, {
-    connection: {
-      host: config.bullmqRedisHost,
-      port: config.bullmqRedisPort,
-      password: config.bullmqRedisPassword,
-    },
-  });
-
-  const worker = new Worker<WorkerData>(
-    queueName,
-    async (job: Job<WorkerData>) => {
-      try {
-        const { symbolPair, userAddress } = job.data;
-
-        if (symbolPair) {
-          const [symbol1, symbol2] = symbolPair.split('/');
-
-          if (symbol1 && symbol2) {
-            const tick1 = await retrieveLatestTick(symbol1);
-            const tick2 = await retrieveLatestTick(symbol2);
-
-            if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
-              const bidRatio = tick1.bid / tick2.bid;
-              const askRatio = tick1.ask / tick2.ask;
-
-              latestPriceData[`${userAddress}_${symbolPair}`] = {
-                bid: bidRatio,
-                ask: askRatio,
-              };
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error processing job:', error);
-      }
-    },
-    {
-      connection: {
-        host: config.bullmqRedisHost,
-        port: config.bullmqRedisPort,
-        password: config.bullmqRedisPassword,
-      },
-      concurrency: 1, // Process one job at a time
-    },
-  );
-
   console.log(`Mt5Price worker started`);
 }
 
 async function mt5Price(
   symbolPair: string,
   updateSpeedMs: number,
-  updateLengthMin: number,
+  updateLengthSec: number,
   userAddress: string,
 ): Promise<void> {
-  const updateSpeed = updateSpeedMs;
-  const updateLength = updateLengthMin;
-
-  const queue = new Queue<WorkerData>('mt5PriceQueue', {
-    connection: {
-      host: config.bullmqRedisHost,
-      port: config.bullmqRedisPort,
-      password: config.bullmqRedisPassword,
-    },
-  });
-
   const jobKey = `mt5PriceJob_${userAddress}_${symbolPair}`;
 
-  if (jobKeys[jobKey]) {
-    const existingJobId = jobKeys[jobKey];
-    if (existingJobId) {
-      const existingJob = await queue.getJob(existingJobId);
-      if (existingJob) {
-        try {
-          await existingJob.remove();
-        } catch (error) {
-          console.error(`Error removing existing job ${existingJobId}:`, error);
-        }
-      }
-    }
-  }
-
-  const workerData: WorkerData = {
+  const workerData = {
     symbolPair,
-    updateSpeed,
-    updateLength,
+    updateSpeed: updateSpeedMs,
+    updateLength: updateLengthSec,
     userAddress,
   };
 
-  const job = await queue.add(jobKey, workerData, {
-    repeat: {
-      every: updateSpeed,
-    },
-  });
+  cache.set(jobKey, workerData, updateLengthSec);
 
-  jobKeys[jobKey] = job.id;
+  const worker = async () => {
+    const { symbolPair, userAddress } = workerData;
+    const [symbol1, symbol2] = symbolPair.split('/');
+
+    const [tick1, tick2] = await Promise.all([
+      retrieveLatestTick(symbol1),
+      retrieveLatestTick(symbol2),
+    ]);
+
+    if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
+      const bidRatio = tick1.bid / tick2.bid;
+      const askRatio = tick1.ask / tick2.ask;
+
+      cache.set(`${userAddress}_${symbolPair}`, {
+        bid: bidRatio,
+        ask: askRatio,
+      });
+    }
+  };
+
+  const intervalId = setInterval(worker, updateSpeedMs);
+
+  setTimeout(() => {
+    clearInterval(intervalId);
+    cache.del(jobKey);
+  }, updateLengthSec * 1000);
 }
 
 function getLatestPrice(
   userAddress: string,
   symbolPair: string,
-): { bid: number; ask: number } | null {
+): { bid: number; ask: number } | undefined {
   const key = `${userAddress}_${symbolPair}`;
-  return latestPriceData[key] || null;
+  return cache.get(key);
 }
 
-// Start the Mt5Price worker automatically
+async function initMt5PriceWorker(): Promise<void> {
+  cache.flushAll();
+  console.log('Mt5Price worker initialized. All pairs and jobs cleared.');
+}
+
 startMt5PriceWorker(config)
   .then(() => {
     console.log('Mt5Price worker started successfully');
@@ -158,4 +94,4 @@ startMt5PriceWorker(config)
     console.error('Error starting Mt5Price worker:', error);
   });
 
-export { mt5Price, getLatestPrice };
+export { mt5Price, getLatestPrice, initMt5PriceWorker };

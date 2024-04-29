@@ -6,6 +6,7 @@ import { getFieldFromAsset, getPairConfig } from '../configBuilder/configRead';
 import { rfqCheck } from '../types/rfqCheck';
 import { logger } from '../utils/init';
 import { checkRFQCore } from './checkRfq';
+import { mt5Price, getLatestPrice } from '../broker/mt5Price';
 
 const RFQ_CHECK_PREFIX = 'rfqCheck:';
 
@@ -21,6 +22,11 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
   const checkRFQ = await getCheckRFQ(rfq);
   logger.info(checkRFQ, 'checkRFQ');
   const isRFQValid = verifyCheckRFQ(checkRFQ);
+  const latestPrice = getLatestPrice(
+    rfq.userAddress,
+    `${checkRFQ.assetAId}/${checkRFQ.assetBId}`,
+  );
+
   if (isRFQValid) {
     return {
       chainId: rfq.chainId,

@@ -1,3 +1,6 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 export const config = {
   fastApiHost: process.env.FAST_API_HOST || '127.0.0.1',
   fastApiPort: process.env.FAST_API_PORT || '8000',

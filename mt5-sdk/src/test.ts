@@ -6,20 +6,39 @@ import {
   sendRfq,
 } from '@pionerfriends/api-client';
 import dotenv from 'dotenv';
-import { mt5Price } from './broker/mt5Price';
+import {
+  mt5Price,
+  getLatestPrice,
+  initMt5PriceWorker,
+} from './broker/mt5Price';
+import { tripartyPrice, getTripartyLatestPrice } from './broker/tripartyPrice';
+import {
+  brokerHealth,
+  getLatestMaxNotional,
+} from './broker/brokerHealthModule';
+import {
+  startTotalOpenAmountInfo,
+  getTotalOpenAmount,
+} from './broker/totalOpenAmountModule';
+
 import { adjustQuantities, getPairConfig } from './configBuilder/configRead';
 import { calculatePairPrices } from './forSDK';
 import { logger } from './utils/init';
 dotenv.config();
 
 import { wallet } from './utils/init';
+import { config } from './config';
+
+export let token = '';
 
 async function bullExample(): Promise<void> {
-  const token = await getPayloadAndLogin(wallet);
-  if (!wallet || !token) {
+  const tokens = await getPayloadAndLogin(wallet);
+  if (!wallet || !tokens) {
     console.log('login failed');
     return;
   }
+  token = tokens;
+
   const websocketClient = new QuoteWebsocketClient(
     (message: QuoteResponse) => {},
     (error) => {
@@ -73,7 +92,7 @@ async function bullExample(): Promise<void> {
 
   const rfq: RfqRequest = {
     chainId: chainId,
-    expiration: String(10),
+    expiration: String(10000),
     assetAId: assetAId,
     assetBId: assetBId,
     sPrice: String(bid),
@@ -101,15 +120,27 @@ async function bullExample(): Promise<void> {
     lTimelockA: String(3600),
     lTimelockB: String(3600),
   };
-
+  initMt5PriceWorker();
   try {
     let counter = 0;
-    mt5Price('EURUSD/GBPUSD', 500, 60000, 'user1');
+    mt5Price('EURUSD/GBPUSD', 1000, 60000, 'user1');
+    tripartyPrice('forex.EURUSD/forex.GBPUSD', 800, 60000, 'user1');
+    brokerHealth('mt5.ICMarkets', 5000, 1);
+    startTotalOpenAmountInfo('EURUSD', 'EURUSD');
 
     setInterval(() => {
-      /*
       const latestPrice = getLatestPrice('user1', 'EURUSD/GBPUSD');
-      logger.info(latestPrice);*/
+      const tripartyLatestPrice = getTripartyLatestPrice(
+        'user1',
+        'forex.EURUSD/forex.GBPUSD',
+      );
+      const maxNotional = getLatestMaxNotional('mt5.ICMarkets');
+
+      logger.info(latestPrice);
+      logger.info(tripartyLatestPrice);
+      logger.info(maxNotional);
+      logger.info(getTotalOpenAmount('EURUSD', 'EURUSD'));
+
       sendRfq(rfq, token);
       counter++;
     }, 1000);

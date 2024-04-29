@@ -12,6 +12,7 @@
   "scripts": {
     "start": "tsc && node dist/index.js",
     "test": "tsc && node dist/test.js",
+    "block": "tsc && node dist/blockTest.js",
     "lint": "eslint \"./**/*.ts\" --fix && npx prettier --write \"./**/*.ts\""
   },
   "dependencies": {
@@ -20,6 +21,7 @@
     "axios": "^1.6.8",
     "bullmq": "^5.7.6",
     "dotenv": "^16.4.5",
+    "node-cache": "^5.1.2",
     "pino": "^8.21.0",
     "pino-pretty": "^11.0.0",
     "redis": "^4.6.13",

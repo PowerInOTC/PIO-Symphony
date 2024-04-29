@@ -1,8 +1,7 @@
 import axios from 'axios';
+import { config } from '../config';
 
-//const apiBaseUrl = process.env.FAST_API;
-const apiBaseUrl = 'http://20.55.0.76:8000';
-//const apiBaseUrl = 'http://0.0.0.0:8000';
+const apiBaseUrl = config.apiBaseUrl;
 
 async function getTotalOpenAmount(
   symbol: string,
