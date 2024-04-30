@@ -18,7 +18,9 @@
   "dependencies": {
     "@pionerfriends/api-client": "^1.0.26",
     "@pionerfriends/blockchain-client": "^1.0.26",
+    "async-lock": "^1.4.1",
     "axios": "^1.6.8",
+    "axios-cache-interceptor": "^1.5.2",
     "bullmq": "^5.7.6",
     "dotenv": "^16.4.5",
     "node-cache": "^5.1.2",

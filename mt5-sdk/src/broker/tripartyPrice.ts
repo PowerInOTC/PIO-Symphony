@@ -1,177 +1,114 @@
-import { Queue, Worker, QueueEvents, Job } from 'bullmq';
-import { config } from '../config';
-import axios from 'axios';
 import { getPrices } from '@pionerfriends/api-client';
 import { token } from '../test';
+import { logger } from '../utils/init';
 
 interface WorkerData {
   symbolPair: string;
   updateSpeed: number;
   updateLength: number;
-  userAddress: string;
 }
 
-interface Mt5PriceConfig {
-  bullmqRedisHost: string;
-  bullmqRedisPort: number;
-  bullmqRedisPassword: string;
-}
+let latestPriceData: { [key: string]: { bid: number; ask: number } } = {};
+let updateWorkers: { [key: string]: NodeJS.Timeout } = {};
+let symbolPairData: { [key: string]: WorkerData } = {};
 
-const latestPriceData: { [key: string]: { bid: number; ask: number } } = {};
-const jobKeys: { [key: string]: string | undefined } = {};
-
-async function retrieveLatestTick(
-  symbol: string,
-): Promise<{ bid: number; ask: number }> {
+async function retrieveLatestTicks(
+  symbols: string[],
+): Promise<{ [symbol: string]: { bid: number; ask: number } }> {
   try {
-    const response = await getPrices([symbol], token);
-    if (!response || !response.data || !response.data[symbol]) {
-      return { bid: 0, ask: 0 };
+    const response = await getPrices(symbols, token);
+    if (!response || !response.data) {
+      return {};
     }
 
-    const { bidPrice, askPrice } = response.data[symbol];
-    const bid = parseFloat(bidPrice);
-    const ask = parseFloat(askPrice);
+    const ticks: { [symbol: string]: { bid: number; ask: number } } = {};
 
-    return { bid, ask };
+    symbols.forEach((symbol) => {
+      const { bidPrice, askPrice } = response.data[symbol] || {};
+      const bid = parseFloat(bidPrice || '0');
+      const ask = parseFloat(askPrice || '0');
+      ticks[symbol] = { bid, ask };
+
+      console.log(`Latest ticks for ${symbol}: bid=${bid}, ask=${ask}`);
+    });
+
+    return ticks;
   } catch (error) {
-    //console.error(`Error retrieving latest tick for ${symbol}:`, error);
-    return { bid: 0, ask: 0 };
+    console.error(`Error retrieving latest ticks:`, error);
+    return {};
   }
 }
 
-async function startTripartyPriceWorker(config: Mt5PriceConfig): Promise<void> {
-  const queueName = 'mt5PriceQueue';
-
-  const queue = new Queue<WorkerData>(queueName, {
-    connection: {
-      host: config.bullmqRedisHost,
-      port: config.bullmqRedisPort,
-      password: config.bullmqRedisPassword,
-    },
-  });
-
-  const queueEvents = new QueueEvents(queueName, {
-    connection: {
-      host: config.bullmqRedisHost,
-      port: config.bullmqRedisPort,
-      password: config.bullmqRedisPassword,
-    },
-  });
-
-  const worker = new Worker<WorkerData>(
-    queueName,
-    async (job: Job<WorkerData>) => {
-      try {
-        const { symbolPair, userAddress } = job.data;
-
-        if (symbolPair) {
-          const [symbol1, symbol2] = symbolPair.split('/');
-
-          if (symbol1 && symbol2) {
-            const tick1 = await retrieveLatestTick(symbol1);
-            const tick2 = await retrieveLatestTick(symbol2);
-
-            if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
-              const bidRatio = tick1.bid / tick2.bid;
-              const askRatio = tick1.ask / tick2.ask;
-
-              latestPriceData[`${userAddress}_${symbolPair}`] = {
-                bid: bidRatio,
-                ask: askRatio,
-              };
-            }
-          }
-        }
-      } catch (error) {
-        //console.error('Error processing job:', error);
-      }
-    },
-    {
-      connection: {
-        host: config.bullmqRedisHost,
-        port: config.bullmqRedisPort,
-        password: config.bullmqRedisPassword,
-      },
-      concurrency: 1, // Process one job at a time
-    },
-  );
-
-  console.log(`Mt5Price worker started`);
-}
-
-async function tripartyPrice(
+async function startTripartyPriceUpdater(
   symbolPair: string,
   updateSpeedMs: number,
   updateLengthMin: number,
-  userAddress: string,
 ): Promise<void> {
-  const updateSpeed = updateSpeedMs;
-  const updateLength = updateLengthMin;
-
-  const queue = new Queue<WorkerData>('mt5PriceQueue', {
-    connection: {
-      host: config.bullmqRedisHost,
-      port: config.bullmqRedisPort,
-      password: config.bullmqRedisPassword,
-    },
-  });
-
-  const jobKey = `mt5PriceJob_${userAddress}_${symbolPair}`;
-
-  if (jobKeys[jobKey]) {
-    const existingJobId = jobKeys[jobKey];
-    if (existingJobId) {
-      const existingJob = await queue.getJob(existingJobId);
-      if (existingJob) {
-        try {
-          await existingJob.remove();
-        } catch (error) {
-          console.error(`Error removing existing job ${existingJobId}:`, error);
-        }
-      }
-    }
-  }
-
-  const workerData: WorkerData = {
+  symbolPairData[symbolPair] = {
     symbolPair,
-    updateSpeed,
-    updateLength,
-    userAddress,
+    updateSpeed: updateSpeedMs,
+    updateLength: updateLengthMin * 60 * 1000,
   };
 
-  const job = await queue.add(jobKey, workerData, {
-    repeat: {
-      every: updateSpeed,
-    },
-  });
+  if (!updateWorkers['allPairs']) {
+    const updatePrices = async () => {
+      const currentTime = Date.now();
+      const activePairs = Object.values(symbolPairData).filter(
+        (data) => currentTime - data.updateLength < 0,
+      );
 
-  jobKeys[jobKey] = job.id;
+      if (activePairs.length === 0) {
+        stopTripartyPriceUpdater();
+        return;
+      }
+
+      const symbols = activePairs.flatMap((data) => data.symbolPair.split('/'));
+      logger.info(`Retrieving latest ticks for symbols: ${symbols}`);
+      const ticks = await retrieveLatestTicks(symbols);
+
+      activePairs.forEach((data) => {
+        const { symbolPair } = data;
+        const [symbol1, symbol2] = symbolPair.split('/');
+        const tick1 = ticks[symbol1];
+        const tick2 = ticks[symbol2];
+
+        if (
+          tick1 &&
+          tick2 &&
+          tick1.bid &&
+          tick1.ask &&
+          tick2.bid &&
+          tick2.ask
+        ) {
+          const bidRatio = tick1.bid / tick2.bid;
+          const askRatio = tick1.ask / tick2.ask;
+
+          latestPriceData[symbolPair] = {
+            bid: bidRatio,
+            ask: askRatio,
+          };
+        }
+      });
+    };
+
+    updateWorkers['allPairs'] = setInterval(updatePrices, 1000);
+  }
 }
 
 function getTripartyLatestPrice(
-  userAddress: string,
   symbolPair: string,
 ): { bid: number; ask: number } | null {
-  const key = `${userAddress}_${symbolPair}`;
-  const priceData = latestPriceData[key];
-
-  if (priceData) {
-    return {
-      bid: priceData.bid,
-      ask: priceData.ask,
-    };
-  }
-
-  return null;
+  return latestPriceData[symbolPair] || null;
 }
-// Start the Mt5Price worker automatically
-startTripartyPriceWorker(config)
-  .then(() => {
-    console.log('Mt5Price worker started successfully');
-  })
-  .catch((error) => {
-    //console.error('Error starting Mt5Price worker:', error);
+
+function stopTripartyPriceUpdater(): void {
+  Object.values(updateWorkers).forEach((updateWorker) => {
+    clearInterval(updateWorker);
   });
 
-export { tripartyPrice, getTripartyLatestPrice };
+  updateWorkers = {};
+  latestPriceData = {};
+  symbolPairData = {};
+}
+
+export { startTripartyPriceUpdater, getTripartyLatestPrice };

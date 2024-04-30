@@ -3,12 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initMt5PriceWorker = exports.getLatestPrice = exports.mt5Price = void 0;
-const bullmq_1 = require("bullmq");
-const config_1 = require("../config");
+exports.getMT5LatestPrice = void 0;
 const axios_1 = __importDefault(require("axios"));
-const latestPriceData = {};
-const jobKeys = {};
+const config_1 = require("../config");
+const init_1 = require("../utils/init");
 async function retrieveLatestTick(symbol) {
     try {
         const response = await axios_1.default.get(`${config_1.config.apiBaseUrl}/retrieve_latest_tick/${symbol}`);
@@ -19,19 +17,17 @@ async function retrieveLatestTick(symbol) {
         return { bid: 0, ask: 0 };
     }
 }
-async function startMt5PriceWorker(config) {
-    const queueName = 'mt5PriceQueue';
-    const connection = {
-        host: config.bullmqRedisHost,
-        port: config.bullmqRedisPort,
-        password: config.bullmqRedisPassword,
-    };
-    const queue = new bullmq_1.Queue(queueName, { connection });
-    const queueEvents = new bullmq_1.QueueEvents(queueName, { connection });
-    const worker = new bullmq_1.Worker(queueName, async (job) => {
+function getMT5LatestPrice(symbolPair, updateSpeedMs, updateLengthMs) {
+    const [symbol1, symbol2] = symbolPair.split('/');
+    let updateCount = 0;
+    const maxUpdateCount = Math.floor(updateLengthMs / updateSpeedMs);
+    let latestPrice = null;
+    let resolvePromise;
+    const pricePromise = new Promise((resolve) => {
+        resolvePromise = resolve;
+    });
+    const updatePrice = async () => {
         try {
-            const { symbolPair, userAddress } = job.data;
-            const [symbol1, symbol2] = symbolPair.split('/');
             const [tick1, tick2] = await Promise.all([
                 retrieveLatestTick(symbol1),
                 retrieveLatestTick(symbol2),
@@ -39,81 +35,31 @@ async function startMt5PriceWorker(config) {
             if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
                 const bidRatio = tick1.bid / tick2.bid;
                 const askRatio = tick1.ask / tick2.ask;
-                latestPriceData[`${userAddress}_${symbolPair}`] = {
-                    bid: bidRatio,
-                    ask: askRatio,
-                };
+                latestPrice = { bid: bidRatio, ask: askRatio };
+                init_1.logger.info(latestPrice);
+                if (resolvePromise) {
+                    resolvePromise(latestPrice);
+                    resolvePromise = undefined;
+                }
+            }
+            else {
+                init_1.logger.error(`Invalid tick data for ${symbolPair}: ${JSON.stringify(tick1)}, ${JSON.stringify(tick2)}`);
             }
         }
         catch (error) {
-            console.error('Error processing job:', error);
+            init_1.logger.error(`Error updating price for ${symbolPair}:`, error);
         }
-    }, { connection, concurrency: 1 });
-    console.log(`Mt5Price worker started`);
-}
-async function mt5Price(symbolPair, updateSpeedMs, updateLengthSec, userAddress) {
-    const queue = new bullmq_1.Queue('mt5PriceQueue', {
-        connection: {
-            host: config_1.config.bullmqRedisHost,
-            port: config_1.config.bullmqRedisPort,
-            password: config_1.config.bullmqRedisPassword,
-        },
-    });
-    const jobKey = `mt5PriceJob_${userAddress}_${symbolPair}`;
-    if (jobKeys[jobKey]) {
-        const existingJobId = jobKeys[jobKey];
-        if (existingJobId) {
-            await queue.removeRepeatableByKey(existingJobId);
-            delete jobKeys[jobKey];
+        updateCount++;
+        if (updateCount >= maxUpdateCount) {
+            clearInterval(updateWorker);
         }
-    }
-    const workerData = {
-        symbolPair,
-        updateSpeed: updateSpeedMs,
-        updateLength: updateLengthSec,
-        userAddress,
     };
-    const job = await queue.add(jobKey, workerData, {
-        repeat: {
-            every: updateSpeedMs,
-            limit: Math.floor((updateLengthSec * 1000) / updateSpeedMs),
-        },
-    });
-    jobKeys[jobKey] = job.id;
-}
-exports.mt5Price = mt5Price;
-function getLatestPrice(userAddress, symbolPair) {
-    const key = `${userAddress}_${symbolPair}`;
-    return latestPriceData[key] || null;
-}
-exports.getLatestPrice = getLatestPrice;
-startMt5PriceWorker(config_1.config)
-    .then(() => {
-    console.log('Mt5Price worker started successfully');
-})
-    .catch((error) => {
-    console.error('Error starting Mt5Price worker:', error);
-});
-async function initMt5PriceWorker() {
-    const connection = {
-        host: config_1.config.bullmqRedisHost,
-        port: config_1.config.bullmqRedisPort,
-        password: config_1.config.bullmqRedisPassword,
-    };
-    const queue = new bullmq_1.Queue('mt5PriceQueue', { connection });
-    // Clear all stored price data
-    for (const key in latestPriceData) {
-        delete latestPriceData[key];
+    const updateWorker = setInterval(updatePrice, updateSpeedMs);
+    if (latestPrice) {
+        return Promise.resolve(latestPrice);
     }
-    // Remove all repeatable jobs from the queue
-    const repeatableJobs = await queue.getRepeatableJobs();
-    for (const job of repeatableJobs) {
-        await queue.removeRepeatableByKey(job.key);
+    else {
+        return pricePromise;
     }
-    // Clear the jobKeys object
-    for (const key in jobKeys) {
-        delete jobKeys[key];
-    }
-    console.log('Mt5Price worker initialized. All pairs and jobs cleared.');
 }
-exports.initMt5PriceWorker = initMt5PriceWorker;
+exports.getMT5LatestPrice = getMT5LatestPrice;

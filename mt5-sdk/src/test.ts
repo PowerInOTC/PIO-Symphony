@@ -6,12 +6,11 @@ import {
   sendRfq,
 } from '@pionerfriends/api-client';
 import dotenv from 'dotenv';
+import { getMT5LatestPrice } from './broker/mt5Price';
 import {
-  mt5Price,
-  getLatestPrice,
-  initMt5PriceWorker,
-} from './broker/mt5Price';
-import { tripartyPrice, getTripartyLatestPrice } from './broker/tripartyPrice';
+  startTripartyPriceUpdater,
+  getTripartyLatestPrice,
+} from './broker/tripartyPrice';
 import {
   brokerHealth,
   getLatestMaxNotional,
@@ -120,26 +119,33 @@ async function bullExample(): Promise<void> {
     lTimelockA: String(3600),
     lTimelockB: String(3600),
   };
-  initMt5PriceWorker();
   try {
     let counter = 0;
-    mt5Price('EURUSD/GBPUSD', 1000, 60000, 'user1');
-    tripartyPrice('forex.EURUSD/forex.GBPUSD', 800, 60000, 'user1');
+
+    /*
+    startTripartyPriceUpdater('forex.EURUSD/forex.GBPUSD', 1500, 60000);
+    startTripartyPriceUpdater('forex.GBPUSD/forex.GBPUSD', 1500, 60000);
+
     brokerHealth('mt5.ICMarkets', 5000, 1);
     startTotalOpenAmountInfo('EURUSD', 'EURUSD');
-
-    setInterval(() => {
-      const latestPrice = getLatestPrice('user1', 'EURUSD/GBPUSD');
+*/
+    setInterval(async () => {
       const tripartyLatestPrice = getTripartyLatestPrice(
-        'user1',
         'forex.EURUSD/forex.GBPUSD',
       );
-      const maxNotional = getLatestMaxNotional('mt5.ICMarkets');
+      const a1 = await getMT5LatestPrice('EURUSD/GBPUSD', 1000, 5000);
+      const a2 = await getMT5LatestPrice('USDJPY/GBPUSD', 1000, 100_000);
 
-      logger.info(latestPrice);
+      console.log('EURUSD/GBPUSD:', a1);
+      console.log('USDJPY/GBPUSD:', a2);
+
+      //const maxNotional = getLatestMaxNotional('mt5.ICMarkets');
+
+      //logger.info(latestPrice);
+
       logger.info(tripartyLatestPrice);
-      logger.info(maxNotional);
-      logger.info(getTotalOpenAmount('EURUSD', 'EURUSD'));
+      //logger.info(maxNotional);
+      //logger.info(getTotalOpenAmount('EURUSD', 'EURUSD'));
 
       sendRfq(rfq, token);
       counter++;

@@ -1,14 +1,6 @@
-import { config } from '../config';
 import axios from 'axios';
-import NodeCache from 'node-cache';
-
-interface Mt5PriceConfig {
-  cacheHost: string;
-  cachePort: number;
-  cachePassword: string;
-}
-
-const cache = new NodeCache({ stdTTL: 15 * 60 }); // 15 minutes TTL
+import { config } from '../config';
+import { logger } from '../utils/init';
 
 async function retrieveLatestTick(
   symbol: string,
@@ -24,74 +16,63 @@ async function retrieveLatestTick(
   }
 }
 
-async function startMt5PriceWorker(config: Mt5PriceConfig): Promise<void> {
-  console.log(`Mt5Price worker started`);
-}
-
-async function mt5Price(
+function getMT5LatestPrice(
   symbolPair: string,
   updateSpeedMs: number,
-  updateLengthSec: number,
-  userAddress: string,
-): Promise<void> {
-  const jobKey = `mt5PriceJob_${userAddress}_${symbolPair}`;
+  updateLengthMs: number,
+): Promise<{ bid: number; ask: number }> {
+  const [symbol1, symbol2] = symbolPair.split('/');
+  let updateCount = 0;
+  const maxUpdateCount = Math.floor(updateLengthMs / updateSpeedMs);
+  let latestPrice: { bid: number; ask: number } | null = null;
+  let resolvePromise:
+    | ((value: { bid: number; ask: number }) => void)
+    | undefined;
 
-  const workerData = {
-    symbolPair,
-    updateSpeed: updateSpeedMs,
-    updateLength: updateLengthSec,
-    userAddress,
-  };
+  const pricePromise = new Promise<{ bid: number; ask: number }>((resolve) => {
+    resolvePromise = resolve;
+  });
 
-  cache.set(jobKey, workerData, updateLengthSec);
+  const updatePrice = async () => {
+    try {
+      const [tick1, tick2] = await Promise.all([
+        retrieveLatestTick(symbol1),
+        retrieveLatestTick(symbol2),
+      ]);
 
-  const worker = async () => {
-    const { symbolPair, userAddress } = workerData;
-    const [symbol1, symbol2] = symbolPair.split('/');
+      if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
+        const bidRatio = tick1.bid / tick2.bid;
+        const askRatio = tick1.ask / tick2.ask;
 
-    const [tick1, tick2] = await Promise.all([
-      retrieveLatestTick(symbol1),
-      retrieveLatestTick(symbol2),
-    ]);
+        latestPrice = { bid: bidRatio, ask: askRatio };
+        logger.info(latestPrice);
 
-    if (tick1.bid && tick1.ask && tick2.bid && tick2.ask) {
-      const bidRatio = tick1.bid / tick2.bid;
-      const askRatio = tick1.ask / tick2.ask;
+        if (resolvePromise) {
+          resolvePromise(latestPrice);
+          resolvePromise = undefined;
+        }
+      } else {
+        logger.error(
+          `Invalid tick data for ${symbolPair}: ${JSON.stringify(tick1)}, ${JSON.stringify(tick2)}`,
+        );
+      }
+    } catch (error) {
+      logger.error(`Error updating price for ${symbolPair}:`, error);
+    }
 
-      cache.set(`${userAddress}_${symbolPair}`, {
-        bid: bidRatio,
-        ask: askRatio,
-      });
+    updateCount++;
+    if (updateCount >= maxUpdateCount) {
+      clearInterval(updateWorker);
     }
   };
 
-  const intervalId = setInterval(worker, updateSpeedMs);
+  const updateWorker = setInterval(updatePrice, updateSpeedMs);
 
-  setTimeout(() => {
-    clearInterval(intervalId);
-    cache.del(jobKey);
-  }, updateLengthSec * 1000);
+  if (latestPrice) {
+    return Promise.resolve(latestPrice);
+  } else {
+    return pricePromise;
+  }
 }
 
-function getLatestPrice(
-  userAddress: string,
-  symbolPair: string,
-): { bid: number; ask: number } | undefined {
-  const key = `${userAddress}_${symbolPair}`;
-  return cache.get(key);
-}
-
-async function initMt5PriceWorker(): Promise<void> {
-  cache.flushAll();
-  console.log('Mt5Price worker initialized. All pairs and jobs cleared.');
-}
-
-startMt5PriceWorker(config)
-  .then(() => {
-    console.log('Mt5Price worker started successfully');
-  })
-  .catch((error) => {
-    console.error('Error starting Mt5Price worker:', error);
-  });
-
-export { mt5Price, getLatestPrice, initMt5PriceWorker };
+export { getMT5LatestPrice };

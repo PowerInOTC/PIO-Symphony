@@ -11,7 +11,10 @@ import {
   startTotalOpenAmountInfo,
   getTotalOpenAmount,
 } from '../broker/totalOpenAmountModule';
-import { tripartyPrice, getTripartyLatestPrice } from '../broker/tripartyPrice';
+import {
+  startTripartyPriceUpdater,
+  getTripartyLatestPrice,
+} from '../broker/tripartyPrice';
 
 const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   const checkRFQ: rfqCheck = {
@@ -237,14 +240,12 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
 
   checkRFQ.checkMarketIsOpen = true;
 
-  tripartyPrice(
+  startTripartyPriceUpdater(
     `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
     800,
     60000,
-    'user1',
   );
   const tripartyLatestPrice = getTripartyLatestPrice(
-    'user1',
     `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
   );
 
