@@ -7,23 +7,13 @@ import {
 } from '@pionerfriends/api-client';
 import dotenv from 'dotenv';
 import { getMT5LatestPrice } from './broker/mt5Price';
-import {
-  startTripartyPriceUpdater,
-  getTripartyLatestPrice,
-} from './broker/tripartyPrice';
-import {
-  brokerHealth,
-  getLatestMaxNotional,
-} from './broker/brokerHealthModule';
-import {
-  startTotalOpenAmountInfo,
-  getTotalOpenAmount,
-} from './broker/totalOpenAmountModule';
+import { getTripartyLatestPrice } from './broker/tripartyPrice';
+import { getLatestMaxNotional } from './broker/brokerHealthModule';
+import { getTotalOpenAmount } from './broker/totalOpenAmountModule';
 
 import { adjustQuantities, getPairConfig } from './configBuilder/configRead';
 import { calculatePairPrices } from './forSDK';
 import { logger } from './utils/init';
-dotenv.config();
 
 import { wallet } from './utils/init';
 import { config } from './config';
@@ -130,20 +120,27 @@ async function bullExample(): Promise<void> {
     startTotalOpenAmountInfo('EURUSD', 'EURUSD');
 */
     setInterval(async () => {
-      const tripartyLatestPrice = getTripartyLatestPrice(
-        'forex.EURUSD/forex.GBPUSD',
-      );
       const a1 = await getMT5LatestPrice('EURUSD/GBPUSD', 1000, 5000);
       const a2 = await getMT5LatestPrice('USDJPY/GBPUSD', 1000, 100_000);
-
-      console.log('EURUSD/GBPUSD:', a1);
-      console.log('USDJPY/GBPUSD:', a2);
+      const a3 = await getTripartyLatestPrice(
+        'forex.EURUSD/forex.GBPUSD',
+        1000,
+        5000,
+      );
+      const a4 = await getTripartyLatestPrice(
+        'forex.GBPUSD/forex.USDJPY',
+        1000,
+        5000,
+      );
+      logger.info('EURUSD/GBPUSD:', a1);
+      logger.info('USDJPY/GBPUSD:', a2);
+      logger.info('forex.EURUSD/forex.GBPUSD:', a3);
+      logger.info('forex.GBPUSD/forex.USDJPY:', a4);
 
       //const maxNotional = getLatestMaxNotional('mt5.ICMarkets');
 
       //logger.info(latestPrice);
 
-      logger.info(tripartyLatestPrice);
       //logger.info(maxNotional);
       //logger.info(getTotalOpenAmount('EURUSD', 'EURUSD'));
 
