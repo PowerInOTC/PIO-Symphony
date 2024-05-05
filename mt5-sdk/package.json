@@ -23,11 +23,13 @@
     "axios-cache-interceptor": "^1.5.2",
     "bullmq": "^5.7.6",
     "dotenv": "^16.4.5",
+    "ethers": "5.7",
     "node-cache": "^5.1.2",
     "pino": "^8.21.0",
     "pino-pretty": "^11.0.0",
     "redis": "^4.6.13",
-    "viem": "^2.9.28"
+    "viem": "^2.9.28",
+    "web3": "4.8.0"
   },
   "peerDependencies": {
     "@types/node": "^20.11.25"
