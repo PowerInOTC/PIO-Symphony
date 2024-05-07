@@ -7,7 +7,8 @@ import {
   RfqWebsocketClient,
   getPayloadAndLogin,
   getSignedWrappedOpenQuotes,
-  sendSignedFillOpenQuote.
+  sendSignedFillOpenQuote,
+  SignedFillOpenQuoteRequest,
   signedWrappedOpenQuoteResponse,
 } from '@pionerfriends/api-client';
 import { Worker } from 'bullmq';
@@ -16,7 +17,10 @@ import { signOpenToFill } from './signOpenToFill';
 import { logger, rfqQueue, wallet } from '../utils/init';
 import { sendErrorToTelegram } from '../utils/telegram';
 
-async function processQuotes(start: number, token: string): Promise<void> {
+export async function processQuotes(
+  start: number,
+  token: string,
+): Promise<void> {
   try {
     const response = await getSignedWrappedOpenQuotes(
       '1.0',
@@ -42,6 +46,30 @@ async function processQuotes(start: number, token: string): Promise<void> {
   } catch (error) {
     console.error('Error processing quotes:', error);
   }
+}
+
+export function startSignedOpenWorker(token: string): void {
+  new Worker(
+    'signedOpen',
+    async (job) => {
+      try {
+        const data: signedWrappedOpenQuoteResponse = job.data;
+        logger.info(`Signed Open: ${JSON.stringify(data)}`);
+        const fill: SignedFillOpenQuoteRequest = await signOpenToFill(data);
+        sendSignedFillOpenQuote(fill, token);
+      } catch {
+        logger.error(`Error processing job: ${Error}`);
+      }
+    },
+    {
+      connection: {
+        host: config.bullmqRedisHost,
+        port: config.bullmqRedisPort,
+        password: config.bullmqRedisPassword,
+      },
+      removeOnComplete: { count: 0 },
+    },
+  );
 }
 
 async function index(): Promise<void> {
@@ -86,7 +114,7 @@ async function index(): Promise<void> {
       },
     );
 
-    const startInitial = Date.now();
+    const startInitial = 1714897507 * 1000;
     processQuotes(startInitial, token);
   } catch (error: any) {
     sendErrorToTelegram(error);

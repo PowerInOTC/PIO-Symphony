@@ -132,10 +132,10 @@ async function bullExample(): Promise<void> {
         1000,
         5000,
       );
-      logger.info('EURUSD/GBPUSD:', a1);
-      logger.info('USDJPY/GBPUSD:', a2);
-      logger.info('forex.EURUSD/forex.GBPUSD:', a3);
-      logger.info('forex.GBPUSD/forex.USDJPY:', a4);
+      console.log('EURUSD/GBPUSD:', a1);
+      console.log('USDJPY/GBPUSD:', a2);
+      console.log('forex.EURUSD/forex.GBPUSD:', a3);
+      console.log('forex.GBPUSD/forex.USDJPY:', a4);
 
       //const maxNotional = getLatestMaxNotional('mt5.ICMarkets');
 

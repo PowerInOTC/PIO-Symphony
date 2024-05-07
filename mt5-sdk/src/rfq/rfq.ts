@@ -2,11 +2,9 @@ import { RfqResponse, QuoteRequest } from '@pionerfriends/api-client';
 import { createClient, RedisClientType, SetOptions } from 'redis';
 import { config } from '../config';
 import { redisClient } from '../utils/init';
-import { getFieldFromAsset, getPairConfig } from '../configBuilder/configRead';
 import { rfqCheck } from '../types/rfqCheck';
 import { logger } from '../utils/init';
 import { checkRFQCore } from './checkRfq';
-//import { getMT5LatestPrice, startMT5PriceUpdater } from '../broker/mt5Price';
 
 const RFQ_CHECK_PREFIX = 'rfqCheck:';
 
@@ -14,14 +12,24 @@ const verifyCheckRFQ = (checkRFQ: rfqCheck): boolean => {
   const checkProperties = Object.entries(checkRFQ).filter(([key]) =>
     key.startsWith('check'),
   );
-  logger.info(checkProperties, 'checkProperties');
+  //logger.info(checkProperties, 'checkProperties');
   return checkProperties.every(([, value]) => value === true);
+};
+
+const printFalseChecks = (checkRFQ: rfqCheck) => {
+  Object.entries(checkRFQ).forEach(([key, value]) => {
+    if (key.startsWith('check') && value === false) {
+      logger.info(key);
+    }
+  });
 };
 
 const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
   const checkRFQ = await getCheckRFQ(rfq);
-  logger.info(checkRFQ, 'checkRFQ');
+  printFalseChecks(checkRFQ);
+
   const isRFQValid = verifyCheckRFQ(checkRFQ);
+
   const latestPrice = 0; //getMT5LatestPrice(`${checkRFQ.assetAId}/${checkRFQ.assetBId}`,);
 
   if (isRFQValid) {
@@ -80,8 +88,6 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
       checkRFQ.lTimelockA === parseFloat(rfq.lTimelockA) &&
       checkRFQ.lTimelockB === parseFloat(rfq.lTimelockB)
     ) {
-      logger.info('RFQ is cached');
-
       return checkRFQ;
     }
   }
@@ -94,7 +100,6 @@ const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
   };
 
   await redisClient.set(cacheKey, JSON.stringify(checkRFQ), setOptions);
-  logger.info('RFQ is not cached');
 
   return checkRFQ;
 };

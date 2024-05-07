@@ -61,7 +61,7 @@ async function testSignCloseQuote() {
     bContractId: bContractId,
     price: price,
     amount: amount,
-    limitOrStop: limitOrStop,
+    limitOrStop: ethers.BigNumber.from(limitOrStop),
     expiry: expiry,
     authorized: authorized,
     nonce: nonce,

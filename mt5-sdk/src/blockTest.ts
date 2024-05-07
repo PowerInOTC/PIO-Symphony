@@ -7,14 +7,8 @@ import {
   web3Client,
 } from './utils/init';
 import { parseUnits } from 'viem';
-import {
-  mintFUSD,
-  getMintFUSD,
-  allowance,
-  getAllowance,
-  deposit,
-  getBalance,
-} from './blockchain/write';
+import { mintFUSD, allowance, deposit } from './blockchain/write';
+import { getBalance, getAllowance, getMintFUSD } from './blockchain/read';
 
 async function test() {
   const amount = parseUnits('10000', 18);
