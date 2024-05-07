@@ -6,16 +6,37 @@ interface SymphonyJSON {
   assets: Asset[];
 }
 
-function processSymphonyJSON(symphonyJSONPath: string): Asset[] {
+export function processSymphonyJSON(symphonyJSONPath: string): Asset[] {
   const rawData = fs.readFileSync(symphonyJSONPath, 'utf-8');
   const jsonData: SymphonyJSON = JSON.parse(rawData);
   return jsonData.assets;
 }
 
 const symphonyJSONPath = './symphony.json';
-const symbolList: Asset[] = processSymphonyJSON(symphonyJSONPath);
+export const symbolList: Asset[] = processSymphonyJSON(symphonyJSONPath);
+let symbolCache: Set<string> = new Set();
+let symbolCacheTimestamp: number = 0;
 
-function getFieldFromAsset(
+export function isValidSymbol(symbol: string): boolean {
+  if (symbolCache.has(symbol)) {
+    return true;
+  }
+
+  const asset = symbolList.find((a) => a.proxyTicker === symbol);
+  if (asset) {
+    symbolCache.add(symbol);
+    return true;
+  }
+
+  return false;
+}
+
+export function verifySymbols(input: string): boolean {
+  const symbols = input.split('/');
+  return symbols.every((symbol) => isValidSymbol(symbol));
+}
+
+export function getFieldFromAsset(
   broker: string,
   proxyTicker: string,
   side: string,
@@ -38,11 +59,20 @@ function getFieldFromAsset(
   return undefined;
 }
 
-function findAssetByProxyTicker(proxyTicker: string): Asset | undefined {
+export function getMT5Ticker(proxyTicker: string): string | undefined {
+  const asset = symbolList.find((a) => a.proxyTicker === proxyTicker);
+  if (asset) {
+    return asset.mt5Ticker;
+  }
+  logger.warn(`Asset not listed: ${proxyTicker}`);
+  return undefined;
+}
+
+export function findAssetByProxyTicker(proxyTicker: string): Asset | undefined {
   return symbolList.find((a) => a.proxyTicker === proxyTicker);
 }
 
-function getAllocatedBroker(proxyTicker: string): string | undefined {
+export function getAllocatedBroker(proxyTicker: string): string | undefined {
   const asset = symbolList.find((a) => a.proxyTicker === proxyTicker);
   if (!asset) {
     return undefined;
@@ -50,14 +80,14 @@ function getAllocatedBroker(proxyTicker: string): string | undefined {
   return asset.broker;
 }
 
-function getAllProxyTickers(): string[] {
+export function getAllProxyTickers(): string[] {
   if (!Array.isArray(symbolList)) {
     throw new Error('symbolList is not an array');
   }
   return symbolList.map((a) => a.proxyTicker);
 }
 
-function writeProxyTickersToFile(): void {
+export function writeProxyTickersToFile(): void {
   if (!Array.isArray(symbolList)) {
     throw new Error('symbolList is not an array');
   }
@@ -100,7 +130,7 @@ function writeProxyTickersToFile(): void {
   fs.writeFileSync(filename, json);
 }
 
-function getMaxNotionalForMaxLeverage(
+export function getMaxNotionalForMaxLeverage(
   proxyTicker: string,
   side: string,
   maxLeverage: number,
@@ -120,7 +150,7 @@ function getMaxNotionalForMaxLeverage(
   return undefined;
 }
 
-function adjustQuantities(
+export function adjustQuantities(
   bid: number,
   ask: number,
   sQuantity: number,
@@ -169,7 +199,7 @@ function adjustQuantities(
   return { sQuantity, lQuantity };
 }
 
-function getPairConfig(
+export function getPairConfig(
   tickerA: string,
   tickerB: string,
   side: string,
@@ -250,12 +280,3 @@ function getPairConfig(
 
   return config;
 }
-
-export {
-  getFieldFromAsset,
-  getPairConfig,
-  getAllProxyTickers,
-  adjustQuantities,
-  writeProxyTickersToFile,
-  getAllocatedBroker,
-};

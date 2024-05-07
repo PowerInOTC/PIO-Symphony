@@ -237,16 +237,10 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
 
   checkRFQ.checkMarketIsOpen = true;
 
-  getTripartyLatestPrice(
-    `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
-    800,
-    60000,
-  );
+  getTripartyLatestPrice(`${checkRFQ.assetAId}/${checkRFQ.assetAId}`);
 
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
-    1000,
-    5000,
   );
   if (
     tripartyLatestPrice != null &&

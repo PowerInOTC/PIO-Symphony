@@ -113,30 +113,24 @@ async function bullExample(): Promise<void> {
     let counter = 0;
 
     /*
-    startTripartyPriceUpdater('forex.EURUSD/forex.GBPUSD', 1500, 60000);
-    startTripartyPriceUpdater('forex.GBPUSD/forex.GBPUSD', 1500, 60000);
+
 
     brokerHealth('mt5.ICMarkets', 5000, 1);
     startTotalOpenAmountInfo('EURUSD', 'EURUSD');
 */
+
     setInterval(async () => {
-      const a1 = await getMT5LatestPrice('EURUSD/GBPUSD', 1000, 5000);
-      const a2 = await getMT5LatestPrice('USDJPY/GBPUSD', 1000, 100_000);
-      const a3 = await getTripartyLatestPrice(
-        'forex.EURUSD/forex.GBPUSD',
-        1000,
-        5000,
-      );
-      const a4 = await getTripartyLatestPrice(
-        'forex.GBPUSD/forex.USDJPY',
-        1000,
-        5000,
-      );
+      logger.info('counter:', counter);
+
+      const a1 = await getMT5LatestPrice('forex.EURUSD/forex.GBPUSD');
+      const a2 = await getMT5LatestPrice('forex.EURUSD/forex.GBPUSD');
+      const a4 = await getTripartyLatestPrice('forex.GBPSD/forex.USDJPY');
+      const a3 = await getTripartyLatestPrice('forex.EURUSD/forex.GBPUSD');
       console.log('EURUSD/GBPUSD:', a1);
       console.log('USDJPY/GBPUSD:', a2);
       console.log('forex.EURUSD/forex.GBPUSD:', a3);
       console.log('forex.GBPUSD/forex.USDJPY:', a4);
-
+      /*  
       //const maxNotional = getLatestMaxNotional('mt5.ICMarkets');
 
       //logger.info(latestPrice);
@@ -144,7 +138,7 @@ async function bullExample(): Promise<void> {
       //logger.info(maxNotional);
       //logger.info(getTotalOpenAmount('EURUSD', 'EURUSD'));
 
-      sendRfq(rfq, token);
+      sendRfq(rfq, token);*/
       counter++;
     }, 1000);
   } catch (error: any) {
