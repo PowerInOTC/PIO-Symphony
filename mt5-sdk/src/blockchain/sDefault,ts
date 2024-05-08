@@ -2,7 +2,7 @@ import { getPionSignature } from '@pionerfriends/api-client';
 import { updatePriceAndDefault } from './write';
 import { BOracle, BContract } from '@pionerfriends/blockchain-client';
 import { getbContract, getbOracle } from './read';
-import { convertFromBytes32 } from '../utils/eip712';
+import { convertFromBytes32 } from '../utils/ethersUtils';
 import { getTripartyLatestPrice } from '../broker/tripartyPrice';
 import { token } from '../test';
 import { PionResult, pionSignType } from './types';

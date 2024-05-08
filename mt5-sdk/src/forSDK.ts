@@ -46,9 +46,6 @@ async function calculatePairPrices(
           //logger.info(`${pair} - bid: ${bid}, ask: ${ask}`);
         } else {
           pairPrices[pair] = { bid: 0, ask: 0 };
-          logger.warn(
-            `Unable to retrieve prices for pair: ${pair}. Setting bid and ask to 0.`,
-          );
         }
       }
     } else {

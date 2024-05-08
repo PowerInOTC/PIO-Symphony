@@ -10,6 +10,7 @@ import { getMT5LatestPrice } from './broker/mt5Price';
 import { getTripartyLatestPrice } from './broker/tripartyPrice';
 import { getBrokerMaxNotional } from './broker/brokerMaxNotional';
 import { getTotalOpenAmount } from './broker/totalOpenAmountModule';
+import { minAmountSymbol } from './broker/minAmount';
 
 import { adjustQuantities, getPairConfig } from './configBuilder/configRead';
 import { calculatePairPrices } from './forSDK';
@@ -117,10 +118,12 @@ async function bullExample(): Promise<void> {
 
     brokerHealth('mt5.ICMarkets', 5000, 1);
     startTotalOpenAmountInfo('EURUSD', 'EURUSD');
-*/ const maxNotional = await getBrokerMaxNotional('mt5.ICMarkets');
-    console.log('maxNotional:', maxNotional);
+*/
 
     setInterval(async () => {
+      const a1 = await minAmountSymbol('forex.EURUSD/forex.GBPUSD');
+      console.log('EURUSD/GBPUSD:', a1);
+
       logger.info('counter:', counter);
 
       /*
@@ -138,7 +141,7 @@ async function bullExample(): Promise<void> {
 
       sendRfq(rfq, token);*/
       counter++;
-    }, 1000);
+    }, 100);
   } catch (error: any) {
     if (error instanceof Error) {
       logger.error(error);

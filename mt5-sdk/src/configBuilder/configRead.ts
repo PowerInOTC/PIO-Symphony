@@ -17,6 +17,15 @@ export const symbolList: Asset[] = processSymphonyJSON(symphonyJSONPath);
 let symbolCache: Set<string> = new Set();
 let symbolCacheTimestamp: number = 0;
 
+export function getBrokerFromAsset(proxyTicker: string): string | undefined {
+  const asset = symbolList.find((a) => a.proxyTicker === proxyTicker);
+  if (asset) {
+    return asset.broker;
+  }
+  logger.warn(`Asset not listed: ${proxyTicker}`);
+  return undefined;
+}
+
 export function isValidSymbol(symbol: string): boolean {
   if (symbolCache.has(symbol)) {
     return true;

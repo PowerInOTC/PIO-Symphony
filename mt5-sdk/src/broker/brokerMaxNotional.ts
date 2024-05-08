@@ -1,67 +1,84 @@
-import { retrieveMaxNotional } from './dispatcher';
+import axios from 'axios';
+import { config } from '../config';
+import { logger } from '../utils/init';
 
-const maxNotionalCache: {
-  [broker: string]: { expiration: number; maxNotional?: number };
-} = {};
+interface CacheItem {
+  expiration: number;
+  cached?: number;
+}
+
+const brokerCache: { [broker: string]: CacheItem } = {};
+
+async function fetchMaxNotional(broker: string): Promise<number> {
+  switch (broker) {
+    case 'mt5.ICMarkets':
+      try {
+        return (await axios.get(`${config.apiBaseUrl}/retrieve_max_notional`))
+          .data.max_notional;
+      } catch (error) {
+        logger.error('Error retrieving max notional:', error);
+        return 0;
+      }
+    default:
+      logger.error('Unsupported broker for retrieveMaxNotional');
+      return 0;
+  }
+}
+
+function startOrUpdateBroker(broker: string, expirationTime: number): void {
+  brokerCache[broker] = {
+    expiration: expirationTime,
+    cached: brokerCache[broker]?.cached,
+  };
+}
 
 async function getBrokerMaxNotional(broker: string): Promise<number> {
   const currentTime = Date.now();
-  const expirationTime = currentTime + 60000; // Cache expiration time: 1 minute
+  const expirationTime = currentTime + 10000;
 
-  if (
-    maxNotionalCache[broker] &&
-    maxNotionalCache[broker].expiration >= currentTime
-  ) {
-    return maxNotionalCache[broker].maxNotional!;
+  if (brokerCache[broker] && brokerCache[broker].cached !== undefined) {
+    startOrUpdateBroker(broker, expirationTime);
+    return brokerCache[broker].cached!;
   }
 
-  const maxNotional = await retrieveMaxNotional(broker);
+  const maxNotional = await fetchMaxNotional(broker);
+  startOrUpdateBroker(broker, expirationTime);
+  brokerCache[broker].cached = maxNotional;
 
-  // Remove the broker from the cache if the API returns 0 (indicating an error or unsupported broker)
   if (maxNotional === 0) {
-    delete maxNotionalCache[broker];
-  } else {
-    maxNotionalCache[broker] = { expiration: expirationTime, maxNotional };
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    return getBrokerMaxNotional(broker);
   }
 
   return maxNotional;
 }
 
-async function updateMaxNotionalCache(): Promise<void> {
-  const updateMaxNotionals = async (retryCount = 0): Promise<void> => {
-    try {
-      const currentTime = Date.now();
-      for (const broker in maxNotionalCache) {
-        const maxNotional = await retrieveMaxNotional(broker);
+async function updateCacheData(): Promise<void> {
+  const currentTime = Date.now();
 
-        // Remove the broker from the cache if the API returns 0 (indicating an error or unsupported broker)
-        if (maxNotional === 0) {
-          delete maxNotionalCache[broker];
-        } else {
-          maxNotionalCache[broker] = {
-            maxNotional,
-            expiration: currentTime + 60000, // Cache expiration time: 1 minute
-          };
+  const updateMaxNotional = async (retryCount = 0): Promise<void> => {
+    try {
+      for (const broker in brokerCache) {
+        if (brokerCache[broker].expiration > currentTime) {
+          const maxNotional = await fetchMaxNotional(broker);
+          brokerCache[broker].cached = maxNotional;
         }
       }
     } catch (error) {
-      console.error('Error updating max notional cache:', error);
+      logger.error('Error updating cache data:', error);
       if (retryCount < 3) {
-        console.info(
-          `Retrying updateMaxNotionalCache (attempt ${retryCount + 1})...`,
-        );
+        logger.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        await updateMaxNotionals(retryCount + 1);
+        await updateMaxNotional(retryCount + 1);
       } else {
-        console.error(
-          'Max retry attempts reached. Skipping max notional cache update.',
-        );
+        logger.error('Max retry attempts reached. Skipping cache update.');
       }
     }
   };
-  await updateMaxNotionals();
+
+  await updateMaxNotional();
 }
 
-setInterval(updateMaxNotionalCache, 10000); // Update cache every 10 seconds
+setInterval(updateCacheData, 2000);
 
 export { getBrokerMaxNotional };

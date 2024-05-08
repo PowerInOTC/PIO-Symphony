@@ -6,7 +6,7 @@ import {
 import { config } from '../config';
 import { ethers } from 'ethers';
 import { checkRFQCore } from '../rfq/checkRfq';
-import { extractSymbolFromAssetHex } from '../utils/eip712';
+import { extractSymbolFromAssetHex } from '../utils/ethersUtils';
 const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
 
 export interface checkFillSign {
