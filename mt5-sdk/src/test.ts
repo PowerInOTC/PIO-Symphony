@@ -8,7 +8,7 @@ import {
 import dotenv from 'dotenv';
 import { getMT5LatestPrice } from './broker/mt5Price';
 import { getTripartyLatestPrice } from './broker/tripartyPrice';
-import { getLatestMaxNotional } from './broker/brokerHealthModule';
+import { getBrokerMaxNotional } from './broker/brokerMaxNotional';
 import { getTotalOpenAmount } from './broker/totalOpenAmountModule';
 
 import { adjustQuantities, getPairConfig } from './configBuilder/configRead';
@@ -117,19 +117,17 @@ async function bullExample(): Promise<void> {
 
     brokerHealth('mt5.ICMarkets', 5000, 1);
     startTotalOpenAmountInfo('EURUSD', 'EURUSD');
-*/
+*/ const maxNotional = await getBrokerMaxNotional('mt5.ICMarkets');
+    console.log('maxNotional:', maxNotional);
 
     setInterval(async () => {
       logger.info('counter:', counter);
 
+      /*
       const a1 = await getMT5LatestPrice('forex.EURUSD/forex.GBPUSD');
-      const a2 = await getMT5LatestPrice('forex.EURUSD/forex.GBPUSD');
       const a4 = await getTripartyLatestPrice('forex.GBPSD/forex.USDJPY');
-      const a3 = await getTripartyLatestPrice('forex.EURUSD/forex.GBPUSD');
       console.log('EURUSD/GBPUSD:', a1);
-      console.log('USDJPY/GBPUSD:', a2);
-      console.log('forex.EURUSD/forex.GBPUSD:', a3);
-      console.log('forex.GBPUSD/forex.USDJPY:', a4);
+      console.log('forex.GBPUSD/forex.USDJPY:', a4);*/
       /*  
       //const maxNotional = getLatestMaxNotional('mt5.ICMarkets');
 

@@ -12,6 +12,7 @@ import {
   networks,
   FakeUSD,
   PionerV1Compliance,
+  PionerV1View,
 } from '@pionerfriends/blockchain-client';
 import { config } from '../config';
 import { createClient, RedisClientType } from 'redis';
@@ -94,6 +95,10 @@ const pionerV1WrapperContract: ChainContracts = {
   64165: networks.sonic.contracts.PionerV1Wrapper,
   64156: networks.fuji.contracts.PionerV1Wrapper,
 };
+const pionerV1ViewContract: ChainContracts = {
+  64165: networks.sonic.contracts.PionerV1View,
+  64156: networks.fuji.contracts.PionerV1View,
+};
 
 const account = privateKeyToAccount(
   config.privateKeys?.split(',')[0] as Address,
@@ -153,6 +158,7 @@ export {
   pionerV1CloseContract,
   pionerV1DefaultContract,
   pionerV1WrapperContract,
+  pionerV1ViewContract,
   chains,
   chainName,
   account,

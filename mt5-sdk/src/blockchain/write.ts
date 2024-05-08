@@ -22,6 +22,7 @@ import {
   BOracleSignValueType,
   openQuoteSignValueType,
   closeQuoteSignValueType,
+  pionSignType,
 } from './types';
 import Web3 from 'web3';
 
@@ -165,6 +166,25 @@ export async function settleClose(
     abi: PionerV1Wrapper.abi,
     functionName: 'wrapperCloseLimitMM',
     args: [openCloseQuoteValue, signatureCloseQuote],
+    account: accounts[accountId],
+  });
+
+  const hash = await wallets[accountId].writeContract(request);
+  return hash;
+}
+
+export async function updatePriceAndDefault(
+  priceSignature: pionSignType,
+  bOracleId: bigint,
+  bContractId: bigint,
+  accountId: number,
+  chainId: number,
+) {
+  const { request } = await web3Client.simulateContract({
+    address: pionerV1WrapperContract[chainId] as Address,
+    abi: PionerV1Wrapper.abi,
+    functionName: 'wrapperUpdatePriceAndDefault',
+    args: [priceSignature, bOracleId, bContractId],
     account: accounts[accountId],
   });
 

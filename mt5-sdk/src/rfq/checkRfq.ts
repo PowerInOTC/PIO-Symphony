@@ -3,10 +3,7 @@ import { getPairConfig } from '../configBuilder/configRead';
 import { rfqCheck } from '../types/rfqCheck';
 import { getAllocatedBroker } from '../configBuilder/configRead';
 import { get } from 'http';
-import {
-  brokerHealth,
-  getLatestMaxNotional,
-} from '../broker/brokerHealthModule';
+import { getBrokerMaxNotional } from '../broker/brokerMaxNotional';
 import {
   startTotalOpenAmountInfo,
   getTotalOpenAmount,
