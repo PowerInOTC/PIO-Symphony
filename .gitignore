@@ -53,5 +53,6 @@ build/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+myenv/
 *.py[cod]
 *$py.class

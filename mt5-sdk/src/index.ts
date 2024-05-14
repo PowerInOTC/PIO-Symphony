@@ -9,17 +9,16 @@ import {
 import { config } from './config';
 import { logger, rfqQueue, wallet } from './utils/init';
 import { sendErrorToTelegram } from './utils/telegram';
-import { startSignedOpenWorker, processQuotes } from './signers/openSign';
-import { startRfqWorker } from './rfq/bullRfq';
+import { startSignedOpenWorker, processOpenQuotes } from './signers/openSign';
+import { startRfqWorker } from './rfq/rfqWorker';
+import { getToken } from './utils/init';
 
 async function index(): Promise<void> {
   try {
-    const token = await getPayloadAndLogin(wallet);
-    if (!wallet || !token) {
-      console.log('login failed');
-      return;
-    }
+    const token = await getToken();
 
+    /*** RFQ  */
+    /*
     const websocketClient = new RfqWebsocketClient(
       (message: RfqResponse) => {
         rfqQueue.add('rfq', message);
@@ -30,12 +29,20 @@ async function index(): Promise<void> {
     );
 
     await websocketClient.startWebSocket(token);
-
-    startSignedOpenWorker(token);
     //startRfqWorker(token);
 
-    const startInitial = Date.now();
-    processQuotes(startInitial, token);
+    */
+    /*** SignOpen  */
+    startSignedOpenWorker(token);
+    const startInitial = 1714897507 * 1000;
+    processOpenQuotes(startInitial, token);
+
+    /*** SignClose  */
+
+    /*** Settlement  */
+
+    /***  */
+    //
   } catch (error: any) {
     sendErrorToTelegram(error);
   }

@@ -1,5 +1,5 @@
 import { getPrices } from '@pionerfriends/api-client';
-import { logger } from './utils/init';
+import { logger } from './init';
 
 async function calculatePairPrices(
   pairs: string[],

@@ -234,8 +234,6 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
 
   checkRFQ.checkMarketIsOpen = true;
 
-  getTripartyLatestPrice(`${checkRFQ.assetAId}/${checkRFQ.assetAId}`);
-
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
   );

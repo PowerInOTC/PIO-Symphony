@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hedger Dashboard</title>
+    <style>
+      body {
+        background-color: #1c1c1e;
+        color: #ffffff;
+        font-family: Arial, sans-serif;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .logo {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .logo svg {
+        width: 100px;
+        height: 100px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #333333;
+        width: 20%;
+        word-wrap: break-word;
+      }
+
+      .upnl-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .upnl-item {
+        background-color: #2c2c2e;
+        padding: 10px;
+        border-radius: 5px;
+        width: 30%;
+        text-align: center;
+      }
+
+      .arrow {
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        margin: 0 10px;
+      }
+
+      .arrow-left {
+        border-right: 10px solid #ffffff;
+      }
+
+      .arrow-right {
+        border-left: 10px solid #ffffff;
+      }
+
+      .green {
+        color: rgb(147, 250, 147);
+      }
+
+      .red {
+        color: #ffb0b0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hedger#1 Dashboard</h1>
+    <div class="logo">
+      <svg
+        width="100"
+        height="100"
+        viewBox="0 0 212 212"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M212 106C212 164.569 164.539 212 106.066 212C97.0192 212 88.3661 210.952 80.1064 208.855C80.8056 208.855 81.5049 208.855 82.2041 208.855C124.158 208.855 158.115 174.92 158.115 132.991C158.115 91.063 124.158 57.1273 82.2041 57.1273C40.2499 57.1273 6.29313 91.063 6.29313 132.991C6.29313 136.835 6.55535 140.591 7.07978 144.26C2.49103 132.467 0 119.496 0 106C0 47.5625 47.4607 0 106.066 0C164.539 0 212 47.5625 212 106ZM200.856 106C200.856 53.7207 158.377 11.2682 106.066 11.2682C76.9598 11.2682 51.0006 24.3708 33.5634 44.9419C50.0829 30.9221 71.4533 22.5365 94.7904 22.5365C147.102 22.5365 189.581 64.9889 189.581 117.268C189.581 140.591 181.059 161.948 167.161 178.457C187.745 161.031 200.856 135.088 200.856 106Z"
+          fill="url(#paint0_linear_127_64)"
+        />
+        <defs>
+          <linearGradient
+            id="paint0_linear_127_64"
+            x1="-0.0445805"
+            y1="213.069"
+            x2="-0.0445805"
+            y2="7.5484"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0.146" stop-color="#A97100" />
+            <stop offset="0.822" stop-color="#EDE46E" />
+            <stop offset="1" stop-color="#DEC53F" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <div class="upnl-container">
+      <div class="upnl-item">
+        <h3>MT5 Account UPNL</h3>
+        <p id="mt5-upnl"></p>
+      </div>
+      <div class="arrow arrow-right"></div>
+      <div class="upnl-item">
+        <h3>Hedger Earnings</h3>
+        <p id="sum-upnl"></p>
+      </div>
+      <div class="arrow arrow-left"></div>
+      <div class="upnl-item">
+        <h3>On-Chain Trades UPNL</h3>
+        <p id="onchain-upnl"></p>
+      </div>
+    </div>
+
+    <table id="trades-table">
+      <thead>
+        <tr>
+          <th>Trade Id</th>
+          <th>Symbol</th>
+          <th>Volume</th>
+          <th>MT5 Delta Neutral Hedge Open Price</th>
+          <th>On-Chain Open Price</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      const tradesTable = document.getElementById("trades-table");
+      const tradesTableBody = tradesTable.querySelector("tbody");
+      const mt5UpnlElement = document.getElementById("mt5-upnl");
+      const sumUpnlElement = document.getElementById("sum-upnl");
+      const onchainUpnlElement = document.getElementById("onchain-upnl");
+
+      function updateOpenTrades() {
+        fetch("/open_positions")
+          .then((response) => response.json())
+          .then((positions) => {
+            tradesTableBody.innerHTML = "";
+
+            positions.forEach((position) => {
+              const row = document.createElement("tr");
+              const mt5OpenPriceClass = position.type === 0 ? "green" : "red";
+              const onchainOpenPriceClass =
+                position.type === 0 ? "red" : "green";
+              row.innerHTML = `
+                <td>${position.comment}</td>
+                <td>${position.symbol}</td>
+                <td>${position.volume}</td>
+                <td class="${mt5OpenPriceClass}">${position.open_price}</td>
+                <td class="${onchainOpenPriceClass}">${
+                position.open_price * 1.0001
+              }</td>
+              `;
+              tradesTableBody.appendChild(row);
+            });
+          });
+      }
+
+      function updateUpnl() {
+        fetch("/mt5_upnl")
+          .then((response) => response.json())
+          .then((data) => {
+            mt5UpnlElement.textContent = data.mt5_upnl;
+            sumUpnlElement.textContent = data.sum_upnl;
+            onchainUpnlElement.textContent = data.onchain_upnl;
+          });
+      }
+
+      // Update open trades and UPNL every 1 second
+      setInterval(updateOpenTrades, 1000);
+      setInterval(updateUpnl, 1000);
+    </script>
+  </body>
+</html>

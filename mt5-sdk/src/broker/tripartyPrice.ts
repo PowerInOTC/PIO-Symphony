@@ -2,8 +2,8 @@ import axios from 'axios';
 import { config } from '../config';
 import { logger } from '../utils/init';
 import { getPrices, PricesResponse } from '@pionerfriends/api-client';
-import { token } from '../test';
 import { verifySymbols } from '../configBuilder/configRead';
+import { getToken } from '../utils/init';
 
 interface CacheData {
   bid: number;
@@ -18,6 +18,7 @@ interface CacheItem {
 const pairCache: { [pair: string]: CacheItem } = {};
 
 async function fetchCacheData(pair: string): Promise<CacheData> {
+  const token = await getToken();
   const [symbol1, symbol2] = pair.split('/');
   const response = await getPrices([symbol1, symbol2], token);
 
@@ -72,6 +73,7 @@ async function getTripartyLatestPrice(pair: string): Promise<CacheData> {
 }
 
 async function updateCacheData(): Promise<void> {
+  const token = await getToken();
   const currentTime = Date.now();
   const uniqueSymbols = new Set<string>();
 

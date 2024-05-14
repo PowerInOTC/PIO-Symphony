@@ -26,4 +26,5 @@ export const config = {
   chatId: process.env.CHAT_ID || 'abc',
   activeChainIds: process.env.ACTIVE_CHAIN_IDS || '64165',
   apiBaseUrl: process.env.API_BASE_URL || '',
+  azureMt5AuthToken: process.env.AZURE_MT5_IDENTIFICATION_TOKEN || '',
 };

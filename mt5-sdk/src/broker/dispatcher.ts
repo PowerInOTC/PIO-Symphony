@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../config';
+import { getMT5Ticker, getBrokerFromAsset } from '../configBuilder/configRead';
 
 const apiBaseUrl = config.apiBaseUrl;
 
@@ -82,29 +83,106 @@ async function retrieveAllSymbols(broker: string): Promise<string[]> {
   }
 }
 
-async function manageSymbolInventory(
-  symbol: string,
+export async function verifyTradeOpenable(
+  pair: string,
   amount: number,
-  broker: string,
+  price: number,
 ): Promise<boolean> {
-  switch (broker) {
-    case 'mt5.ICMarkets':
-      try {
-        return (
-          (
-            await axios.post(
-              `${apiBaseUrl}/manage_symbol_inventory/${symbol}`,
-              { amount },
-            )
-          ).status === 200
-        );
-      } catch (error) {
-        console.error('Error managing symbol inventory:', error);
+  const [pair1, pair2] = pair.split('/');
+  const mt5Ticker1 = getMT5Ticker(pair1);
+  const broker1 = getBrokerFromAsset(pair1);
+  const mt5Ticker2 = getMT5Ticker(pair2);
+  const broker2 = getBrokerFromAsset(pair2);
+  const pairMT5 = `${mt5Ticker1}/${mt5Ticker2}`;
+
+  if (!mt5Ticker1 || !broker1 || !mt5Ticker2 || !broker2) {
+    return false;
+  }
+
+  if (broker1 === broker2) {
+    switch (broker1) {
+      case 'mt5.ICMarkets':
+        try {
+          const payload = {
+            symbol: pairMT5,
+            volume: amount,
+            price: price,
+          };
+          const response = await axios.post(
+            `${apiBaseUrl}/verify-trade`,
+            JSON.stringify(payload),
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          );
+          return response.data;
+        } catch (error) {
+          console.error('Error verifying trade:', error);
+          return false;
+        }
+      default:
+        console.error('Unsupported broker for verifyTradeOpenable');
         return false;
-      }
-    default:
-      console.error('Unsupported broker for manageSymbolInventory');
-      return false;
+    }
+  } else {
+    return false;
+  }
+}
+
+async function manageSymbolInventory(
+  pair: string,
+  amount: number,
+  bContractId: number,
+  isLong: boolean,
+  isOpen: boolean,
+): Promise<boolean> {
+  const [pair1, pair2] = pair.split('/');
+  const mt5Ticker1 = getMT5Ticker(pair1);
+  const broker1 = getBrokerFromAsset(pair1);
+  const mt5Ticker2 = getMT5Ticker(pair2);
+  const broker2 = getBrokerFromAsset(pair2);
+
+  const pairMT5 = `${mt5Ticker1}/${mt5Ticker2}`;
+
+  if (!mt5Ticker1 || !broker1 || !mt5Ticker2 || !broker2) {
+    return false;
+  }
+
+  if (broker1 === broker2) {
+    switch (broker1) {
+      case 'mt5.ICMarkets':
+        try {
+          const payload = {
+            pair: pairMT5,
+            b_contract_id: bContractId,
+            amount: amount,
+            is_long: isLong,
+            is_open: isOpen,
+          };
+
+          const response = await axios.post(
+            `${apiBaseUrl}/manage_symbol_inventory`,
+            JSON.stringify(payload),
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          );
+
+          return response.status === 200;
+        } catch (error) {
+          console.error('Error managing symbol inventory:', error);
+          return false;
+        }
+      default:
+        console.error('Unsupported broker for manageSymbolInventory');
+        return false;
+    }
+  } else {
+    return false;
   }
 }
 
@@ -251,10 +329,12 @@ async function maxAmountAssetInfo(
   }
 }
 
-async function totalOpenAmountInfo(
-  symbol: string,
-  broker: string,
-): Promise<number> {
+async function totalOpenAmountInfo(symbol: string): Promise<number> {
+  const mt5Ticker = getMT5Ticker(symbol);
+  const broker = getBrokerFromAsset(symbol);
+  if (!mt5Ticker || !broker) {
+    return 0;
+  }
   switch (broker) {
     case 'mt5.ICMarkets':
       try {

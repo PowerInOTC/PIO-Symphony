@@ -14,7 +14,7 @@ export interface checkFillSign {
   checkCounterpartyBalance: boolean;
 }
 
-export async function signOpenToFill(open: signedWrappedOpenQuoteResponse) {
+export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
   const symbol = extractSymbolFromAssetHex(open.assetHex);
 
   const rfqResponse: RfqResponse = {

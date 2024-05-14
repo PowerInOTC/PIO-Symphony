@@ -10,7 +10,7 @@ import {
 } from '@pionerfriends/api-client';
 import { Worker } from 'bullmq';
 import { config } from '../config';
-import { rfqToQuote } from '../rfq/rfq';
+import { rfqToQuote } from './rfq';
 import { logger, rfqQueue, wallet } from '../utils/init';
 
 async function index(): Promise<void> {

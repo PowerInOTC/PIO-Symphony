@@ -42,7 +42,7 @@ async function startTotalOpenAmountWorker(
     async (job: Job<WorkerData>) => {
       try {
         const { symbol, broker } = job.data;
-        const totalOpenAmount = await totalOpenAmountInfo(symbol, broker);
+        const totalOpenAmount = await totalOpenAmountInfo(symbol);
         totalOpenAmountData[`${broker}_${symbol}`] = totalOpenAmount;
         console.log(
           `Total open amount for ${symbol} (${broker}): ${totalOpenAmount}`,

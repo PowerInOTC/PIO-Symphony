@@ -6,6 +6,62 @@ import pytz
 
 
 
+
+
+
+def manage_symbol_inventory(pair, amount, b_contract_id, is_long, is_open):
+    print(f"manage_symbol_inventory called with pair: {pair}, amount: {amount}, b_contract_id: {b_contract_id}, is_long: {is_long}, is_open: {is_open}")
+    try:
+        pair1, pair2 = pair.split("/")
+        
+        if is_long:
+            success1 = manage_single_symbol_inventory(pair1, amount, b_contract_id, True, is_open)
+            success2 = manage_single_symbol_inventory(pair2, amount, b_contract_id, False, is_open)
+        else:
+            success1 = manage_single_symbol_inventory(pair1, amount, b_contract_id, False, is_open)
+            success2 = manage_single_symbol_inventory(pair2, amount, b_contract_id, True, is_open)
+        
+        if not success1 or not success2:
+            # If one of the positions fails, close the other position
+            if success1:
+                manage_single_symbol_inventory(pair1, amount, b_contract_id, is_long, False)
+            if success2:
+                manage_single_symbol_inventory(pair2, amount, b_contract_id, not is_long, False)
+            
+            return False
+    except Exception as e:
+        print(f"An error occurred in manage_symbol_inventory: {str(e)}")
+        return False
+    
+    print("manage_symbol_inventory executed successfully")
+    return True
+
+def manage_single_symbol_inventory(symbol, amount, b_contract_id, is_long, is_open):
+    print(f"manage_single_symbol_inventory called with symbol: {symbol}, amount: {amount}, b_contract_id: {b_contract_id}, is_long: {is_long}, is_open: {is_open}")
+    try:
+        lots = amount_to_lots(amount, symbol)
+        
+        if is_open:
+            if is_long:
+                place_order("BUY", symbol, lots, str(b_contract_id), True)
+            else:
+                place_order("SELL", symbol, lots, str(b_contract_id), True)
+        else:
+            positions = get_open_positions()
+            for position in positions:
+                if position.symbol == symbol and position.comment == str(b_contract_id):
+                    if is_long and position.type == 0:  # Long position
+                        close_position(position.ticket, symbol, position.volume, "SELL", position.price_current, str(b_contract_id))
+                    elif not is_long and position.type == 1:  # Short position
+                        close_position(position.ticket, symbol, position.volume, "BUY", position.price_current, str(b_contract_id))
+    except Exception as e:
+        print(f"An error occurred in manage_single_symbol_inventory: {str(e)}")
+        return False
+    
+    print("manage_single_symbol_inventory executed successfully")
+    return True
+
+
 # Function to start Meta Trader 5 (MT5)
 def start_mt5(username, password, server):
     """
@@ -78,6 +134,7 @@ def initialize_symbols(symbol_array):
     return True
 
 
+
 # Function to place a trade on MT5
 def place_order(order_type, symbol, volume, comment, direct=False, price=0):
     """
@@ -90,11 +147,23 @@ def place_order(order_type, symbol, volume, comment, direct=False, price=0):
     :param price: String or Float, optional
     :return: Trade outcome or syntax error
     """
+    print("place_order", symbol, volume, order_type, comment, direct, price)
+    if price == 0:
+        bid, ask = retrieve_latest_tick(symbol)
+        if bid == 0 or ask == 0 or bid is None or ask is None:
+            print("Error retrieving latest tick")
+        if order_type == "SELL_STOP" or order_type == "SELL":
+            price = ask
+        elif order_type == "BUY_STOP" or order_type == "BUY":
+            price = bid
+        else:
+            print("Choose a valid order type from SELL_STOP, BUY_STOP, SELL, BUY")
+
 
     # Set up the place order request
     request = {
         "symbol": symbol,
-        "volume": volume,
+        "volume": float(volume),
         "type_time": MetaTrader5.ORDER_TIME_GTC,
         "comment": comment
     }
@@ -118,6 +187,7 @@ def place_order(order_type, symbol, volume, comment, direct=False, price=0):
         request['action'] = MetaTrader5.TRADE_ACTION_DEAL
         request['type_filling'] = MetaTrader5.ORDER_FILLING_IOC
     elif order_type == "BUY":
+        
         request['type'] = MetaTrader5.ORDER_TYPE_BUY
         request['action'] = MetaTrader5.TRADE_ACTION_DEAL
         request['type_filling'] = MetaTrader5.ORDER_FILLING_IOC
@@ -128,13 +198,34 @@ def place_order(order_type, symbol, volume, comment, direct=False, price=0):
     if direct is True:
         # Send the order to MT5
         order_result = MetaTrader5.order_send(request)
+        if order_result == None:
+            print("Order failed to send. MetaTrader5 Object == None ")
+
         # Notify based on return outcomes
-        if order_result[0] == 10009:
+        elif order_result[0] == 10009:
             # print(f"Order for {symbol} successful") # Enable if error checking order_result
             return order_result[2]
         elif order_result[0] == 10027:
             # Turn off autotrading
             print(f"Turn off Algo Trading on MT5 Terminal")
+        elif order_result[0] == 10014:
+            print(f"	Invalid volume in the request { volume }")
+        elif order_result[0] == 10013:
+            print(f"	Invalid price in the request { price }")
+        elif order_result[0] == 10006:
+            print(f"	Requote")
+        elif order_result[0] == 10010:
+            print(f"	Only part of the request was completed")
+        elif order_result[0] == 10011:
+            print(f"		Request processing error")
+        elif order_result[0] == 10012:
+            print(f"	Request canceled by timeout")
+        elif order_result[0] == 10015:
+            print(f"		Invalid price in the request")
+        elif order_result[0] == 10018:
+            print(f"		Market is closed")
+        elif order_result[0] == 10019:
+            print(f"		There is not enough money to complete the request")
         else:
             # Print result
             print(f"Error placing order. ErrorCode {order_result[0]}, Error Details: {order_result}")
@@ -148,13 +239,14 @@ def place_order(order_type, symbol, volume, comment, direct=False, price=0):
             place_order(
                 order_type=order_type,
                 symbol=symbol,
-                volume=volume,
+                volume=float(volume),
                 price=price,
                 comment=comment,
                 direct=True
             )
         else:
             print(f"Order unsucessful. Details: {result}")
+
 
 # Function to cancel an order
 def cancel_order(order_number):
@@ -234,31 +326,6 @@ def get_total_open_amount(symbol):
             total_open_amount -= position.volume
     return total_open_amount
 
-def manage_symbol_inventory(max_notional, symbol, target_amount):
-    """
-    Function to manage the inventory of a symbol
-    :param symbol: String
-    :param target_notional: Float
-    :return:
-    """ 
-    open_amount = get_total_open_amount(symbol)
-    bid, ask = retrieve_latest_tick(symbol)
-    open_notional = lots_to_dollar_notional(open_amount, symbol, ask)
-    if verify_inventory_new_amount_health( max_notional, target_notional, open_notional ):
-        if open_amount >= target_notional:
-            cancel_all_symbol_orders(symbol)
-            if open_amount > 0:
-                place_order("SELL", symbol, abs(open_amount - target_notional), "Inventory", True)
-            else:
-                place_order("BUY", symbol, abs(open_amount - target_notional), "Inventory", True)
-        elif open_amount < target_notional:
-            cancel_all_symbol_orders(symbol)
-            if open_amount < 0:
-                place_order("SELL", symbol, abs(target_notional - open_amount), "Inventory", True)
-            else:
-                place_order("BUY", symbol, abs(target_notional - open_amount), "Inventory", True)
-    else:
-        return 2013
 
 # Function to close an open position
 def close_position(order_number, symbol, volume, order_type, price, comment):
@@ -309,7 +376,7 @@ def retrieve_latest_tick(symbol):
         tick = tick._asdict()
         return (tick['ask'], tick['bid'])
     else:
-        return (None, None)
+        return (0, 0)
 
 # Convert lots to dollar notional
 def lots_to_dollar_notional(lots, symbol, price):
@@ -374,7 +441,7 @@ def lots_to_amount(lots, symbol):
     """
     # Get the symbol information
     symbol_info = MetaTrader5.symbol_info(symbol)
-    if symbol_info is None:
+    if symbol_info is None:         
         return 2137
     else:
         # Calculate the amount
@@ -599,8 +666,8 @@ def verify_inventory_new_amount_health( max_notional, target_notional, open_noti
     """
     Function to verify the inventory new amount health
     :param max_notional: Float
-    :param target_notional: Float
-    :param open_amount: Float
+    :param target_notional    :param open_amount: Float
+: Float
     :param price: Float
     :return: Boolean
     """

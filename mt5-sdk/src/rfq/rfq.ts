@@ -5,6 +5,8 @@ import { redisClient } from '../utils/init';
 import { rfqCheck } from '../types/rfqCheck';
 import { logger } from '../utils/init';
 import { checkRFQCore } from './checkRfq';
+import { getTripartyLatestPrice } from '../broker/tripartyPrice';
+import { minAmountSymbol } from '../broker/minAmount';
 
 const RFQ_CHECK_PREFIX = 'rfqCheck:';
 
@@ -28,21 +30,29 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
   const checkRFQ = await getCheckRFQ(rfq);
   printFalseChecks(checkRFQ);
 
-  const isRFQValid = verifyCheckRFQ(checkRFQ);
-
-  const latestPrice = 0; //getMT5LatestPrice(`${checkRFQ.assetAId}/${checkRFQ.assetBId}`,);
+  const isRFQValid = await verifyCheckRFQ(checkRFQ);
+  const tripartyLatestPrice = await getTripartyLatestPrice(
+    `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
+  );
+  const minAmount = await minAmountSymbol(
+    `${checkRFQ.assetAId}/${checkRFQ.assetBId}`,
+  );
+  let amount = Number(rfq.sQuantity);
+  if (minAmount > Number(rfq.sQuantity)) {
+    amount = minAmount;
+  }
 
   if (isRFQValid) {
     return {
       chainId: rfq.chainId,
       rfqId: rfq.id,
       expiration: rfq.expiration,
-      sMarketPrice: (Number(rfq.sPrice) * 1.001).toString(),
+      sMarketPrice: (Number(tripartyLatestPrice.bid) * 1.001).toString(),
       sPrice: rfq.sPrice,
-      sQuantity: rfq.sQuantity,
-      lMarketPrice: (Number(rfq.lPrice) * 0.999).toString(),
+      sQuantity: amount,
+      lMarketPrice: (Number(tripartyLatestPrice.ask) * 0.999).toString(),
       lPrice: rfq.lPrice,
-      lQuantity: rfq.lQuantity,
+      lQuantity: amount,
     };
   } else {
     throw new Error('RFQ is not valid');

@@ -12,15 +12,8 @@ password = os.getenv('HEDGER1_PASSWORD')
 server = os.getenv('HEDGER1_SERVER')
 start_mt5(login_id, password, server)
 
-max_notional = 0
+reset_account()
 
-def update_max_notional(leverage):
-    max_notional = retrieve_account_free_margin(leverage)
-
-def retrieve_max_notional():
-    return max_notional
-
-print(retrieve_symbol_info('EURUSD'))
 
 # call each second is_connected() // if False, call start_mt5(login_id, password, server)
 # call each 1 minutes, or after each calls update_max_notional(leverage)
