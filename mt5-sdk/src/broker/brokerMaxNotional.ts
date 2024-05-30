@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { config } from '../config';
-import { logger } from '../utils/init';
 
 interface CacheItem {
   expiration: number;
@@ -16,11 +15,11 @@ async function fetchMaxNotional(broker: string): Promise<number> {
         return (await axios.get(`${config.apiBaseUrl}/retrieve_max_notional`))
           .data.max_notional;
       } catch (error) {
-        logger.error('Error retrieving max notional:', error);
+        console.error('Error retrieving max notional:', error);
         return 0;
       }
     default:
-      logger.error('Unsupported broker for retrieveMaxNotional');
+      console.error('Unsupported broker for retrieveMaxNotional');
       return 0;
   }
 }
@@ -65,13 +64,13 @@ async function updateCacheData(): Promise<void> {
         }
       }
     } catch (error) {
-      logger.error('Error updating cache data:', error);
+      console.error('Error updating cache data:', error);
       if (retryCount < 3) {
-        logger.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
+        console.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await updateMaxNotional(retryCount + 1);
       } else {
-        logger.error('Max retry attempts reached. Skipping cache update.');
+        console.error('Max retry attempts reached. Skipping cache update.');
       }
     }
   };

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config } from '../config';
-import { logger } from '../utils/init';
+
 import { getMT5Ticker, getBrokerFromAsset } from '../configBuilder/configRead';
 
 interface CacheItem {
@@ -13,7 +13,7 @@ const symbolCache: { [symbol: string]: CacheItem } = {};
 async function fetchMinAmount(symbol: string, broker: string): Promise<number> {
   const mt5Ticker = getMT5Ticker(symbol);
   if (!mt5Ticker) {
-    logger.error('Invalid symbol for minAmountSymbol');
+    console.error('Invalid symbol for minAmountSymbol');
     return 0;
   }
 
@@ -26,11 +26,11 @@ async function fetchMinAmount(symbol: string, broker: string): Promise<number> {
           )
         ).data.min_amount;
       } catch (error) {
-        logger.error('Error retrieving minimum amount:', error);
+        console.error('Error retrieving minimum amount:', error);
         return 0;
       }
     default:
-      logger.error('Unsupported broker for minAmountSymbol');
+      console.error('Unsupported broker for minAmountSymbol');
       return 0;
   }
 }
@@ -77,14 +77,14 @@ async function minAmountSymbol(proxyPair: string): Promise<number> {
   const broker1 = getBrokerFromAsset(proxyTicker1);
   const broker2 = getBrokerFromAsset(proxyTicker2);
   if (!broker1 || !broker2) {
-    logger.error('Invalid broker for minAmountSymbol');
+    console.error('Invalid broker for minAmountSymbol');
     return 0;
   }
 
   const mt5Ticker1 = getMT5Ticker(proxyTicker1);
   const mt5Ticker2 = getMT5Ticker(proxyTicker2);
   if (!mt5Ticker1 || !mt5Ticker2) {
-    logger.error('Invalid symbol for minAmountSymbol');
+    console.error('Invalid symbol for minAmountSymbol');
     return 0;
   }
 

@@ -1,136 +1,183 @@
-import { RfqResponse, QuoteRequest } from '@pionerfriends/api-client';
-import { createClient, RedisClientType, SetOptions } from 'redis';
+import {
+  getPayloadAndLogin,
+  getPayload,
+  login,
+  extendToken,
+} from '@pionerfriends/api-client';
 import { config } from '../config';
-import { redisClient } from '../utils/init';
-import { rfqCheck } from '../types/rfqCheck';
-import { logger } from '../utils/init';
-import { checkRFQCore } from './checkRfq';
-import { getTripartyLatestPrice } from '../broker/tripartyPrice';
-import { minAmountSymbol } from '../broker/minAmount';
+import { createClient, RedisClientType } from 'redis';
+import { Queue } from 'bullmq';
+import { privateKeyToAccount, PrivateKeyAccount } from 'viem/accounts';
+import {
+  defineChain,
+  Address,
+  createPublicClient,
+  PublicClient,
+  Chain,
+  createWalletClient,
+  WalletClient,
+  http,
+} from 'viem';
+import { avalancheFuji } from 'viem/chains';
 
-const RFQ_CHECK_PREFIX = 'rfqCheck:';
+const client: RedisClientType = createClient({
+  socket: {
+    host: config.bullmqRedisHost,
+    port: config.bullmqRedisPort,
+  },
+  password: config.bullmqRedisPassword,
+});
 
-const verifyCheckRFQ = (checkRFQ: rfqCheck): boolean => {
-  const checkProperties = Object.entries(checkRFQ).filter(([key]) =>
-    key.startsWith('check'),
-  );
-  //logger.info(checkProperties, 'checkProperties');
-  return checkProperties.every(([, value]) => value === true);
+const fantomSonicTestnet: Chain = defineChain({
+  id: 64165,
+  name: 'Fantom Sonic Testnet',
+  network: 'fantom-sonic-testnet',
+  nativeCurrency: {
+    name: 'Fantom',
+    symbol: 'FTM',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: { http: ['https://rpc.sonic.fantom.network/'] },
+    public: { http: ['https://rpc.sonic.fantom.network/'] },
+  },
+});
+
+const chains: { [key: number]: Chain } = {
+  64165: fantomSonicTestnet,
+  64156: avalancheFuji,
 };
+const chainName = { 64165: 'sonic', 64156: 'fuji' };
+const chainHex = { 64165: 'sonic', 64156: 'fuji' };
 
-const printFalseChecks = (checkRFQ: rfqCheck) => {
-  Object.entries(checkRFQ).forEach(([key, value]) => {
-    if (key.startsWith('check') && value === false) {
-      logger.info(key);
-    }
+// Initialize the accounts and wallets objects
+const accounts: {
+  [chainId: number]: { [address: string]: PrivateKeyAccount };
+} = {};
+const wallets: { [chainId: number]: { [address: string]: WalletClient } } = {};
+
+// Populate the accounts and wallets objects
+for (const chainId in chains) {
+  const numericChainId = Number(chainId);
+  accounts[numericChainId] = {};
+  wallets[numericChainId] = {};
+
+  config.privateKeys?.split(',').forEach((key) => {
+    const account = privateKeyToAccount(key as Address);
+    accounts[numericChainId][account.address] = account;
+    wallets[numericChainId][account.address] = createWalletClient({
+      account,
+      chain: chains[numericChainId],
+      transport: http(),
+    });
   });
-};
+}
 
-const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
-  const checkRFQ = await getCheckRFQ(rfq);
-  printFalseChecks(checkRFQ);
+const web3Clients: { [chainId: number]: PublicClient } = {};
 
-  const isRFQValid = await verifyCheckRFQ(checkRFQ);
-  const tripartyLatestPrice = await getTripartyLatestPrice(
-    `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
-  );
-  const minAmount = await minAmountSymbol(
-    `${checkRFQ.assetAId}/${checkRFQ.assetBId}`,
-  );
-  let amount = Number(rfq.sQuantity);
-  if (minAmount > Number(rfq.sQuantity)) {
-    amount = minAmount;
+// Create public clients for each chain
+for (const chainId in chains) {
+  const numericChainId = Number(chainId);
+  web3Clients[numericChainId] = createPublicClient({
+    chain: chains[numericChainId],
+    transport: http(),
+  });
+}
+
+async function getToken(maxRetries = 3, retryDelay = 1000): Promise<string> {
+  let retries = 0;
+  while (retries < maxRetries) {
+    try {
+      const cachedToken = await client.get('token');
+      if (cachedToken) {
+        return cachedToken;
+      }
+
+      const newToken = await fetchNewToken();
+      await client.set('token', newToken);
+      return newToken;
+    } catch (error: unknown) {
+      if (error instanceof Error && (error as any).code === 'ECONNRESET') {
+        retries++;
+        console.error(
+          `ECONNRESET error occurred (attempt ${retries}). Retrying...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      } else {
+        console.error('Error getting token:', error);
+        throw error;
+      }
+    }
   }
+  throw new Error('Failed to get token after maximum retries');
+}
 
-  if (isRFQValid) {
-    return {
-      chainId: rfq.chainId,
-      rfqId: rfq.id,
-      expiration: rfq.expiration,
-      sMarketPrice: (Number(tripartyLatestPrice.bid) * 1.001).toString(),
-      sPrice: rfq.sPrice,
-      sQuantity: amount,
-      lMarketPrice: (Number(tripartyLatestPrice.ask) * 0.999).toString(),
-      lPrice: rfq.lPrice,
-      lQuantity: amount,
-    };
-  } else {
-    throw new Error('RFQ is not valid');
-  }
-};
+async function fetchNewToken(): Promise<string> {
+  try {
+    const chainId = 64156;
+    const address = Object.keys(accounts[chainId])[0];
+    const account = accounts[chainId][address];
 
-const getCheckRFQ = async (rfq: RfqResponse): Promise<rfqCheck> => {
-  let checkRFQ: rfqCheck;
-  const cacheKey = `${RFQ_CHECK_PREFIX}${rfq.id}`;
-  if (!redisClient.isOpen) {
-    await redisClient.connect();
-  }
-  const cachedCheckRFQ = await redisClient.get(cacheKey);
-  if (cachedCheckRFQ) {
-    checkRFQ = JSON.parse(cachedCheckRFQ) as rfqCheck;
+    const payloadResponse = await getPayload(account.address);
     if (
-      Date.now() - checkRFQ.rfqCheckUpdateTime < 60000 &&
-      checkRFQ.chainId === rfq.chainId &&
-      checkRFQ.assetAId === rfq.assetAId &&
-      checkRFQ.assetBId === rfq.assetBId &&
-      checkRFQ.sPrice === rfq.sPrice &&
-      checkRFQ.sQuantity === rfq.sQuantity &&
-      checkRFQ.sInterestRate === rfq.sInterestRate &&
-      checkRFQ.sIsPayingApr === rfq.sIsPayingApr &&
-      checkRFQ.sImA === rfq.sImA &&
-      checkRFQ.sImB === rfq.sImB &&
-      checkRFQ.sDfA === rfq.sDfA &&
-      checkRFQ.sDfB === rfq.sDfB &&
-      checkRFQ.sExpirationA === parseFloat(rfq.sExpirationA) &&
-      checkRFQ.sExpirationB === parseFloat(rfq.sExpirationB) &&
-      checkRFQ.sTimelockA === parseFloat(rfq.sTimelockA) &&
-      checkRFQ.sTimelockB === parseFloat(rfq.sTimelockB) &&
-      checkRFQ.lPrice === rfq.lPrice &&
-      checkRFQ.lQuantity === rfq.lQuantity &&
-      checkRFQ.lInterestRate === rfq.lInterestRate &&
-      checkRFQ.lIsPayingApr === rfq.lIsPayingApr &&
-      checkRFQ.lImA === rfq.lImA &&
-      checkRFQ.lImB === rfq.lImB &&
-      checkRFQ.lDfA === rfq.lDfA &&
-      checkRFQ.lDfB === rfq.lDfB &&
-      checkRFQ.lExpirationA === parseFloat(rfq.lExpirationA) &&
-      checkRFQ.lExpirationB === parseFloat(rfq.lExpirationB) &&
-      checkRFQ.lTimelockA === parseFloat(rfq.lTimelockA) &&
-      checkRFQ.lTimelockB === parseFloat(rfq.lTimelockB)
+      !payloadResponse ||
+      payloadResponse.status !== 200 ||
+      !payloadResponse.data.uuid ||
+      !payloadResponse.data.message
     ) {
-      return checkRFQ;
+      return '';
     }
-  }
+    const { uuid, message } = payloadResponse.data;
+    const signedMessage = await wallets[chainId][account.address].signMessage({
+      account,
+      message,
+    });
+    const loginResponse = await login(uuid, signedMessage);
 
-  checkRFQ = await checkRFQCore(rfq);
-  cacheManager();
-
-  const setOptions: SetOptions = {
-    EX: 60,
-  };
-
-  await redisClient.set(cacheKey, JSON.stringify(checkRFQ), setOptions);
-
-  return checkRFQ;
-};
-
-const cacheManager = async (): Promise<void> => {
-  const keys = await redisClient.keys(`${RFQ_CHECK_PREFIX}*`);
-  for (const key of keys) {
-    const checkRFQ = JSON.parse(
-      (await redisClient.get(key)) as string,
-    ) as rfqCheck;
-    if (Date.now() - checkRFQ.rfqCheckUpdateTime > 30000) {
-      await redisClient.del(key);
+    if (
+      !loginResponse ||
+      loginResponse.status !== 200 ||
+      !loginResponse.data.token
+    ) {
+      return '';
     }
-  }
-};
 
-const flushCache = async (): Promise<void> => {
-  const keys = await redisClient.keys(`${RFQ_CHECK_PREFIX}*`);
-  if (keys.length > 0) {
-    await redisClient.del(keys);
+    return loginResponse.data.token;
+  } catch (error) {
+    console.error('Error fetching new token:', error);
+    return '';
   }
-};
+}
 
-export { rfqToQuote };
+async function refreshToken() {
+  try {
+    const token = await client.get('token');
+    if (token) {
+      const response = await extendToken(token);
+      if (response && response.status === 200 && response.data.token) {
+        await client.set('token', response.data.token);
+        console.log('Token refreshed successfully');
+      } else {
+        console.error('Failed to refresh token');
+      }
+    } else {
+      console.error('No token found in Redis');
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+  }
+}
+
+// Run the token refresh worker once per day
+setInterval(refreshToken, 24 * 60 * 60 * 1000);
+
+export {
+  chains,
+  chainName,
+  accounts,
+  wallets,
+  web3Clients,
+  client as redisClient,
+  fantomSonicTestnet,
+  getToken,
+};

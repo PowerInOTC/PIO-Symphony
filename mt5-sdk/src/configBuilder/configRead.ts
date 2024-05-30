@@ -1,6 +1,5 @@
 import fs from 'fs';
 import { Asset, Row } from '../types/config';
-import { logger } from '../utils/init';
 
 interface SymphonyJSON {
   assets: Asset[];
@@ -22,7 +21,6 @@ export function getBrokerFromAsset(proxyTicker: string): string | undefined {
   if (asset) {
     return asset.broker;
   }
-  logger.warn(`Asset not listed: ${proxyTicker}`);
   return undefined;
 }
 
@@ -73,7 +71,14 @@ export function getMT5Ticker(proxyTicker: string): string | undefined {
   if (asset) {
     return asset.mt5Ticker;
   }
-  logger.warn(`Asset not listed: ${proxyTicker}`);
+  return undefined;
+}
+
+export function getProxyTicker(mt5Ticker: string) {
+  const asset = symbolList.find((a) => a.mt5Ticker === mt5Ticker);
+  if (asset) {
+    return asset.proxyTicker;
+  }
   return undefined;
 }
 

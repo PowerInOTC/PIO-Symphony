@@ -1,15 +1,4 @@
-import {
-  accounts,
-  logger,
-  web3Client,
-  wallets,
-  fakeUSDContract,
-  pionerV1ComplianceContract,
-  pionerV1Contract,
-  pionerV1DefaultContract,
-  pionerV1WrapperContract,
-  pionerV1ViewContract,
-} from '../utils/init';
+import { accounts, web3Clients, wallets } from '../utils/init';
 import { config } from '../config';
 import {
   FakeUSD,
@@ -20,28 +9,33 @@ import {
   PionerV1View,
   BOracle,
   BContract,
+  networks,
+  NetworkKey,
 } from '@pionerfriends/blockchain-client';
 import { Address, parseUnits } from 'viem';
 import { BOracleSignValueType, openQuoteSignValueType } from './types';
 import { closeQuoteSignValueType } from './types';
 import Web3 from 'web3';
 
-export async function getAllowance(accountId: number, chainId: number) {
-  const allowanceAmount = await web3Client.readContract({
-    address: fakeUSDContract[chainId] as Address,
+export async function getAllowance(accountId: number, chainId: string) {
+  const allowanceAmount = await web3Clients[Number(chainId)].readContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .FakeUSD as Address,
     abi: FakeUSD.abi,
     functionName: 'allowance',
     args: [
       config.publicKeys?.split(',')[accountId] as string,
-      pionerV1ComplianceContract[chainId],
+      networks[chainId as unknown as NetworkKey].contracts
+        .pionerV1Compliance as Address,
     ],
   });
   return allowanceAmount;
 }
 
-export async function getBalance(accountId: number, chainId: number) {
-  const balance = await web3Client.readContract({
-    address: pionerV1Contract[chainId] as Address,
+export async function getBalance(accountId: number, chainId: string) {
+  const balance = await web3Clients[Number(chainId)].readContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1 as Address,
     abi: PionerV1.abi,
     functionName: 'getBalances',
     args: [config.publicKeys?.split(',')[accountId] as string],
@@ -49,9 +43,10 @@ export async function getBalance(accountId: number, chainId: number) {
   return balance;
 }
 
-export async function getMintFUSD(accountId: number, chainId: number) {
-  const balance = await web3Client.readContract({
-    address: fakeUSDContract[chainId] as Address,
+export async function getMintFUSD(accountId: number, chainId: string) {
+  const balance = await web3Clients[Number(chainId)].readContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .FakeUSD as Address,
     abi: FakeUSD.abi,
     functionName: 'balanceOf',
     args: [config.publicKeys?.split(',')[accountId] as string],
@@ -61,10 +56,11 @@ export async function getMintFUSD(accountId: number, chainId: number) {
 
 export async function getbOracle(
   bOracleId: bigint,
-  chainId: number,
+  chainId: string,
 ): Promise<BOracle> {
-  const oracle = await web3Client.readContract({
-    address: pionerV1ViewContract[chainId] as Address,
+  const oracle = await web3Clients[Number(chainId)].readContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1View as Address,
     abi: PionerV1View.abi,
     functionName: 'getOracle',
     args: [bOracleId],
@@ -75,10 +71,11 @@ export async function getbOracle(
 
 export async function getbContract(
   bContractId: bigint,
-  chainId: number,
+  chainId: string,
 ): Promise<BContract> {
-  const bContract = await web3Client.readContract({
-    address: pionerV1ViewContract[chainId] as Address,
+  const bContract = await web3Clients[Number(chainId)].readContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1View as Address,
     abi: PionerV1View.abi,
     functionName: 'getContract',
     args: [bContractId],

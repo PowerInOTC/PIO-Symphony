@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMT5LatestPrice = void 0;
 const axios_1 = __importDefault(require("axios"));
 const config_1 = require("../config");
-const init_1 = require("../utils/init");
 const configRead_1 = require("../configBuilder/configRead");
 const pairCache = {};
 async function fetchCacheData(proxyPair) {
@@ -25,7 +24,7 @@ async function fetchCacheData(proxyPair) {
         const ask = tick1.ask / tick2.ask;
         return { bid, ask };
     }
-    init_1.logger.warn(`Unable to retrieve prices for pair: ${proxyPair}. Setting bid and ask to 0.`);
+    console.warn(`Unable to retrieve prices for pair: ${proxyPair}. Setting bid and ask to 0.`);
     return { bid: 0, ask: 0 };
 }
 function startOrUpdatePair(proxyPair, expirationTime) {
@@ -63,14 +62,14 @@ async function updateCacheData() {
             }
         }
         catch (error) {
-            init_1.logger.error('Error updating cache data:', error);
+            console.error('Error updating cache data:', error);
             if (retryCount < 3) {
-                init_1.logger.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
+                console.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
                 await new Promise((resolve) => setTimeout(resolve, 1000));
                 await updatePrices(retryCount + 1);
             }
             else {
-                init_1.logger.error('Max retry attempts reached. Skipping cache update.');
+                console.error('Max retry attempts reached. Skipping cache update.');
             }
         }
     };

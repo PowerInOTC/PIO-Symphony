@@ -186,7 +186,6 @@ const checkRFQCore = async (rfq) => {
     checkRFQ.checkOnchainSelfLeverage = true;
     checkRFQ.checkCounterpartySelfLeverage = true;
     checkRFQ.checkMarketIsOpen = true;
-    (0, tripartyPrice_1.getTripartyLatestPrice)(`${checkRFQ.assetAId}/${checkRFQ.assetAId}`);
     const tripartyLatestPrice = await (0, tripartyPrice_1.getTripartyLatestPrice)(`${checkRFQ.assetAId}/${checkRFQ.assetAId}`);
     if (tripartyLatestPrice != null &&
         tripartyLatestPrice.bid > 0 &&
@@ -197,6 +196,12 @@ const checkRFQCore = async (rfq) => {
     checkRFQ.checkSPrice = true;
     checkRFQ.checkLPrice = true;
     checkRFQ.checkBrokerSelfLeverage = true;
+    if (checkRFQ.chainId == 64165) {
+        checkRFQ.checkChainId = true;
+    }
+    checkRFQ.checkSQuantity = true;
+    checkRFQ.checkLQuantity = true;
+    console.log(checkRFQ);
     return checkRFQ;
 };
 exports.checkRFQCore = checkRFQCore;

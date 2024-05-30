@@ -16,6 +16,7 @@ export interface checkFillSign {
 
 export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
   const symbol = extractSymbolFromAssetHex(open.assetHex);
+  console.log('symbol', symbol);
 
   const rfqResponse: RfqResponse = {
     id: '',
@@ -51,10 +52,23 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     lTimelockA: open.timeLock,
     lTimelockB: open.timeLock,
   };
-  const checkOpenSign = await checkRFQCore(rfqResponse);
+  // const checkOpenSign = await checkRFQCore(rfqResponse);
 
-  const signCloseQuote = await addr1.signMessage(open.signatureOpenQuote);
-
+  const signCloseQuote = await addr1.signMessage(open.signatureOpenQuote); /*
+      const signatureOpenQuote = await ethersSigner._signTypedData(
+      domainOpen,
+      openQuoteSignType,
+      openQuoteSignValue
+    );*/
+  /*
+     struct AcceptOpenQuoteSign {
+        uint256 bContractId;
+        uint256 acceptPrice;
+        address backendAffiliate;
+        uint256 amount;
+        uint256 nonce; 
+    }
+    */
   const fill: SignedFillOpenQuoteRequest = {
     issuerAddress: open.counterpartyAddress,
     counterpartyAddress: open.issuerAddress,

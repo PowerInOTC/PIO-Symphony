@@ -2,16 +2,11 @@ import {
   PionerV1Wrapper,
   PionerV1Close,
   PionerV1Open,
+  NetworkKey,
+  networks,
 } from '@pionerfriends/blockchain-client';
 import { config } from '../config';
-import {
-  accounts,
-  pionerV1WrapperContract,
-  pionerV1CloseContract,
-  pionerV1OpenContract,
-  wallets,
-  web3Client,
-} from '../utils/init';
+import { accounts, wallets, web3Clients } from '../utils/init';
 import { convertToBytes32 } from './read';
 import { Address, bytesToHex, parseUnits, toBytes } from 'viem';
 import { ethers, Wallet } from 'ethers';
@@ -23,7 +18,7 @@ import {
 } from './types';
 
 async function testSignCloseQuote() {
-  const chaindId = 64165;
+  const chainId = '64165';
   const bContractId = 0;
   const price = ethers.utils.parseUnits('55', 18);
   const amount = ethers.utils.parseUnits('10', 18);
@@ -41,8 +36,9 @@ async function testSignCloseQuote() {
   const domainClose = {
     name: 'PionerV1Close',
     version: '1.0',
-    chainId: chaindId,
-    verifyingContract: pionerV1CloseContract[chaindId],
+    chainId: chainId,
+    verifyingContract: networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1Close as Address,
   };
 
   const OpenCloseQuoteType = {
@@ -73,13 +69,14 @@ async function testSignCloseQuote() {
     closeQuoteValue,
   );
 
-  settleClose(closeQuoteValue, signCloseQuote, 2, chaindId);
+  settleClose(closeQuoteValue, signCloseQuote, 2, chainId);
 }
 
 async function testSignOpenQuote() {
   const provider = new ethers.providers.JsonRpcProvider(
     'https://rpc.sonic.fantom.network/',
   );
+  const chainId = '64165';
 
   const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0], provider);
   const addr2 = new ethers.Wallet(config.privateKeys?.split(',')[1], provider);
@@ -189,8 +186,9 @@ async function testSignOpenQuote() {
   console.log('signatureBoracle', ethers.utils.hexlify(signatureBoracle));
   console.log('addr1', addr1.address);
   console.log('addr2', addr2.address);
-  const { request } = await web3Client.simulateContract({
-    address: pionerV1WrapperContract[64165] as Address,
+  const { request } = await web3Clients[Number(chainId)].simulateContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1Wrapper as Address,
     abi: PionerV1Wrapper.abi,
     functionName: 'wrapperOpenQuoteMM',
     args: [
@@ -200,9 +198,9 @@ async function testSignOpenQuote() {
       signatureOpenQuote,
       ethers.utils.parseUnits('50', 18),
     ],
-    account: accounts[2],
+    account: accounts[Number(chainId)][2],
   });
 
-  const hash = await wallets[2].writeContract(request);
+  const hash = await wallets[Number(chainId)][2].writeContract(request);
   return hash;
 }

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config } from '../config';
-import { logger } from '../utils/init';
+
 import { getMT5Ticker } from '../configBuilder/configRead';
 
 interface CacheData {
@@ -36,7 +36,7 @@ async function fetchCacheData(proxyPair: string): Promise<CacheData> {
     return { bid, ask };
   }
 
-  logger.warn(
+  console.warn(
     `Unable to retrieve prices for pair: ${proxyPair}. Setting bid and ask to 0.`,
   );
   return { bid: 0, ask: 0 };
@@ -82,13 +82,13 @@ async function updateCacheData(): Promise<void> {
         }
       }
     } catch (error) {
-      logger.error('Error updating cache data:', error);
+      console.error('Error updating cache data:', error);
       if (retryCount < 3) {
-        logger.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
+        console.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await updatePrices(retryCount + 1);
       } else {
-        logger.error('Max retry attempts reached. Skipping cache update.');
+        console.error('Max retry attempts reached. Skipping cache update.');
       }
     }
   };

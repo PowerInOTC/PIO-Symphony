@@ -1,26 +1,23 @@
-/*
-// init
-    init db with events
-    PionerV1.mintTestNet(1e36):
-    set MM address
-    init MT5 connection
-    login to API ?
-    config fill 
-    max leverage
-    */
 import {
-  networks,
-  FakeUSD,
-  PionerV1Compliance,
-  PionerV1View,
-} from '@pionerfriends/blockchain-client';
-import { getPayloadAndLogin } from '@pionerfriends/api-client';
+  getPayloadAndLogin,
+  getPayload,
+  login,
+  extendToken,
+} from '@pionerfriends/api-client';
 import { config } from '../config';
 import { createClient, RedisClientType } from 'redis';
 import { Queue } from 'bullmq';
-import { privateKeyToAccount } from 'viem/accounts';
-import { createWalletClient, http } from 'viem';
-import { defineChain, Address, createPublicClient } from 'viem';
+import { privateKeyToAccount, PrivateKeyAccount } from 'viem/accounts';
+import {
+  defineChain,
+  Address,
+  createPublicClient,
+  PublicClient,
+  Chain,
+  createWalletClient,
+  WalletClient,
+  http,
+} from 'viem';
 import { avalancheFuji } from 'viem/chains';
 
 const client: RedisClientType = createClient({
@@ -31,23 +28,7 @@ const client: RedisClientType = createClient({
   password: config.bullmqRedisPassword,
 });
 
-const rfqQueue = new Queue('rfq', {
-  connection: {
-    host: config.bullmqRedisHost,
-    port: config.bullmqRedisPort,
-    password: config.bullmqRedisPassword,
-  },
-});
-
-const pino = require('pino');
-const pretty = require('pino-pretty');
-const stream = pretty({
-  colorize: true,
-  colorizeObjects: true,
-});
-const logger = pino(stream);
-
-const fantomSonicTestnet = defineChain({
+const fantomSonicTestnet: Chain = defineChain({
   id: 64165,
   name: 'Fantom Sonic Testnet',
   network: 'fantom-sonic-testnet',
@@ -62,140 +43,137 @@ const fantomSonicTestnet = defineChain({
   },
 });
 
-const chains = { 64165: fantomSonicTestnet, 64156: avalancheFuji };
+const chains: { [key: number]: Chain } = {
+  64165: fantomSonicTestnet,
+  64156: avalancheFuji,
+};
 const chainName = { 64165: 'sonic', 64156: 'fuji' };
-interface ChainContracts {
-  [chainId: number]: string;
+const chainHex = { 64165: 'sonic', 64156: 'fuji' };
+
+// Initialize the accounts and wallets objects
+const accounts: {
+  [chainId: number]: { [address: string]: PrivateKeyAccount };
+} = {};
+const wallets: { [chainId: number]: { [address: string]: WalletClient } } = {};
+
+// Populate the accounts and wallets objects
+for (const chainId in chains) {
+  const numericChainId = Number(chainId);
+  accounts[numericChainId] = {};
+  wallets[numericChainId] = {};
+
+  config.privateKeys?.split(',').forEach((key) => {
+    const account = privateKeyToAccount(key as Address);
+    accounts[numericChainId][account.address] = account;
+    wallets[numericChainId][account.address] = createWalletClient({
+      account,
+      chain: chains[numericChainId],
+      transport: http(),
+    });
+  });
 }
 
-const fakeUSDContract: ChainContracts = {
-  64165: networks.sonic.contracts.FakeUSD,
-  64156: networks.fuji.contracts.FakeUSD,
-};
-const pionerV1Contract: ChainContracts = {
-  64165: networks.sonic.contracts.PionerV1,
-  64156: networks.fuji.contracts.PionerV1,
-};
-const pionerV1ComplianceContract: ChainContracts = {
-  64165: networks.sonic.contracts.PionerV1Compliance,
-  64156: networks.fuji.contracts.PionerV1Compliance,
-};
-const pionerV1OpenContract: ChainContracts = {
-  64165: networks.sonic.contracts.PionerV1Open,
-  64156: networks.fuji.contracts.PionerV1Open,
-};
-const pionerV1CloseContract: ChainContracts = {
-  64165: networks.sonic.contracts.PionerV1Close,
-  64156: networks.fuji.contracts.PionerV1Close,
-};
-const pionerV1DefaultContract: ChainContracts = {
-  64165: networks.sonic.contracts.PionerV1Default,
-  64156: networks.fuji.contracts.PionerV1Default,
-};
-const pionerV1WrapperContract: ChainContracts = {
-  64165: networks.sonic.contracts.PionerV1Wrapper,
-  64156: networks.fuji.contracts.PionerV1Wrapper,
-};
-const pionerV1ViewContract: ChainContracts = {
-  64165: networks.sonic.contracts.PionerV1View,
-  64156: networks.fuji.contracts.PionerV1View,
-};
+const web3Clients: { [chainId: number]: PublicClient } = {};
 
-const account = privateKeyToAccount(
-  config.privateKeys?.split(',')[0] as Address,
-);
-const account0 = privateKeyToAccount(
-  config.privateKeys?.split(',')[0] as Address,
-);
-const account1 = privateKeyToAccount(
-  config.privateKeys?.split(',')[1] as Address,
-);
-const account2 = privateKeyToAccount(
-  config.privateKeys?.split(',')[2] as Address,
-);
-const account3 = privateKeyToAccount(
-  config.privateKeys?.split(',')[3] as Address,
-);
-const web3Client = createPublicClient({
-  chain: fantomSonicTestnet,
-  transport: http(),
-});
-
-const accounts = [account0, account1, account2, account3];
-
-const wallet = createWalletClient({
-  account,
-  chain: fantomSonicTestnet,
-  transport: http(),
-});
-const wallet0 = createWalletClient({
-  account: config.privateKeys?.split(',')[0] as Address,
-  chain: fantomSonicTestnet,
-  transport: http(),
-});
-const wallet1 = createWalletClient({
-  account: config.privateKeys?.split(',')[1] as Address,
-  chain: fantomSonicTestnet,
-  transport: http(),
-});
-const wallet2 = createWalletClient({
-  account: config.privateKeys?.split(',')[2] as Address,
-  chain: fantomSonicTestnet,
-  transport: http(),
-});
-const wallet3 = createWalletClient({
-  account: config.privateKeys?.split(',')[3] as Address,
-  chain: fantomSonicTestnet,
-  transport: http(),
-});
-
-const wallets = [wallet0, wallet1, wallet2, wallet3];
-
+// Create public clients for each chain
+for (const chainId in chains) {
+  const numericChainId = Number(chainId);
+  web3Clients[numericChainId] = createPublicClient({
+    chain: chains[numericChainId],
+    transport: http(),
+  });
+}
 let token = '';
-let tokenTimestamp = 0;
 
-export async function getToken(): Promise<string> {
-  const currentTime = new Date().getTime();
-  const expirationTime = tokenTimestamp + 6 * 24 * 60 * 60 * 1000;
+async function getToken(maxRetries = 3, retryDelay = 1000): Promise<string> {
+  let retries = 0;
+  while (retries < maxRetries) {
+    try {
+      const cachedToken = await client.get('token');
+      if (cachedToken) {
+        return cachedToken;
+      }
 
-  if (token && currentTime < expirationTime) {
-    return token;
+      const newToken = await fetchNewToken();
+      await client.set('token', newToken);
+      return newToken;
+    } catch (error: unknown) {
+      if (error instanceof Error && (error as any).code === 'ECONNRESET') {
+        retries++;
+        console.error(
+          `ECONNRESET error occurred (attempt ${retries}). Retrying...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error('Failed to get token after maximum retries');
+}
+
+async function fetchNewToken(): Promise<string> {
+  const chainId = 64156;
+  const address = Object.keys(accounts[chainId])[0];
+  const account = accounts[chainId][address];
+
+  const payloadResponse = await getPayload(account.address);
+  if (
+    !payloadResponse ||
+    payloadResponse.status != 200 ||
+    !payloadResponse.data.uuid ||
+    !payloadResponse.data.message
+  ) {
+    return '';
+  }
+  const { uuid, message } = payloadResponse.data;
+  const signedMessage = await wallets[chainId][account.address].signMessage({
+    account,
+    message,
+  });
+  const loginResponse = await login(uuid, signedMessage);
+
+  if (
+    !loginResponse ||
+    loginResponse.status != 200 ||
+    !loginResponse.data.token
+  ) {
+    return '';
   }
 
-  const newToken = await fetchNewToken();
-  token = newToken;
-  tokenTimestamp = currentTime;
+  const token = loginResponse.data.token;
 
   return token;
 }
 
-async function fetchNewToken(): Promise<string> {
-  const tokens = await getPayloadAndLogin(wallet);
-  if (!wallet || !tokens) {
-    console.log('Login failed');
-    return '';
+async function refreshToken() {
+  try {
+    const token = await redisClient.get('token');
+    if (token) {
+      const response = await extendToken(token);
+      if (response && response.status === 200 && response.data.token) {
+        await redisClient.set('token', response.data.token);
+        console.log('Token refreshed successfully');
+      } else {
+        console.error('Failed to refresh token');
+      }
+    } else {
+      console.error('No token found in Redis');
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error);
   }
-  return tokens;
 }
 
+// Run the token refresh worker once per day
+setInterval(refreshToken, 24 * 60 * 60 * 1000);
 export {
-  fakeUSDContract,
-  pionerV1ComplianceContract,
-  pionerV1Contract,
-  pionerV1OpenContract,
-  pionerV1CloseContract,
-  pionerV1DefaultContract,
-  pionerV1WrapperContract,
-  pionerV1ViewContract,
   chains,
   chainName,
-  account,
   accounts,
   wallets,
-  web3Client,
+  web3Clients,
   client as redisClient,
-  rfqQueue,
-  logger,
   fantomSonicTestnet,
-  wallet,
+  getToken,
 };

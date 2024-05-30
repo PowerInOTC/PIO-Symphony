@@ -4,75 +4,36 @@ dotenv.config();
 import {
   QuoteRequest,
   RfqResponse,
-  RfqWebsocketClient,
+  PionerWebsocketClient,
   getPayloadAndLogin,
   sendQuote,
+  WebSocketType,
 } from '@pionerfriends/api-client';
-import { Worker } from 'bullmq';
+import { Worker, Queue, Job } from 'bullmq';
 import { config } from '../config';
 import { rfqToQuote } from './rfq';
-import { logger, rfqQueue, wallet } from '../utils/init';
 
-async function index(): Promise<void> {
-  try {
-    //sendMessage('RFQ worker started');
-    const token = await getPayloadAndLogin(wallet);
-    if (!wallet || !token) {
-      console.log('login failed');
-      return;
-    }
-    const websocketClient = new RfqWebsocketClient(
-      (message: RfqResponse) => {
-        rfqQueue.add('rfq', message);
-      },
-      (error: Error) => {
-        // Explicitly specify the type of error
-        console.error('WebSocket error:', error);
-      },
-    );
-    await websocketClient.startWebSocket(token);
-
-    new Worker(
-      'rfq',
-      async (job) => {
-        try {
-          const data: RfqResponse = job.data;
-          logger.info(`RFQ: ${JSON.stringify(data)}`);
-          const quote: QuoteRequest = await rfqToQuote(data);
-          sendQuote(quote, token);
-          quote.sMarketPrice = (Number(quote.sMarketPrice) * 1.001).toString();
-          quote.lMarketPrice = (Number(quote.lMarketPrice) / 1.001).toString();
-        } catch {
-          logger.error(`Error processing job: ${Error}`);
-        }
-      },
-      {
-        connection: {
-          host: config.bullmqRedisHost,
-          port: config.bullmqRedisPort,
-          password: config.bullmqRedisPassword,
-        },
-        removeOnComplete: { count: 0 },
-        //removeOnFail: { count: 0 }
-      },
-    );
-  } catch (error: any) {
-    logger.error(error);
-  }
-}
+const rfqQueue = new Queue('rfq', {
+  connection: {
+    host: config.bullmqRedisHost,
+    port: config.bullmqRedisPort,
+    password: config.bullmqRedisPassword,
+  },
+});
 
 export function startRfqWorker(token: string): void {
-  new Worker(
+  new Worker<RfqResponse>(
     'rfq',
-    async (job) => {
+    async (job: Job<RfqResponse>) => {
       try {
         const data: RfqResponse = job.data;
-        //logger.info(`RFQ: ${JSON.stringify(data)}`);
-        logger.info(`RFQ: ${data.assetAId}/ ${data.assetBId}`);
+        console.info(`RFQ: ${data.assetAId}/ ${data.assetBId}`);
         const quote: QuoteRequest = await rfqToQuote(data);
         sendQuote(quote, token);
-      } catch {
-        logger.error(`Error processing job: ${Error}`);
+        quote.sMarketPrice = (Number(quote.sMarketPrice) * 1.001).toString();
+        quote.lMarketPrice = (Number(quote.lMarketPrice) / 1.001).toString();
+      } catch (error) {
+        console.error(`Error processing job: ${error}`);
       }
     },
     {
@@ -84,4 +45,36 @@ export function startRfqWorker(token: string): void {
       removeOnComplete: { count: 0 },
     },
   );
+}
+
+export async function processRfqs(token: string): Promise<void> {
+  try {
+    const websocketClient = new PionerWebsocketClient<WebSocketType.LiveRfqs>(
+      WebSocketType.LiveRfqs,
+      async (message: RfqResponse) => {
+        try {
+          await rfqQueue.add('rfq', message);
+        } catch (error) {
+          console.error('Error adding RFQ to queue:', error);
+        }
+      },
+      () => console.log('Quote Open'),
+      () => console.log('Quote Closed'),
+      () => console.log('Quote Reconnected'),
+      (error: Error) => console.error('Quote Error:', error),
+    );
+
+    await websocketClient.startWebSocket(token);
+  } catch (error) {
+    console.error('Error processing RFQs:', error);
+  }
+}
+
+export async function startRfqProcess(token: string): Promise<void> {
+  try {
+    startRfqWorker(token);
+    await processRfqs(token);
+  } catch (error: any) {
+    console.error(error);
+  }
 }

@@ -1,10 +1,4 @@
-import {
-  QuoteResponse,
-  QuoteWebsocketClient,
-  RfqRequest,
-  getPayloadAndLogin,
-  sendRfq,
-} from '@pionerfriends/api-client';
+import { RfqRequest } from '@pionerfriends/api-client';
 import dotenv from 'dotenv';
 import { getMT5LatestPrice } from './broker/mt5Price';
 import { getTripartyLatestPrice } from './broker/tripartyPrice';
@@ -17,24 +11,18 @@ import {
   verifyTradeOpenable,
 } from './broker/dispatcher';
 import { hedger } from './broker/inventory';
+import {
+  adjustQuantities,
+  getPairConfig,
+  getProxyTicker,
+} from './configBuilder/configRead';
+import { getToken } from './utils/init';
 
-import { adjustQuantities, getPairConfig } from './configBuilder/configRead';
-import { calculatePairPrices } from './utils/forSDK';
-import { logger, getToken } from './utils/init';
-
-import { wallet } from './utils/init';
+import { wallets } from './utils/init';
 import { config } from './config';
 
 async function bullExample(): Promise<void> {
   const token = await getToken();
-
-  const websocketClient = new QuoteWebsocketClient(
-    (message: QuoteResponse) => {},
-    (error) => {
-      console.error('WebSocket error:', error);
-    },
-  );
-  await websocketClient.startWebSocket(token);
 
   const chainId = 64165;
   const assetAId = 'forex.EURUSD';
@@ -45,10 +33,10 @@ async function bullExample(): Promise<void> {
   let sQuantity = 100;
   let lQuantity = 101;
   const assetHex = `${assetAId}/${assetBId}`;
-  const pairs: string[] = [assetHex, 'forex.EURUSD/stock.nasdaq.AI'];
-  const pairPrices = await calculatePairPrices(pairs, token);
-  bid = pairPrices[assetHex]['bid'];
-  ask = pairPrices[assetHex]['ask'];
+
+  const pairPrices = await getTripartyLatestPrice(assetHex);
+  bid = pairPrices.bid;
+  ask = pairPrices.ask;
 
   const adjustedQuantities = await adjustQuantities(
     bid,
@@ -110,27 +98,33 @@ async function bullExample(): Promise<void> {
     lTimelockB: String(3600),
   };
 
+  const bob = await getProxyTicker('ABBV');
+  console.log(bob);
+
   try {
     let counter = 100;
+    const price = getTripartyLatestPrice('forex.GBPUSD/forx.EURUSD');
+    console.log(price);
+
     /*
 
     brokerHealth('mt5.ICMarkets', 5000, 1);
     startTotalOpenAmountInfo('EURUSD', 'EURUSD');
-*/ const pair = 'forex.EURUSD/forex.GBPUSD';
+    /*
+ const pair = 'forex.EURUSD/forex.GBPUSD';
     const price = 0.858;
     const bContractId = 0;
     const amount = 1000;
     const isLong = true;
     const isOpen = false;
-    const isPassed = await hedger(
-      pair,
-      price,
-      bContractId,
-      amount,
-      isLong,
-      isOpen,
-    );
-    console.log('test ended :', isPassed);
+      const isPassed = await hedger(
+        pair,
+        price,
+        bContractId,
+        amount,
+        isLong,
+        isOpen,
+      );*/
 
     setInterval(async () => {
       /*
@@ -139,9 +133,9 @@ async function bullExample(): Promise<void> {
     }, 7000);
   } catch (error: any) {
     if (error instanceof Error) {
-      logger.error(error);
+      console.error(error);
     } else {
-      logger.error('An unknown error occurred');
+      console.error('An unknown error occurred');
     }
   }
 }

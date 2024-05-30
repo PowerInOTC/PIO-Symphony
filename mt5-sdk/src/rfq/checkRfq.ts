@@ -250,6 +250,14 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   checkRFQ.checkLPrice = true;
 
   checkRFQ.checkBrokerSelfLeverage = true;
+  if (checkRFQ.chainId == 64165) {
+    checkRFQ.checkChainId = true;
+  }
+
+  checkRFQ.checkSQuantity = true;
+  checkRFQ.checkLQuantity = true;
+
+  console.log(checkRFQ);
 
   return checkRFQ;
 };

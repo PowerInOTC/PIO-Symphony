@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { config } from '../config';
-import { logger } from '../utils/init';
 import { getPrices, PricesResponse } from '@pionerfriends/api-client';
 import { verifySymbols } from '../configBuilder/configRead';
 import { getToken } from '../utils/init';
@@ -33,7 +32,7 @@ async function fetchCacheData(pair: string): Promise<CacheData> {
     }
   }
 
-  logger.warn(
+  console.warn(
     `Unable to retrieve prices for pair: ${pair}. Setting bid and ask to 0.`,
   );
   return { bid: 0, ask: 0 };
@@ -48,7 +47,7 @@ function startOrUpdatePair(pair: string, expirationTime: number): void {
 
 async function getTripartyLatestPrice(pair: string): Promise<CacheData> {
   if (!verifySymbols(pair)) {
-    logger.warn(`Invalid pair: ${pair}. Returning bid and ask as 0.`);
+    console.warn(`Invalid pair: ${pair}. Returning bid and ask as 0.`);
     return { bid: 0, ask: 0 };
   }
 
@@ -105,7 +104,7 @@ async function updateCacheData(): Promise<void> {
               const ask = parseFloat(ask1) / parseFloat(ask2);
               pairCache[pair].cached = { bid, ask };
             } else {
-              logger.warn(
+              console.warn(
                 `Unable to retrieve prices for pair: ${pair}. Setting bid and ask to 0.`,
               );
               pairCache[pair].cached = { bid: 0, ask: 0 };
@@ -113,7 +112,7 @@ async function updateCacheData(): Promise<void> {
           }
         }
       } else {
-        logger.error(
+        console.error(
           'Error retrieving prices: response or response.data is undefined',
         );
         for (const pair in pairCache) {
@@ -123,13 +122,13 @@ async function updateCacheData(): Promise<void> {
         }
       }
     } catch (error) {
-      logger.error('Error updating cache data:', error);
+      console.error('Error updating cache data:', error);
       if (retryCount < 5) {
-        logger.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
+        console.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await updatePrices(retryCount + 1);
       } else {
-        logger.error('Max retry attempts reached. Skipping cache update.');
+        console.error('Max retry attempts reached. Skipping cache update.');
       }
     }
   };
