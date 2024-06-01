@@ -6,7 +6,7 @@ import {
   processOpenQuotes,
 } from './signers/openSignWorker';
 import {
-  startSignedCloseWorker,
+  startCloseQuotesWorker,
   processCloseQuotes,
 } from './signers/closeSignWorker';
 import { startRfqProcess } from './rfq/rfqWorker';
@@ -16,6 +16,7 @@ async function index(): Promise<void> {
   try {
     console.log('Start');
     const token = await getToken();
+    console.log(token);
 
     /*** RFQ */
 
@@ -38,16 +39,16 @@ async function index(): Promise<void> {
     }
 
     /*** SignClose */
-    /*
-    // Add your SignClose logic here
+
     try {
+      processCloseQuotes(token);
       startCloseQuotesWorker(token);
     } catch (error) {
       console.error(
         'Error processing close quotes or starting signed close worker:',
         error,
       );
-*/
+    }
 
     /*** Settlement */
     /*
@@ -59,7 +60,7 @@ async function index(): Promise<void> {
         'Error processing settlements or starting open positions worker:',
         error,
       );
-*/
+    */
   } catch (error: any) {
     console.error('Error in index function:', error);
     sendErrorToTelegram(error);

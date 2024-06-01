@@ -33,9 +33,9 @@ export type openQuoteSignValueType = {
 
 export type closeQuoteSignValueType = {
   bContractId: number;
-  price: BigNumber;
-  amount: BigNumber;
-  limitOrStop: BigNumber;
+  price: string;
+  amount: string;
+  limitOrStop: string;
   expiry: number;
   authorized: string;
   nonce: number;
@@ -43,28 +43,28 @@ export type closeQuoteSignValueType = {
 
 interface BOracle {
   assetHex: string;
-  oracleType: BigNumber;
-  lastBid: BigNumber;
-  lastAsk: BigNumber;
+  oracleType: string;
+  lastBid: string;
+  lastAsk: string;
   publicOracleAddress: string;
-  maxConfidence: BigNumber;
-  x: BigNumber;
+  maxConfidence: string;
+  x: string;
   parity: number;
-  maxDelay: BigNumber;
-  lastPrice: BigNumber;
-  lastPriceUpdateTime: BigNumber;
-  imA: BigNumber;
-  imB: BigNumber;
-  dfA: BigNumber;
-  dfB: BigNumber;
-  expiryA: BigNumber;
-  expiryB: BigNumber;
-  timeLock: BigNumber;
-  cType: BigNumber;
-  forceCloseType: BigNumber;
+  maxDelay: string;
+  lastPrice: string;
+  lastPriceUpdateTime: string;
+  imA: string;
+  imB: string;
+  dfA: string;
+  dfB: string;
+  expiryA: string;
+  expiryB: string;
+  timeLock: string;
+  cType: string;
+  forceCloseType: string;
   kycAddress: string;
   isPaused: boolean;
-  deployTime: BigNumber;
+  deployTime: string;
 }
 
 export interface pionSignType {

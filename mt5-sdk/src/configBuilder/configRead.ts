@@ -53,11 +53,14 @@ export function getFieldFromAsset(
   const asset = symbolList.find(
     (a) => a.broker === broker && a.proxyTicker === proxyTicker,
   );
+  if (leverage < 1) {
+    leverage = 1;
+  }
   if (asset) {
     const row = asset.notional?.find(
       (r) =>
         r.side === side &&
-        r.leverage < leverage &&
+        r.leverage <= leverage &&
         (r.maxNotional ?? Infinity) > notional,
     );
 
@@ -220,6 +223,8 @@ export function getPairConfig(
   leverage: number,
   notional: number,
 ): Row {
+  console.log(tickerA, tickerB, side, leverage, notional);
+
   const rowA = getFieldFromAsset(
     'mt5.ICMarkets',
     tickerA,

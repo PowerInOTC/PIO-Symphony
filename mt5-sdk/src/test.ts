@@ -15,9 +15,9 @@ import {
   adjustQuantities,
   getPairConfig,
   getProxyTicker,
+  getBrokerFromAsset,
 } from './configBuilder/configRead';
 import { getToken } from './utils/init';
-
 import { wallets } from './utils/init';
 import { config } from './config';
 
@@ -103,13 +103,24 @@ async function bullExample(): Promise<void> {
 
   try {
     let counter = 100;
-    const price = getTripartyLatestPrice('forex.GBPUSD/forx.EURUSD');
+
+    const pair = 'forex.GBPUSD/forex.EURUSD';
+    const [pair1, pair2] = pair.split('/');
+    const broker1 = getBrokerFromAsset(pair1);
+    const broker2 = getBrokerFromAsset(pair2);
+    if (broker1 != broker2 && broker1 != 'mt5.ICMarkets') {
+      console.error;
+    }
+
+    const price = await getTripartyLatestPrice(pair);
     console.log(price);
+    const minAmount = await minAmountSymbol(pair);
+    const MaxNotional = await getBrokerMaxNotional(pair1);
+    const totalOpenAmount1 = await getTotalOpenAmount(pair1);
+    const totalOpenAmount2 = await getTotalOpenAmount(pair2);
+    console.log(totalOpenAmount1, totalOpenAmount2, MaxNotional, minAmount);
 
     /*
-
-    brokerHealth('mt5.ICMarkets', 5000, 1);
-    startTotalOpenAmountInfo('EURUSD', 'EURUSD');
     /*
  const pair = 'forex.EURUSD/forex.GBPUSD';
     const price = 0.858;

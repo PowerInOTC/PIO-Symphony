@@ -5,7 +5,7 @@ import { minAmountSymbol } from '../broker/minAmount';
 export async function hedger(
   pair: string,
   price: number,
-  bContractId: number,
+  bContractId: string,
   amount: number,
   isLong: boolean,
   isOpen: boolean,

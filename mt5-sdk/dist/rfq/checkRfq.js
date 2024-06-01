@@ -67,10 +67,10 @@ const checkRFQCore = async (rfq) => {
         lTimelockB: parseFloat(rfq.lTimelockB),
         checkLTimelockB: false,
     };
-    const configRfqL = await (0, configRead_1.getPairConfig)(checkRFQ.assetAId, checkRFQ.assetBId, 'long', (parseFloat(checkRFQ.lImA) + parseFloat(checkRFQ.lDfA)) /
-        (parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity)), parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity));
-    const configRfqS = await (0, configRead_1.getPairConfig)(checkRFQ.assetAId, checkRFQ.assetBId, 'long', (parseFloat(checkRFQ.sImA) + parseFloat(checkRFQ.sDfA)) /
-        (parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity)), parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity));
+    console.log(checkRFQ.assetAId, checkRFQ.assetBId, parseFloat(checkRFQ.lImA) + parseFloat(checkRFQ.lDfA), parseFloat(checkRFQ.lPrice), parseFloat(checkRFQ.lQuantity), parseFloat(checkRFQ.lPrice), parseFloat(checkRFQ.lQuantity));
+    const configRfqL = await (0, configRead_1.getPairConfig)(checkRFQ.assetAId, checkRFQ.assetBId, 'long', 1 / (parseFloat(checkRFQ.lImA) + parseFloat(checkRFQ.lDfA)), parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity));
+    const configRfqS = await (0, configRead_1.getPairConfig)(checkRFQ.assetAId, checkRFQ.assetBId, 'long', 1 / (parseFloat(checkRFQ.sImA) + parseFloat(checkRFQ.sDfA)), parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity));
+    console.log(configRfqL, configRfqS);
     const brokerL = (0, configRead_2.getAllocatedBroker)(checkRFQ.assetAId);
     const brokerS = (0, configRead_2.getAllocatedBroker)(checkRFQ.assetBId);
     let maxNotionalL = 0, maxNotionalS = 0, openAmountL = 100000000000, openAmountS = 100000000000;

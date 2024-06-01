@@ -70,7 +70,7 @@ export async function getbOracle(
 }
 
 export async function getbContract(
-  bContractId: bigint,
+  bContractId: string,
   chainId: string,
 ): Promise<BContract> {
   const bContract = await web3Clients[Number(chainId)].readContract({
@@ -80,10 +80,58 @@ export async function getbContract(
     functionName: 'getContract',
     args: [bContractId],
   });
-  console.log('bContractId', bContract);
-  return bContract as BContract;
-}
 
+  console.log('bContractId', bContract);
+
+  const {
+    pA,
+    pB,
+    oracleId,
+    initiator,
+    price,
+    amount,
+    interestRate,
+    isAPayingAPR,
+    openTime,
+    state,
+    frontEnd,
+    hedger,
+    affiliate,
+    cancelTime,
+  } = bContract as {
+    pA: string;
+    pB: string;
+    oracleId: bigint;
+    initiator: string;
+    price: bigint;
+    amount: bigint;
+    interestRate: bigint;
+    isAPayingAPR: boolean;
+    openTime: bigint;
+    state: bigint;
+    frontEnd: string;
+    hedger: string;
+    affiliate: string;
+    cancelTime: bigint;
+  };
+
+  return {
+    pA,
+    pB,
+    oracleId,
+    initiator,
+    price,
+    amount,
+    interestRate,
+    isAPayingAPR,
+    openTime,
+    state,
+    frontEnd,
+    hedger,
+    affiliate,
+    cancelTime,
+  };
+}
 /*
    function getOracle(uint256 oracleId) public view returns (
         bytes32 assetHex,

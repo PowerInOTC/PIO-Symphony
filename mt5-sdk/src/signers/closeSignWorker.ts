@@ -7,10 +7,8 @@ import {
 } from '@pionerfriends/api-client';
 import { Worker, Queue, Job } from 'bullmq';
 import { signCloseCheck } from './signCloseCheck';
-import {
-  sendSignedFillCloseQuote,
-  SignedFillCloseQuoteRequest,
-} from './sendSignedFillCloseQuote';
+import { settleClose } from '../blockchain/write';
+import { closeQuoteSignValueType } from '../blockchain/types';
 
 const signedCloseQueue = new Queue('signedClose', {
   connection: {
@@ -22,7 +20,7 @@ const signedCloseQueue = new Queue('signedClose', {
 
 const processedPositions: Set<string> = new Set();
 
-export function startSignedCloseWorker(token: string): void {
+export function startCloseQuotesWorker(token: string): void {
   new Worker(
     'signedClose',
     async (job: Job<signedCloseQuoteResponse>) => {
@@ -35,13 +33,28 @@ export function startSignedCloseWorker(token: string): void {
           console.log(`Skipping duplicate position: ${positionKey}`);
           return;
         }
+
         /** todo */
-        /*
+        const closeQuoteSignValueType: closeQuoteSignValueType = {
+          bContractId: quote.chainId,
+          price: quote.price,
+          amount: quote.amount,
+          limitOrStop: String(quote.limitOrStop),
+          expiry: Number(quote.expiry),
+          authorized: quote.authorized,
+          nonce: quote.nonce,
+        };
+
         const fill = await signCloseCheck(quote);
-        const tx = await sendSignedFillCloseQuote(fill, token);
-       
-        console.log(tx?.status, tx?.data);
- */
+        if (fill) {
+          settleClose(
+            closeQuoteSignValueType,
+            quote.signatureClose,
+            1,
+            String(quote.chainId),
+          );
+        }
+
         processedPositions.add(positionKey);
       } catch (error) {
         console.error(`Error processing job: ${error}`);

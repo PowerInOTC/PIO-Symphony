@@ -134,7 +134,7 @@ export async function verifyTradeOpenable(
 async function manageSymbolInventory(
   pair: string,
   amount: number,
-  bContractId: number,
+  hash: string,
   isLong: boolean,
   isOpen: boolean,
 ): Promise<boolean> {
@@ -156,7 +156,7 @@ async function manageSymbolInventory(
         try {
           const payload = {
             pair: pairMT5,
-            b_contract_id: bContractId,
+            b_contract_id: hash,
             amount: amount,
             is_long: isLong,
             is_open: isOpen,

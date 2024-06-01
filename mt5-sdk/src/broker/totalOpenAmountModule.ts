@@ -1,7 +1,7 @@
 import { Queue, Worker, QueueEvents, Job } from 'bullmq';
 import { config } from '../config';
 import { totalOpenAmountInfo } from './dispatcher';
-
+import { getBrokerFromAsset } from '../configBuilder/configRead';
 interface WorkerData {
   symbol: string;
   broker: string;
@@ -102,7 +102,8 @@ async function startTotalOpenAmountInfo(
   jobKeys[jobKey] = job.id;
 }
 
-function getTotalOpenAmount(broker: string, symbol: string): number | null {
+function getTotalOpenAmount(symbol: string): number | null {
+  const broker = getBrokerFromAsset(symbol);
   const key = `${broker}_${symbol}`;
   return totalOpenAmountData[key] || null;
 }

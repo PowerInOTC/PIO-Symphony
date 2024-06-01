@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 dotenv.config();
-
 import {
   QuoteRequest,
   RfqResponse,
@@ -27,11 +26,14 @@ export function startRfqWorker(token: string): void {
     async (job: Job<RfqResponse>) => {
       try {
         const data: RfqResponse = job.data;
-        console.info(`RFQ: ${data.assetAId}/ ${data.assetBId}`);
-        const quote: QuoteRequest = await rfqToQuote(data);
-        sendQuote(quote, token);
-        quote.sMarketPrice = (Number(quote.sMarketPrice) * 1.001).toString();
-        quote.lMarketPrice = (Number(quote.lMarketPrice) / 1.001).toString();
+        console.info(`RFQ: ${data.assetAId}/${data.assetBId}`);
+        const quote: QuoteRequest | null = await rfqToQuote(data);
+        if (quote) {
+          console.log(quote);
+          await sendQuote(quote, token);
+        } else {
+          console.warn('Invalid quote generated. Skipping sending the quote.');
+        }
       } catch (error) {
         console.error(`Error processing job: ${error}`);
       }
@@ -63,7 +65,6 @@ export async function processRfqs(token: string): Promise<void> {
       () => console.log('Quote Reconnected'),
       (error: Error) => console.error('Quote Error:', error),
     );
-
     await websocketClient.startWebSocket(token);
   } catch (error) {
     console.error('Error processing RFQs:', error);
