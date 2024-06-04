@@ -26,10 +26,9 @@ export function startRfqWorker(token: string): void {
     async (job: Job<RfqResponse>) => {
       try {
         const data: RfqResponse = job.data;
-        console.info(`RFQ: ${data.assetAId}/${data.assetBId}`);
         const quote: QuoteRequest | null = await rfqToQuote(data);
         if (quote) {
-          console.log(quote);
+          console.log(quote.rfqId);
           await sendQuote(quote, token);
         } else {
           console.warn('Invalid quote generated. Skipping sending the quote.');

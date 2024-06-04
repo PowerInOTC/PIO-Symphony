@@ -84,20 +84,20 @@ export async function processCloseQuotes(token: string): Promise<void> {
           }
         },
         () => {
-          console.log('WebSocket opened');
+          console.log('WebSocket CloseQuote  opened');
         },
         () => {
-          console.log('WebSocket closed');
+          console.log('WebSocket CloseQuote  closed');
           // Retry connecting to the WebSocket
           setTimeout(() => {
             websocketClient.startWebSocket(token);
           }, 5000); // Retry after 5 seconds, adjust the delay as needed
         },
         () => {
-          console.log('WebSocket reconnected');
+          console.log('WebSocket CloseQuote  reconnected');
         },
         (error: Error) => {
-          console.error('WebSocket error:', error);
+          console.error('WebSocket CloseQuote  error:', error);
           if (error.message.includes('400')) {
             // Ignore error 400 and keep the WebSocket connection open
             console.log(

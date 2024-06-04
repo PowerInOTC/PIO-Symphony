@@ -55,9 +55,9 @@ async function testSignCloseQuote() {
 
   const closeQuoteValue: closeQuoteSignValueType = {
     bContractId: bContractId,
-    price: price,
-    amount: amount,
-    limitOrStop: ethers.BigNumber.from(limitOrStop),
+    price: String(price),
+    amount: String(amount),
+    limitOrStop: String(ethers.BigNumber.from(limitOrStop)),
     expiry: expiry,
     authorized: authorized,
     nonce: nonce,

@@ -27,7 +27,7 @@ yarn-error.log
 # Dependency directories
 jspm_packages/
 bower_components/
-
+mt5-sdk/dist/
 # TypeScript output directory
 dist/
 
@@ -44,7 +44,7 @@ build/
 # Temporary files
 *.bak
 *.tmp
-
+*.js
 # Log files
 *.log
 

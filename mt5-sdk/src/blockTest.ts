@@ -12,24 +12,24 @@ async function test() {
   let hash2;
 
   // Mint FUSD
-  hash1 = await mintFUSD(amount, 1, '64165');
-  hash2 = await mintFUSD(amount, 2, '64165');
+  hash1 = await mintFUSD(amount.toString(), 1, '64165');
+  hash2 = await mintFUSD(amount.toString(), 2, '64165');
   await web3Clients[64165].waitForTransactionReceipt({ hash: hash1 });
   await web3Clients[64165].waitForTransactionReceipt({ hash: hash2 });
   const balance = await getMintFUSD(0, '64165');
   console.log('Mint Balance:', balance);
 
   // Approve allowance
-  hash1 = await allowance(amount, 1, '64165');
-  hash2 = await allowance(amount, 2, '64165');
+  hash1 = await allowance(amount.toString(), 1, '64165');
+  hash2 = await allowance(amount.toString(), 2, '64165');
   await web3Clients[64165].waitForTransactionReceipt({ hash: hash1 });
   await web3Clients[64165].waitForTransactionReceipt({ hash: hash2 });
   const allowanceAmount = await getAllowance(0, '64165');
   console.log('Allowance Amount:', allowanceAmount);
 
   // Deposit
-  hash1 = await deposit(amount, 1, '64165');
-  hash2 = await deposit(amount, 2, '64165');
+  hash1 = await deposit(amount.toString(), 1, '64165');
+  hash2 = await deposit(amount.toString(), 2, '64165');
   await web3Clients[64165].waitForTransactionReceipt({ hash: hash1 });
   await web3Clients[64165].waitForTransactionReceipt({ hash: hash2 });
   const balance1 = await getBalance(1, '64165');

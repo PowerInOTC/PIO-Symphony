@@ -36,6 +36,7 @@ export function startSignedOpenWorker(token: string): void {
 
         const fill = await signOpenCheck(quote);
         const tx = await sendSignedFillOpenQuote(fill, token);
+
         console.log(tx?.status, tx?.data);
 
         processedPositions.add(positionKey);
@@ -67,20 +68,20 @@ export async function processOpenQuotes(token: string): Promise<void> {
           }
         },
         () => {
-          console.log('WebSocket opened');
+          console.log('WebSocket OpenQuote opened');
         },
         () => {
-          console.log('WebSocket closed');
+          console.log('WebSocket OpenQuote closed');
           // Retry connecting to the WebSocket
           setTimeout(() => {
             websocketClient.startWebSocket(token);
           }, 5000); // Retry after 5 seconds, adjust the delay as needed
         },
         () => {
-          console.log('WebSocket reconnected');
+          console.log('WebSocket OpenQuote reconnected');
         },
         (error: Error) => {
-          console.error('WebSocket error:', error);
+          console.error('WebSocket OpenQuote error:', error);
           if (error.message.includes('400')) {
             // Ignore error 400 and keep the WebSocket connection open
             console.log(

@@ -8,11 +8,10 @@ import { checkRFQCore } from './checkRfq';
 import { getTripartyLatestPrice } from '../broker/tripartyPrice';
 import { minAmountSymbol } from '../broker/minAmount';
 
-const verifyCheckRFQ = (checkRFQ: rfqCheck): boolean => {
+export const verifyCheckRFQ = (checkRFQ: rfqCheck): boolean => {
   const checkProperties = Object.entries(checkRFQ).filter(([key]) =>
     key.startsWith('check'),
   );
-  //console.info(checkProperties, 'checkProperties');
   return checkProperties.every(([, value]) => value === true);
 };
 
@@ -25,7 +24,7 @@ const printFalseChecks = (checkRFQ: rfqCheck) => {
 };
 
 const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
-  console.log(rfq);
+  //console.log(rfq);
   const checkRFQ = await getCheckRFQ(rfq);
   printFalseChecks(checkRFQ);
 
@@ -33,15 +32,11 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${checkRFQ.assetAId}/${checkRFQ.assetBId}`,
   );
-  console.log(`${checkRFQ.assetAId}/${checkRFQ.assetBId}`, tripartyLatestPrice);
+  //console.log(`${checkRFQ.assetAId}/${checkRFQ.assetBId}`, tripartyLatestPrice);
 
   const minAmount = await minAmountSymbol(
     `${checkRFQ.assetAId}/${checkRFQ.assetBId}`,
   );
-  let amount = Number(rfq.sQuantity);
-  if (minAmount > Number(rfq.sQuantity)) {
-    amount = minAmount;
-  }
 
   if (isRFQValid) {
     return {
@@ -50,10 +45,14 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
       expiration: rfq.expiration,
       sMarketPrice: (Number(tripartyLatestPrice.bid) * 1.001).toString(),
       sPrice: rfq.sPrice,
-      sQuantity: String(amount),
+      sQuantity: String(rfq.sQuantity),
       lMarketPrice: (Number(tripartyLatestPrice.ask) * 0.999).toString(),
       lPrice: rfq.lPrice,
-      lQuantity: String(amount),
+      lQuantity: String(rfq.lQuantity),
+      minAmount: String(minAmount),
+      maxAmount: String(
+        10000 / Math.min(Number(rfq.sPrice), Number(rfq.lPrice)),
+      ),
     };
   } else {
     throw new Error('RFQ is not valid');

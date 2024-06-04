@@ -6,31 +6,45 @@ import {
 import { config } from '../config';
 import { ethers } from 'ethers';
 import { checkRFQCore } from '../rfq/checkRfq';
+import { verifyCheckRFQ } from '../rfq/rfq';
 import { extractSymbolFromAssetHex } from '../utils/ethersUtils';
 import { networks, NetworkKey } from '@pionerfriends/blockchain-client';
 import { getTripartyLatestPrice } from '../broker/tripartyPrice';
 import { hedger } from '../broker/inventory';
+import { settleOpen } from '../blockchain/write';
+import {
+  BOracleSignValueType,
+  openQuoteSignValueType,
+} from '../blockchain/types';
 
 const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
 
 export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
+  let isCheck = true;
+  let acceptPrice = String(open.price);
+
   const symbol = extractSymbolFromAssetHex(open.assetHex);
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${symbol.assetAId}/${symbol.assetAId}`,
   );
-  let isCheck = true;
   if (open.isLong) {
     if (tripartyLatestPrice.ask <= Number(open.price) * (1 + 0.0001)) {
       isCheck = false;
+      throw new Error('check failed');
+    } else {
+      acceptPrice = String(tripartyLatestPrice.ask * (1 + 0.0001));
     }
   }
   if (!open.isLong) {
     if (tripartyLatestPrice.bid >= Number(open.price) * (1 - 0.0001)) {
       isCheck = false;
+      throw new Error('check failed');
+    } else {
+      acceptPrice = String(tripartyLatestPrice.bid * (1 - 0.0001));
     }
   }
 
-  console.log('symbol', symbol);
+  console.log('Check opening symbol', symbol);
 
   const rfqResponse: RfqResponse = {
     id: '',
@@ -67,6 +81,12 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     lTimelockB: open.timeLock,
   };
   const checkOpenSign = await checkRFQCore(rfqResponse);
+  const isRFQValid = await verifyCheckRFQ(checkOpenSign);
+
+  if (isRFQValid != true) {
+    isCheck = false;
+    throw new Error('checkRFQ failed');
+  }
 
   const domainOpen = {
     name: 'PionerV1Open',
@@ -121,9 +141,50 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
       `${symbol.assetAId}/${symbol.assetAId}`,
       Number(open.price),
       open.signatureOpenQuote,
-      open.amount,
+      Number(open.amount), // TODO /1e18
       open.isLong,
       true,
+    );
+
+    const bOracleSignValue = {
+      x: open.x,
+      parity: Number(open.parity),
+      maxConfidence: open.maxConfidence,
+      assetHex: open.assetHex,
+      maxDelay: Number(open.maxDelay),
+      precision: open.precision,
+      imA: open.imA,
+      imB: open.imB,
+      dfA: open.dfA,
+      dfB: open.dfB,
+      expiryA: Number(open.expiryA),
+      expiryB: Number(open.expiryB),
+      timeLock: Number(open.timeLock),
+      signatureHashOpenQuote: open.signatureOpenQuote,
+      nonce: open.nonceOpenQuote,
+    };
+
+    const openQuoteSignValue: openQuoteSignValueType = {
+      isLong: open.isLong,
+      bOracleId: 0,
+      price: open.price,
+      amount: open.amount,
+      interestRate: open.interestRate,
+      isAPayingAPR: open.isAPayingApr,
+      frontEnd: open.frontEnd,
+      affiliate: open.affiliate,
+      authorized: open.authorized,
+      nonce: open.nonceOpenQuote,
+    };
+
+    const isFilled = settleOpen(
+      bOracleSignValue,
+      open.signatureBoracle,
+      openQuoteSignValue,
+      open.signatureOpenQuote,
+      acceptPrice,
+      0,
+      String(open.chainId),
     );
 
     return fill;

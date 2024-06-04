@@ -17,7 +17,7 @@ import {
 } from './types';
 
 export async function mintFUSD(
-  amount: bigint,
+  amount: string,
   accountId: number,
   chainId: string,
 ) {
@@ -37,7 +37,7 @@ export async function mintFUSD(
 }
 
 export async function deposit(
-  amount: bigint,
+  amount: string,
   accountId: number,
   chainId: string,
 ) {
@@ -61,7 +61,7 @@ export async function deposit(
 }
 
 export async function withdraw(
-  amount: bigint,
+  amount: string,
   accountId: number,
   chainId: string,
 ) {
@@ -81,7 +81,7 @@ export async function withdraw(
 }
 
 export async function claim(
-  amount: bigint,
+  amount: string,
   accountId: number,
   chainId: string,
 ) {
@@ -101,7 +101,7 @@ export async function claim(
 }
 
 export async function allowance(
-  amount: bigint,
+  amount: string,
   accountId: number,
   chainId: string,
 ) {
@@ -125,7 +125,7 @@ export async function allowance(
 }
 
 export async function settle(
-  bContractId: bigint,
+  bContractId: string,
   accountId: number,
   chainId: string,
 ) {
@@ -149,7 +149,7 @@ export async function settleOpen(
   signatureBoracle: string,
   openQuoteSignValue: openQuoteSignValueType,
   signatureOpenQuote: string,
-  acceptPrice: bigint,
+  acceptPrice: string,
   accountId: number,
   chainId: string,
 ) {
@@ -197,8 +197,7 @@ export async function settleClose(
 
 export async function updatePriceAndDefault(
   priceSignature: pionSignType,
-  bOracleId: bigint,
-  bContractId: bigint,
+  bContractId: string,
   accountId: number,
   chainId: string,
 ) {
@@ -207,7 +206,7 @@ export async function updatePriceAndDefault(
       .PionerV1Wrapper as Address,
     abi: PionerV1Wrapper.abi,
     functionName: 'wrapperUpdatePriceAndDefault',
-    args: [priceSignature, bOracleId, bContractId],
+    args: [priceSignature, bContractId],
     account: accounts[Number(chainId)][accountId],
   });
 

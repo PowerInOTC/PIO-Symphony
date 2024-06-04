@@ -73,7 +73,7 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
     lTimelockB: parseFloat(rfq.lTimelockB),
     checkLTimelockB: false,
   };
-
+  /*
   console.log(
     checkRFQ.assetAId,
     checkRFQ.assetBId,
@@ -82,7 +82,7 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
     parseFloat(checkRFQ.lQuantity),
     parseFloat(checkRFQ.lPrice),
     parseFloat(checkRFQ.lQuantity),
-  );
+  );*/
 
   const configRfqL = await getPairConfig(
     checkRFQ.assetAId,
@@ -99,8 +99,6 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
     1 / (parseFloat(checkRFQ.sImA) + parseFloat(checkRFQ.sDfA)),
     parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity),
   );
-
-  console.log(configRfqL, configRfqS);
 
   const brokerL = getAllocatedBroker(checkRFQ.assetAId);
   const brokerS = getAllocatedBroker(checkRFQ.assetBId);
@@ -266,8 +264,6 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
 
   checkRFQ.checkSQuantity = true;
   checkRFQ.checkLQuantity = true;
-
-  console.log(checkRFQ);
 
   return checkRFQ;
 };

@@ -14,32 +14,49 @@ import {
 import { getTripartyLatestPrice } from '../broker/tripartyPrice';
 import { getbContract } from '../blockchain/read';
 import { closeQuoteSignValueType } from '../blockchain/types';
+import { minAmountSymbol } from '../broker/minAmount';
 
-export function signCloseCheck(close: signedCloseQuoteResponse) {
-  let isFilled = true;
-
-  const symbol = extractSymbolFromAssetHex(open.assetHex);
-
+export async function signCloseCheck(close: signedCloseQuoteResponse) {
   let isCheck = true;
+
+  const symbol = extractSymbolFromAssetHex(close.assetHex);
+  const pair = `${symbol.assetAId}/${symbol.assetAId}`;
+
+  /** Test price + spread is profitable for hedger  */
   if (close.isLong) {
-    if (tripartyLatestPrice.ask <= Number(close.price) * (1 + 0.0001)) {
+    if (Number(close.ask) <= Number(close.price) * (1 + 0.0001)) {
       isCheck = false;
+      throw new Error('close price is too low');
     }
   }
   if (!close.isLong) {
-    if (tripartyLatestPrice.bid >= Number(close.price) * (1 - 0.0001)) {
+    if (Number(close.bid) >= Number(close.price) * (1 - 0.0001)) {
       isCheck = false;
+      throw new Error('close price is too high');
     }
   }
 
+  /** Test partial close is bigger than min amount */
+  const minAmount = await minAmountSymbol(pair);
+  if (Number(close.amount) < Number(minAmount)) {
+    isCheck = false;
+    throw new Error('close amount is too low');
+  }
+
   const isPassed = await hedger(
-    `${symbol.assetAId}/${symbol.assetAId}`,
-    Number(open.price),
+    pair,
+    Number(close.price),
     close.signatureOpenQuote,
-    close.amount,
+    Number(close.amount),
     close.isLong,
     false,
   );
 
-  return isFilled;
+  isPassed === true ? (isCheck = false) : (isCheck = true);
+
+  if (isCheck === false) {
+    throw new Error('hedger failed');
+  }
+
+  return isCheck;
 }

@@ -1,28 +1,24 @@
 import { getPionSignature } from '@pionerfriends/api-client';
-import { updatePriceAndDefault } from './write';
-import { BOracle, BContract } from '@pionerfriends/blockchain-client';
-import { getbContract, getbOracle } from './read';
-import { convertFromBytes32 } from '../utils/ethersUtils';
-import { getTripartyLatestPrice } from '../broker/tripartyPrice';
+import { updatePriceAndDefault } from '../blockchain/write';
 import { getToken } from '../utils/init';
-import { PionResult, pionSignType } from './types';
+import { PionResult, pionSignType } from '../blockchain/types';
 
-export async function sDefault(bContractId: bigint) {
+export async function sDefault(
+  bContractId: string,
+  assetHex: string,
+  price: number,
+  chainId: string,
+) {
   const token = await getToken();
-  const bContract: BContract = await getbContract(bContractId, '64165');
-  const bOracle: BOracle = await getbOracle(bContract.oracleId, '64165');
 
-  const assetHex: string = convertFromBytes32(bOracle.assetHex);
   const [assetAId, assetBId]: string[] = assetHex.split('/');
-
-  const price = await getTripartyLatestPrice(assetHex);
 
   const pionResponse = await getPionSignature(
     assetAId,
-    assetBId,
-    String(price.bid),
-    String(price.ask),
-    String(bOracle.maxConfidence),
+    assetAId,
+    String(price),
+    String(price),
+    String(5),
     String(Date.now() + 1000 * 5),
     token,
     {
@@ -56,11 +52,5 @@ export async function sDefault(bContractId: bigint) {
     nonce: '0x1365a32bDd33661a3282992D1C334D5aB2faaDc7',
   };
 
-  await updatePriceAndDefault(
-    priceSignature,
-    bContractId,
-    bContract.oracleId,
-    0,
-    '64165',
-  );
+  await updatePriceAndDefault(priceSignature, bContractId, 0, chainId);
 }
