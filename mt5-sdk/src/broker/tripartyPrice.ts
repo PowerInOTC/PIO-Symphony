@@ -72,7 +72,7 @@ async function getTripartyLatestPrice(pair: string): Promise<CacheData> {
 }
 
 async function updateCacheData(): Promise<void> {
-  const token = await getToken();
+  let token = await getToken();
   const currentTime = Date.now();
   const uniqueSymbols = new Set<string>();
 
@@ -123,12 +123,29 @@ async function updateCacheData(): Promise<void> {
       }
     } catch (error) {
       console.error('Error updating cache data:', error);
-      if (retryCount < 5) {
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'error' in error &&
+        typeof error.error === 'string' &&
+        error.error.includes('String must contain at least 64 character(s)')
+      ) {
+        console.info('Invalid token. Reloading token and retrying...');
+        token = await getToken();
+        await updatePrices(retryCount);
+      } else if (retryCount < 5) {
         console.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await updatePrices(retryCount + 1);
       } else {
         console.error('Max retry attempts reached. Skipping cache update.');
+        // Set default values for cached data when max retry attempts are reached
+        for (const pair in pairCache) {
+          if (pairCache[pair].expiration > currentTime) {
+            pairCache[pair].cached = { bid: 0, ask: 0 };
+          }
+        }
       }
     }
   };

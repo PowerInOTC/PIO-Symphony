@@ -1,6 +1,27 @@
 import { manageSymbolInventory, verifyTradeOpenable } from './dispatcher';
 import { getTripartyLatestPrice } from './tripartyPrice';
 import { minAmountSymbol } from '../broker/minAmount';
+import { getFirst12Characters } from '../broker/utils';
+import { getOpenPositions, Position } from '../broker/dispatcher';
+import { getMT5Ticker, getBrokerFromAsset } from '../configBuilder/configRead';
+
+function isPositionOpen(
+  positions: Position[],
+  symbol: string,
+  bContractId: string,
+  isLong: boolean,
+): boolean {
+  const result = positions.some(
+    (position) =>
+      position.symbol === symbol &&
+      position.comment.startsWith(bContractId) &&
+      position.type === (isLong ? 0 : 1),
+  );
+  console.log(
+    `isPositionOpen(${symbol}, ${bContractId}, ${isLong}): ${result}`,
+  );
+  return result;
+}
 
 export async function hedger(
   pair: string,
@@ -11,53 +32,111 @@ export async function hedger(
   isOpen: boolean,
 ) {
   try {
-    const minAmount = await minAmountSymbol(pair);
+    const positions: Position[] = await getOpenPositions('mt5.ICMarkets');
+    console.log('Open positions:', positions);
 
-    if (minAmount <= amount) {
-      const livePrice = await getTripartyLatestPrice(pair);
+    bContractId = getFirst12Characters(bContractId);
 
-      if (
-        (livePrice.bid <= price && isLong && isOpen) ||
-        (livePrice.bid <= price && !isLong && !isOpen) ||
-        (livePrice.ask >= price && !isLong && isOpen) ||
-        (livePrice.ask >= price && isLong && !isOpen)
-      ) {
-        const isTradeOpenable = await verifyTradeOpenable(
-          pair,
-          amount,
-          livePrice.bid,
-        );
+    const [assetA, assetB] = pair.split('/');
+    const mt5TickerA = getMT5Ticker(assetA);
+    const mt5TickerB = getMT5Ticker(assetB);
+    const brokerA = getBrokerFromAsset(assetA);
+    const brokerB = getBrokerFromAsset(assetB);
 
-        if (isTradeOpenable) {
-          try {
-            await manageSymbolInventory(
-              pair,
-              amount,
-              bContractId,
-              isLong,
-              isOpen,
-            );
-            return true;
-            console.log('Symbol inventory managed successfully');
-          } catch (error) {
-            console.error('Error managing symbol inventory:', error);
-            // Handle the error or throw it to the caller
-            throw error;
-          }
+    if (!mt5TickerA || !mt5TickerB || !brokerA || !brokerB) {
+      return false;
+    }
+
+    const isAssetAPositionOpen = isPositionOpen(
+      positions,
+      mt5TickerA,
+      bContractId,
+      isLong,
+    );
+    const isAssetBPositionOpen = isPositionOpen(
+      positions,
+      mt5TickerB,
+      bContractId,
+      !isLong,
+    );
+
+    try {
+      let tx1 = true;
+      let tx2 = true;
+
+      if (isOpen) {
+        if (!isAssetAPositionOpen) {
+          console.log(mt5TickerA, amount, bContractId, isLong, isOpen);
+          tx1 = await manageSymbolInventory(
+            mt5TickerA,
+            amount,
+            bContractId,
+            isLong,
+            isOpen,
+            brokerA,
+          );
+          console.log(`Opened position for ${assetA}`);
         } else {
-          console.log('Trade is not openable');
+          console.log(`Position for ${assetA} is already open`);
+        }
+
+        if (!isAssetBPositionOpen) {
+          console.log(mt5TickerB, amount, bContractId, !isLong, isOpen);
+
+          tx2 = await manageSymbolInventory(
+            mt5TickerB,
+            amount,
+            bContractId,
+            !isLong,
+            isOpen,
+            brokerB,
+          );
+          console.log(`Opened position for ${assetB}`);
+        } else {
+          console.log(`Position for ${assetB} is already open`);
         }
       } else {
-        console.log('Price condition not met');
-        console.log('livePrice:', livePrice);
-        console.log('price:', price);
+        if (isAssetAPositionOpen) {
+          tx1 = await manageSymbolInventory(
+            mt5TickerA,
+            amount,
+            bContractId,
+            isLong,
+            isOpen,
+            brokerA,
+          );
+          console.log(`Closed position for ${assetA}`);
+        } else {
+          console.log(`Position for ${assetA} is not open`);
+        }
+
+        if (isAssetBPositionOpen) {
+          tx2 = await manageSymbolInventory(
+            mt5TickerB,
+            amount,
+            bContractId,
+            !isLong,
+            isOpen,
+            brokerB,
+          );
+          console.log(`Closed position for ${assetB}`);
+        } else {
+          console.log(`Position for ${assetB} is not open`);
+        }
       }
-    } else {
-      console.log('Amount is less than the minimum required amount');
+
+      if (!tx1 || !tx2) {
+        console.log('Issue with position management');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error managing symbol inventory:', error);
+      throw error;
     }
   } catch (error) {
     console.error('Error in manageSymbolInventory:', error);
-    // Handle the error or throw it to the caller
     throw error;
   }
 }

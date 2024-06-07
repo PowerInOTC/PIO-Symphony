@@ -2,6 +2,7 @@ import { getPionSignature } from '@pionerfriends/api-client';
 import { updatePriceAndDefault } from '../blockchain/write';
 import { getToken } from '../utils/init';
 import { PionResult, pionSignType } from '../blockchain/types';
+import { getBalance } from '../blockchain/read';
 
 export async function sDefault(
   bContractId: string,
@@ -15,7 +16,7 @@ export async function sDefault(
 
   const pionResponse = await getPionSignature(
     assetAId,
-    assetAId,
+    assetBId,
     String(price),
     String(price),
     String(5),

@@ -20,6 +20,8 @@ import {
 import { getToken } from './utils/init';
 import { wallets } from './utils/init';
 import { config } from './config';
+import { getOpenPositions, Position } from './broker/dispatcher';
+import { suggestNearestAmount, isAmountOk } from './broker/utils';
 
 async function bullExample(): Promise<void> {
   const token = await getToken();
@@ -98,12 +100,55 @@ async function bullExample(): Promise<void> {
     lTimelockB: String(3600),
   };
 
-  const bob = await getProxyTicker('ABBV');
-  console.log(bob);
-
   try {
-    let counter = 100;
+    let counter = 1;
+    const amount = 1000;
+    const assetAId = 'forex.GBPUSD';
+    const assetBId = 'forex.EURUSD';
+    const pair = `${assetAId}/${assetBId}`;
+    const isLong = true;
 
+    const minAmount = await minAmountSymbol(pair);
+    if (!isAmountOk(amount, minAmount)) {
+      console.log(suggestNearestAmount(amount, minAmount));
+      throw new Error('Amount is not ok');
+    }
+    console.log(`minAmount ${minAmount}`);
+
+    function getFirst24Characters(hexString: string): string {
+      return hexString.slice(0, 24);
+    }
+    const hexString = `0x81ecwaf5bca8e50573e0183wad582d6b6426bd988c9c7fd40c529bea86232136c8`;
+
+    const isPassed1 = await hedger(
+      pair,
+      0.5,
+      hexString,
+      amount, // TODO /1e18
+      isLong,
+      true,
+    );
+
+    console.log(`1 : ${isPassed1}`);
+    //await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    const position = await getOpenPositions('mt5.ICMarkets');
+    console.log(position);
+
+    const isPassed12 = await hedger(
+      pair,
+      0.5,
+      hexString,
+      amount, // TODO /1e18
+      isLong,
+      false,
+    );
+    console.log(`1 : ${isPassed12}`);
+
+    const position2 = await getOpenPositions('mt5.ICMarkets');
+    console.log(position2);
+
+    /*
     const pair = 'forex.GBPUSD/forex.EURUSD';
     const [pair1, pair2] = pair.split('/');
     const broker1 = getBrokerFromAsset(pair1);

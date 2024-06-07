@@ -1,18 +1,20 @@
+
 # test_mt5_interactions.py
-from mt5_interaction import retrieve_symbol_info, retrieve_inventory_amount, get_total_open_amount, is_connected, retrieve_all_symbols, retrieve_symbol_info, manage_symbol_inventory, retrieve_max_notional_for_account_leverage, retrieve_open_positions_notionals, start_mt5, initialize_symbols, place_order, reset_account, verify_trade_openable, retrieve_latest_tick, retrieve_account_margin, retrieve_account_free_margin
-from dotenv import load_dotenv
-import os
-import json
-import pandas as pd
-load_dotenv()
+#from mt5_interaction import retrieve_symbol_info, retrieve_inventory_amount, get_total_open_amount, is_connected, retrieve_all_symbols, retrieve_symbol_info, manage_symbol_inventory, retrieve_max_notional_for_account_leverage, retrieve_open_positions_notionals, start_mt5, initialize_symbols, place_order, reset_account, verify_trade_openable, retrieve_latest_tick, retrieve_account_margin, retrieve_account_free_margin
+#from dotenv import load_dotenv
+#import os
+#import json
+#import pandas as pd
+#load_dotenv()
 
 
-login_id = int(os.getenv('HEDGER1_LOGIN'))
-password = os.getenv('HEDGER1_PASSWORD')
-server = os.getenv('HEDGER1_SERVER')
-start_mt5(login_id, password, server)
+#login_id = int(os.getenv('HEDGER1_LOGIN'))
+#password = os.getenv('HEDGER1_PASSWORD')
+#server = os.getenv('HEDGER1_SERVER')
+#start_mt5(login_id, password, server)
 
-reset_account()
+#reset_account()
+###
 
 
 # call each second is_connected() // if False, call start_mt5(login_id, password, server)

@@ -1,34 +1,14 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
-const ethers_1 = require("ethers");
-const api_client_1 = require("@pionerfriends/api-client");
-const telegram_1 = require("./utils/telegram");
-const init_1 = require("./utils/init");
+const tripartyPrice_1 = require("./broker/tripartyPrice");
+const minAmount_1 = require("./broker/minAmount");
+const inventory_1 = require("./broker/inventory");
 const configRead_1 = require("./configBuilder/configRead");
-const forSDK_1 = require("./forSDK");
-const mt5Price_1 = require("./broker/mt5Price");
+const init_1 = require("./utils/init");
+const dispatcher_1 = require("./broker/dispatcher");
+const utils_1 = require("./broker/utils");
 async function bullExample() {
-    const rpcURL = 'https://rpc.sonic.fantom.network/';
-    const rpcKey = '';
-    const provider = new ethers_1.ethers.JsonRpcProvider(`${rpcURL}${rpcKey}`);
-    const wallet = new ethers_1.ethers.Wallet('578c436136413ec3626d3451e89ce5e633b249677851954dff6b56fad50ac6fe', provider);
-    const token = await (0, api_client_1.getPayloadAndLogin)(wallet);
-    if (!wallet || !token) {
-        console.log('login failed');
-        return;
-    }
-    const websocketClient = new api_client_1.QuoteWebsocketClient((message) => {
-        //console.log(message);
-    }, (error) => {
-        console.error('WebSocket error:', error);
-        (0, telegram_1.sendErrorToTelegram)(error);
-    });
-    await websocketClient.startWebSocket(token);
+    const token = await (0, init_1.getToken)();
     const chainId = 64165;
     const assetAId = 'forex.EURUSD';
     const assetBId = 'stock.nasdaq.AAPL';
@@ -38,10 +18,9 @@ async function bullExample() {
     let sQuantity = 100;
     let lQuantity = 101;
     const assetHex = `${assetAId}/${assetBId}`;
-    const pairs = [assetHex, 'forex.EURUSD/stock.nasdaq.AI'];
-    const pairPrices = await (0, forSDK_1.calculatePairPrices)(pairs, token);
-    bid = pairPrices[assetHex]['bid'];
-    ask = pairPrices[assetHex]['ask'];
+    const pairPrices = await (0, tripartyPrice_1.getTripartyLatestPrice)(assetHex);
+    bid = pairPrices.bid;
+    ask = pairPrices.ask;
     const adjustedQuantities = await (0, configRead_1.adjustQuantities)(bid, ask, sQuantity, lQuantity, assetAId, assetBId, Leverage);
     sQuantity = adjustedQuantities.sQuantity;
     lQuantity = adjustedQuantities.lQuantity;
@@ -51,7 +30,7 @@ async function bullExample() {
     let sInterestRate = sConfig.funding;
     const rfq = {
         chainId: chainId,
-        expiration: 10,
+        expiration: String(10000),
         assetAId: assetAId,
         assetBId: assetBId,
         sPrice: String(bid),
@@ -62,10 +41,10 @@ async function bullExample() {
         sImB: String(sConfig.imA),
         sDfA: String(sConfig.imA),
         sDfB: String(sConfig.imA),
-        sExpirationA: 3600,
-        sExpirationB: 3600,
-        sTimelockA: 3600,
-        sTimelockB: 3600,
+        sExpirationA: String(3600),
+        sExpirationB: String(3600),
+        sTimelockA: String(3600),
+        sTimelockB: String(3600),
         lPrice: String(ask),
         lQuantity: String(lQuantity),
         lInterestRate: String(lInterestRate),
@@ -74,27 +53,84 @@ async function bullExample() {
         lImB: String(lConfig.imB),
         lDfA: String(lConfig.dfA),
         lDfB: String(lConfig.dfB),
-        lExpirationA: 3600,
-        lExpirationB: 3600,
-        lTimelockA: 3600,
-        lTimelockB: 3600,
+        lExpirationA: String(3600),
+        lExpirationB: String(3600),
+        lTimelockA: String(3600),
+        lTimelockB: String(3600),
     };
     try {
-        let counter = 0;
-        const interval = setInterval(() => {
-            init_1.logger.info(counter);
-            (0, mt5Price_1.mt5Price)('EURUSD', 200, 60000, 'user1');
-            init_1.logger.info((0, mt5Price_1.getLatestPrice)('user1', 'EURUSD'));
-            //sendRfq(rfq, token);
+        let counter = 1;
+        const amount = 1000;
+        const assetAId = 'forex.GBPUSD';
+        const assetBId = 'forex.EURUSD';
+        const pair = `${assetAId}/${assetBId}`;
+        const isLong = true;
+        const minAmount = await (0, minAmount_1.minAmountSymbol)(pair);
+        if (!(0, utils_1.isAmountOk)(amount, minAmount)) {
+            console.log((0, utils_1.suggestNearestAmount)(amount, minAmount));
+            throw new Error('Amount is not ok');
+        }
+        console.log(`minAmount ${minAmount}`);
+        function getFirst24Characters(hexString) {
+            return hexString.slice(0, 24);
+        }
+        const hexString = `0x81ecwaf5bca8e50573e0183wad582d6b6426bd988c9c7fd40c529bea86232136c8`;
+        const isPassed1 = await (0, inventory_1.hedger)(pair, 0.5, hexString, amount, // TODO /1e18
+        isLong, true);
+        console.log(`1 : ${isPassed1}`);
+        //await new Promise((resolve) => setTimeout(resolve, 5000));
+        const position = await (0, dispatcher_1.getOpenPositions)('mt5.ICMarkets');
+        console.log(position);
+        const isPassed12 = await (0, inventory_1.hedger)(pair, 0.5, hexString, amount, // TODO /1e18
+        isLong, false);
+        console.log(`1 : ${isPassed12}`);
+        const position2 = await (0, dispatcher_1.getOpenPositions)('mt5.ICMarkets');
+        console.log(position2);
+        /*
+        const pair = 'forex.GBPUSD/forex.EURUSD';
+        const [pair1, pair2] = pair.split('/');
+        const broker1 = getBrokerFromAsset(pair1);
+        const broker2 = getBrokerFromAsset(pair2);
+        if (broker1 != broker2 && broker1 != 'mt5.ICMarkets') {
+          console.error;
+        }
+    
+        const price = await getTripartyLatestPrice(pair);
+        console.log(price);
+        const minAmount = await minAmountSymbol(pair);
+        const MaxNotional = await getBrokerMaxNotional(pair1);
+        const totalOpenAmount1 = await getTotalOpenAmount(pair1);
+        const totalOpenAmount2 = await getTotalOpenAmount(pair2);
+        console.log(totalOpenAmount1, totalOpenAmount2, MaxNotional, minAmount);
+    
+        /*
+        /*
+     const pair = 'forex.EURUSD/forex.GBPUSD';
+        const price = 0.858;
+        const bContractId = 0;
+        const amount = 1000;
+        const isLong = true;
+        const isOpen = false;
+          const isPassed = await hedger(
+            pair,
+            price,
+            bContractId,
+            amount,
+            isLong,
+            isOpen,
+          );*/
+        setInterval(async () => {
+            /*
+            sendRfq(rfq, token);*/
             counter++;
-        }, 1000);
+        }, 7000);
     }
     catch (error) {
         if (error instanceof Error) {
-            init_1.logger.error(error);
+            console.error(error);
         }
         else {
-            init_1.logger.error('An unknown error occurred');
+            console.error('An unknown error occurred');
         }
     }
 }

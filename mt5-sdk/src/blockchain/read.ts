@@ -43,6 +43,17 @@ export async function getBalance(accountId: number, chainId: string) {
   return balance;
 }
 
+export async function getUserBalance(accountId: string, chainId: string) {
+  const balance = await web3Clients[Number(chainId)].readContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1 as Address,
+    abi: PionerV1.abi,
+    functionName: 'getBalances',
+    args: [accountId],
+  });
+  return balance;
+}
+
 export async function getMintFUSD(accountId: number, chainId: string) {
   const balance = await web3Clients[Number(chainId)].readContract({
     address: networks[chainId as unknown as NetworkKey].contracts

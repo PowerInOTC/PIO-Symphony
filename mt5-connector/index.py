@@ -10,10 +10,10 @@ pip install -r requirements.txt;
 python -m uvicorn index:app --reload;
 '''
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from python.mt5_interaction import (retrieve_inventory_amount, get_total_open_amount, is_connected, 
-                             retrieve_all_symbols, retrieve_symbol_info, manage_symbol_inventory, 
-                             start_mt5, reset_account, verify_trade_openable,amount_to_lots,lots_to_amount, get_open_positions,
-                             retrieve_latest_tick, retrieve_account_free_margin, min_amount_symbol, shutdown_mt5)
+from python.mt5_interaction import ( 
+                             retrieve_all_symbols, retrieve_symbol_info,get_total_open_amount ,retrieve_account_free_margin,
+                               lots_to_amount, get_open_positions,
+                             retrieve_latest_tick, min_amount_symbol, manage_single_symbol_inventory)
 from dotenv import load_dotenv
 import os
 import json
@@ -26,15 +26,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from functools import lru_cache
 import time
+from python.mt5_connection import MT5ConnectionSingleton
+from datetime import datetime
 
-
-login_id = int(os.getenv('HEDGER1_LOGIN'))
-password = os.getenv('HEDGER1_PASSWORD')
-server = os.getenv('HEDGER1_SERVER')
 identification_token = os.getenv('AZURE_MT5_IDENTIFICATION_TOKEN')
-
-
-start_mt5(login_id, password, server)
 
 max_notional = 0
 leverage = 100
@@ -48,41 +43,33 @@ async def update_max_notional_task():
 
 async def stay_connected_task():
     while True:
-        if is_connected():
+        if MT5ConnectionSingleton().is_connected():
             print("MT5 is connected")
         else:
             print("MT5 is not connected. Reconnecting...")
-            start_mt5(login_id, password, server)
+            MT5ConnectionSingleton().start_mt5()
         await asyncio.sleep(60)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     asyncio.create_task(update_max_notional_task())
     asyncio.create_task(stay_connected_task())
     yield
-    shutdown_mt5()
+    MT5ConnectionSingleton().shutdown_mt5()
 
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.post("/verify-trade")
-async def verify_trade_endpoint(payload: dict):
-    print("Received request to verify trade")
-    symbol = payload.get("symbol")
-    volume = payload.get("volume")
-    price = payload.get("price")
-    
-    if symbol is None or volume is None or price is None:
-        raise HTTPException(status_code=400, detail="Missing required parameters")
-    
-    try:
-        trade_openable = verify_trade_openable(symbol, volume, price)
-        return {"trade_openable": trade_openable}
-    except Exception as e:
-        print("An error occurred:", str(e))
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+@app.on_event("startup")
+async def startup_event():
+    print("Starting MT5")
+    MT5ConnectionSingleton().start_mt5()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    print("Shutting down MT5")
+    MT5ConnectionSingleton().shutdown_mt5()
 
 @app.get("/retrieve_funding/{symbol}")
 async def retrieve_funding(symbol: str):
@@ -102,7 +89,7 @@ async def retrieve_all_symbols_endpoint():
 @app.get("/get_total_open_amount/{symbol}")
 async def get_total_open_amount_endpoint(symbol: str):
     total_open_amount = get_total_open_amount(symbol)
-    return {"total_open_amount": total_open_amount}
+    return {"total_open_amount": total_open_amount} 
 
 @app.post("/manage_symbol_inventory")
 async def manage_symbol_inventory_endpoint(payload: dict):
@@ -111,13 +98,20 @@ async def manage_symbol_inventory_endpoint(payload: dict):
     amount = payload.get("amount")
     is_long = payload.get("is_long")
     is_open = payload.get("is_open")
+    time = current_time = datetime.now()
+
+    print("#############")
+    print(time, " : Received request to manage symbol inventory ", pair, b_contract_id, amount, is_long, is_open)
+    print("#############")
+    
     if pair is None or b_contract_id is None or amount is None or is_long is None or is_open is None:
-        raise HTTPException(status_code=400, detail="Missing required parameters")
+        return {False}
     try:
-        success = manage_symbol_inventory(pair, amount, b_contract_id, is_long, is_open)
+        success = manage_single_symbol_inventory(pair, amount, b_contract_id, is_long, is_open)
+        print("Success:", success)
         if not success:
-            raise HTTPException(status_code=400, detail="Failed to manage inventory")
-        return {"success": True}
+            return False
+        return True
     except Exception as e:
         print("An error occurred:", str(e))
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -141,6 +135,26 @@ async def get_open_positions_endpoint():
     positions = get_cached_open_positions()
     return positions
 
+@app.get("/get_positions")
+async def get_open_positions_endpoint():
+    try:
+        print("Received request to get positions")
+        positions = get_open_positions()
+        positions_data = [
+            {
+                "symbol": position.symbol,
+                "volume": position.volume,
+                "type": position.type,
+                "price_current": position.price_current,
+                "comment": position.comment,
+            }
+            for position in positions
+        ]
+        return {"positions": positions_data}
+    except Exception as e:
+        print(f"An error occurred in get_open_positions_endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 @app.get("/open_trades")
 async def get_open_trades():
     with open("static/open_trades.html") as file:
@@ -156,6 +170,7 @@ async def retrieve_max_notional_endpoint():
 @app.get("/min_amount_symbol/{symbol}")
 async def min_amount_symbol_endpoint(symbol: str):
     min_amount = min_amount_symbol(symbol)
+    print(f"Min amount for {symbol} is {min_amount}")
     lots_to_amount(symbol, min_amount)
     return {"min_amount": min_amount}
 

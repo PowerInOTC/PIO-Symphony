@@ -4,6 +4,30 @@ import { getMT5Ticker, getBrokerFromAsset } from '../configBuilder/configRead';
 
 const apiBaseUrl = config.apiBaseUrl;
 
+export interface Position {
+  symbol: string;
+  volume: number;
+  type: number;
+  price_current: number;
+  comment: string;
+}
+
+export async function getOpenPositions(broker: string): Promise<Position[]> {
+  switch (broker) {
+    case 'mt5.ICMarkets':
+      try {
+        const response = await axios.get(`${apiBaseUrl}/get_positions`);
+        return response.data.positions;
+      } catch (error) {
+        console.error('Error retrieving open positions:', error);
+        return [];
+      }
+    default:
+      console.error('Unsupported broker for getOpenPositions');
+      return [];
+  }
+}
+
 async function getTotalOpenAmount(
   symbol: string,
   broker: string,
@@ -137,52 +161,36 @@ async function manageSymbolInventory(
   hash: string,
   isLong: boolean,
   isOpen: boolean,
+  broker: string,
 ): Promise<boolean> {
-  const [pair1, pair2] = pair.split('/');
-  const mt5Ticker1 = getMT5Ticker(pair1);
-  const broker1 = getBrokerFromAsset(pair1);
-  const mt5Ticker2 = getMT5Ticker(pair2);
-  const broker2 = getBrokerFromAsset(pair2);
-
-  const pairMT5 = `${mt5Ticker1}/${mt5Ticker2}`;
-
-  if (!mt5Ticker1 || !broker1 || !mt5Ticker2 || !broker2) {
-    return false;
-  }
-
-  if (broker1 === broker2) {
-    switch (broker1) {
-      case 'mt5.ICMarkets':
-        try {
-          const payload = {
-            pair: pairMT5,
-            b_contract_id: hash,
-            amount: amount,
-            is_long: isLong,
-            is_open: isOpen,
-          };
-
-          const response = await axios.post(
-            `${apiBaseUrl}/manage_symbol_inventory`,
-            JSON.stringify(payload),
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
+  switch (broker) {
+    case 'mt5.ICMarkets':
+      try {
+        const payload = {
+          pair: pair,
+          b_contract_id: hash,
+          amount: amount,
+          is_long: isLong,
+          is_open: isOpen,
+        };
+        console.log('payload', payload);
+        const response = await axios.post(
+          `${apiBaseUrl}/manage_symbol_inventory`,
+          JSON.stringify(payload),
+          {
+            headers: {
+              'Content-Type': 'application/json',
             },
-          );
-
-          return response.status === 200;
-        } catch (error) {
-          console.error('Error managing symbol inventory:', error);
-          return false;
-        }
-      default:
-        console.error('Unsupported broker for manageSymbolInventory');
+          },
+        );
+        return response.data;
+      } catch (error) {
+        console.error('Error managing symbol inventory:', error);
         return false;
-    }
-  } else {
-    return false;
+      }
+    default:
+      console.error('Unsupported broker for manageSymbolInventory');
+      return false;
   }
 }
 
