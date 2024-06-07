@@ -1,27 +1,9 @@
 import { manageSymbolInventory, verifyTradeOpenable } from './dispatcher';
 import { getTripartyLatestPrice } from './tripartyPrice';
 import { minAmountSymbol } from '../broker/minAmount';
-import { getFirst12Characters } from '../broker/utils';
+import { getFirst12Characters, isPositionOpen } from '../broker/utils';
 import { getOpenPositions, Position } from '../broker/dispatcher';
 import { getMT5Ticker, getBrokerFromAsset } from '../configBuilder/configRead';
-
-function isPositionOpen(
-  positions: Position[],
-  symbol: string,
-  bContractId: string,
-  isLong: boolean,
-): boolean {
-  const result = positions.some(
-    (position) =>
-      position.symbol === symbol &&
-      position.comment.startsWith(bContractId) &&
-      position.type === (isLong ? 0 : 1),
-  );
-  console.log(
-    `isPositionOpen(${symbol}, ${bContractId}, ${isLong}): ${result}`,
-  );
-  return result;
-}
 
 export async function hedger(
   pair: string,
@@ -32,8 +14,10 @@ export async function hedger(
   isOpen: boolean,
 ) {
   try {
+    // we are sell side
+    isLong = !isLong;
+
     const positions: Position[] = await getOpenPositions('mt5.ICMarkets');
-    console.log('Open positions:', positions);
 
     bContractId = getFirst12Characters(bContractId);
 
@@ -66,7 +50,6 @@ export async function hedger(
 
       if (isOpen) {
         if (!isAssetAPositionOpen) {
-          console.log(mt5TickerA, amount, bContractId, isLong, isOpen);
           tx1 = await manageSymbolInventory(
             mt5TickerA,
             amount,

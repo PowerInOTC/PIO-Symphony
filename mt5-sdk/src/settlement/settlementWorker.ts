@@ -46,3 +46,15 @@ async function settlementWorker(token: string): Promise<void> {
     setTimeout(() => settlementWorker(token), 1000);
   }
 }
+
+/**
+ * @dev Start the settlement process and run it every 2.5 seconds.
+ * @param token The token used for authentication.
+ */
+export function startSettlementWorker(token: string) {
+  setInterval(() => {
+    settlementWorker(token).catch((error) => {
+      console.error('Error during verification:', error);
+    });
+  }, 2500);
+}

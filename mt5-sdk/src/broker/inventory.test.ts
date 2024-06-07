@@ -1,7 +1,11 @@
 import { minAmountSymbol } from '../broker/minAmount';
 import { hedger } from '../broker/inventory';
 import { getOpenPositions } from '../broker/dispatcher';
-import { suggestNearestAmount, isAmountOk } from '../broker/utils';
+import {
+  suggestNearestAmount,
+  isAmountOk,
+  getFirst12Characters,
+} from '../broker/utils';
 
 describe('Hedger', () => {
   test('testHedger', async () => {
@@ -10,7 +14,9 @@ describe('Hedger', () => {
     const assetBId = 'forex.EURUSD';
     const pair = `${assetAId}/${assetBId}`;
     const isLong = true;
-    const hexString = `0x81ecwaf5bca8e50573e0183wad582d6b6426bd988c9c7fd40c529bea86232136c8`;
+    const hexString = getFirst12Characters(
+      `0x81ecwaf5bca8e50573e0183wad582d6b6426bd988c9c7fd40c529bea86232136c8`,
+    );
 
     const minAmount = await minAmountSymbol(pair);
     expect(isAmountOk(amount, minAmount)).toBe(true);

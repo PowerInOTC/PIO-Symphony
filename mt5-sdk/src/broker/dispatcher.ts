@@ -173,7 +173,6 @@ async function manageSymbolInventory(
           is_long: isLong,
           is_open: isOpen,
         };
-        console.log('payload', payload);
         const response = await axios.post(
           `${apiBaseUrl}/manage_symbol_inventory`,
           JSON.stringify(payload),
