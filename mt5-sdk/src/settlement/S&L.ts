@@ -4,7 +4,7 @@ import { getToken } from '../utils/init';
 import { PionResult, pionSignType } from '../blockchain/types';
 import { getBalance } from '../blockchain/read';
 
-export async function sDefault(
+export async function defaultAndLiquidation(
   bContractId: string,
   assetHex: string,
   price: number,

@@ -1,5 +1,6 @@
 import { getPositions } from '@pionerfriends/api-client';
-import { sDefault } from './S&L';
+import { defaultAndLiquidation } from './S&L';
+import { hedger } from '../broker/inventory';
 
 async function settlementWorker(token: string): Promise<void> {
   try {
@@ -22,7 +23,7 @@ async function settlementWorker(token: string): Promise<void> {
 
         if (imAValue * 0.8 < -upnl || imBValue * 0.8 < -upnl) {
           console.log(`Position ${id} has reached the threshold!`);
-          await sDefault(
+          await defaultAndLiquidation(
             position.bContractId.toString(),
             position.symbol,
             lastPriceValue,

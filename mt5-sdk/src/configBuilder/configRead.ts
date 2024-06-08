@@ -5,6 +5,11 @@ interface SymphonyJSON {
   assets: Asset[];
 }
 
+/**
+ * @dev Processes the Symphony JSON file and returns an array of assets.
+ * @param symphonyJSONPath - The path to the Symphony JSON file.
+ * @returns An array of assets parsed from the JSON file.
+ */
 export function processSymphonyJSON(symphonyJSONPath: string): Asset[] {
   const rawData = fs.readFileSync(symphonyJSONPath, 'utf-8');
   const jsonData: SymphonyJSON = JSON.parse(rawData);
@@ -13,9 +18,20 @@ export function processSymphonyJSON(symphonyJSONPath: string): Asset[] {
 
 const symphonyJSONPath = './symphony.json';
 export const symbolList: Asset[] = processSymphonyJSON(symphonyJSONPath);
+
+/**
+ * @dev Symbol cache to store previously validated symbols for faster lookup.
+ * The cache is implemented as a Set to ensure unique symbols and provide
+ * constant-time lookup and insertion.
+ */
 let symbolCache: Set<string> = new Set();
 let symbolCacheTimestamp: number = 0;
 
+/**
+ * @dev Retrieves the broker from the asset based on the proxy ticker.
+ * @param proxyTicker - The proxy ticker of the asset.
+ * @returns The broker associated with the asset, or undefined if not found.
+ */
 export function getBrokerFromAsset(proxyTicker: string): string | undefined {
   const asset = symbolList.find((a) => a.proxyTicker === proxyTicker);
   if (asset) {
@@ -24,6 +40,11 @@ export function getBrokerFromAsset(proxyTicker: string): string | undefined {
   return undefined;
 }
 
+/**
+ * @dev Checks if a given symbol is valid.
+ * @param symbol - The symbol to validate.
+ * @returns True if the symbol is valid, false otherwise.
+ */
 export function isValidSymbol(symbol: string): boolean {
   if (symbolCache.has(symbol)) {
     return true;
@@ -35,9 +56,21 @@ export function isValidSymbol(symbol: string): boolean {
     return true;
   }
 
+  // Check if the symbol is "crypto.BTCUSD" or "crypto.ETHUSD"
+  const isCryptoSymbol =
+    symbol === 'crypto.BTCUSD' || symbol === 'crypto.ETHUSD';
+  if (isCryptoSymbol) {
+    return true;
+  }
+
   return false;
 }
 
+/**
+ * @dev Verifies if all symbols in the input string are valid.
+ * @param input - The input string containing symbols separated by '/'.
+ * @returns True if all symbols are valid, false otherwise.
+ */
 export function verifySymbols(input: string): boolean {
   const symbols = input.split('/');
   return symbols.every((symbol) => isValidSymbol(symbol));

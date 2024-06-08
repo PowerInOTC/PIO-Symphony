@@ -29,7 +29,7 @@ async function verifyHedgerOpenPositions(token: string) {
   for (let i = 0; i < chainID.length; i++) {
     const positionsForChain = await getPositions(chainID[i], token, {
       onlyActive: true,
-      targetAddress: config.publicKeys?.split(',')[0],
+      address: config.publicKeys?.split(',')[0],
     });
     if (positionsForChain && positionsForChain.data) {
       positions.push(...positionsForChain.data);
