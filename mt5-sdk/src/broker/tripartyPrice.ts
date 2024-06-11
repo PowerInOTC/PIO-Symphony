@@ -17,7 +17,7 @@ interface CacheItem {
 const pairCache: { [pair: string]: CacheItem } = {};
 
 async function fetchCacheData(pair: string): Promise<CacheData> {
-  const token = await getToken();
+  const token = await getToken(0);
   const [symbol1, symbol2] = pair.split('/');
   const response = await getPrices([symbol1, symbol2], token);
 
@@ -72,7 +72,7 @@ async function getTripartyLatestPrice(pair: string): Promise<CacheData> {
 }
 
 async function updateCacheData(): Promise<void> {
-  let token = await getToken();
+  let token = await getToken(0);
   const currentTime = Date.now();
   const uniqueSymbols = new Set<string>();
 
@@ -135,7 +135,7 @@ async function updateCacheData(): Promise<void> {
         error.error.includes('String must contain at least 64 character(s)')
       ) {
         console.info('Invalid token. Reloading token and retrying...');
-        token = await getToken();
+        token = await getToken(0);
         await updatePrices(retryCount);
       } else if (retryCount < 5) {
         console.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);

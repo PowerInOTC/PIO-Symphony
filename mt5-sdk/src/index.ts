@@ -21,7 +21,7 @@ import { startPositionFetching } from './settlement/cachePositions';
 async function index(): Promise<void> {
   try {
     console.log('Start');
-    const token = await getToken();
+    const token = await getToken(0);
     console.log(token);
 
     const config = JSON.parse(fs.readFileSync('hedger.config.json', 'utf-8'));

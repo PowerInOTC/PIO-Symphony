@@ -10,7 +10,7 @@ export async function defaultAndLiquidation(
   price: number,
   chainId: string,
 ) {
-  const token = await getToken();
+  const token = await getToken(0);
 
   const [assetAId, assetBId]: string[] = assetHex.split('/');
 

@@ -28,13 +28,18 @@ export function startRfqWorker(token: string): void {
         const data: RfqResponse = job.data;
         const quote: QuoteRequest | null = await rfqToQuote(data);
         if (quote) {
-          console.log(quote.rfqId);
+          console.log(
+            data.assetAId,
+            data.assetBId,
+            data.lQuantity,
+            data.lPrice,
+          );
           await sendQuote(quote, token);
         } else {
           console.warn('Invalid quote generated. Skipping sending the quote.');
         }
       } catch (error) {
-        console.error(`Error processing job: ${error}`);
+        console.error('Error processing job:', error);
       }
     },
     {

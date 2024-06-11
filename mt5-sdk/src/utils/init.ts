@@ -83,15 +83,31 @@ for (const chainId in chains) {
     transport: http(),
   });
 }
-let token = '';
 
-async function getToken(maxRetries = 3, retryDelay = 1000): Promise<string> {
+//////////
+interface TokenInfo {
+  token: string;
+  expiresAt: number;
+}
+
+const tokenStore: { [id: number]: TokenInfo } = {};
+
+async function getToken(
+  id: number,
+  maxRetries = 3,
+  retryDelay = 1000,
+): Promise<string> {
+  if (tokenStore[id] && tokenStore[id].expiresAt > Date.now()) {
+    return tokenStore[id].token;
+  }
+
   let retries = 0;
   while (retries < maxRetries) {
     try {
-      const newToken = await fetchNewToken();
-      token = newToken;
-      return token;
+      const newToken = await fetchNewToken(id);
+      const expiresAt = Date.now() + 48 * 60 * 60 * 1000; // Token expires in 48 hours
+      tokenStore[id] = { token: newToken, expiresAt };
+      return newToken;
     } catch (error: unknown) {
       if (error instanceof Error && (error as any).code === 'ECONNRESET') {
         retries++;
@@ -107,10 +123,14 @@ async function getToken(maxRetries = 3, retryDelay = 1000): Promise<string> {
   throw new Error('Failed to get token after maximum retries');
 }
 
-async function fetchNewToken(): Promise<string> {
+async function fetchNewToken(id: number): Promise<string> {
   try {
     const chainId = 64156;
-    const address = Object.keys(accounts[chainId])[0];
+    const addresses = Object.keys(accounts[chainId]);
+    if (id >= addresses.length) {
+      throw new Error(`Invalid ID: ${id}. No corresponding address found.`);
+    }
+    const address = addresses[id];
     const account = accounts[chainId][address];
 
     const payloadResponse = await getPayload(account.address);
@@ -139,10 +159,25 @@ async function fetchNewToken(): Promise<string> {
 
     const token = loginResponse.data.token;
 
+    // Call extendToken after 48 hours
+    setTimeout(
+      async () => {
+        try {
+          const extendResponse = await extendToken(token);
+          if (extendResponse && extendResponse.status === 200) {
+            tokenStore[id].expiresAt = Date.now() + 48 * 60 * 60 * 1000; // Token expires in 48 hours
+          }
+        } catch (error) {
+          console.error('Failed to extend token', error);
+        }
+      },
+      48 * 60 * 60 * 1000,
+    );
+
     return token;
   } catch (error) {
-    return '';
     console.error('Failed to get token', error);
+    return '';
   }
 }
 

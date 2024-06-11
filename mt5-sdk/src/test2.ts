@@ -22,9 +22,13 @@ import { wallets } from './utils/init';
 import { config } from './config';
 import { getOpenPositions, Position } from './broker/dispatcher';
 import { suggestNearestAmount, isAmountOk } from './broker/utils';
+import { testWebSocketQuote } from './rfq/rfq.test';
 
 async function bullExample(): Promise<void> {
-  const token = await getToken();
+  testWebSocketQuote();
+
+  /*
+  const token = await getToken(0);
 
   const chainId = 64165;
   const assetAId = 'forex.EURUSD';
@@ -180,11 +184,11 @@ async function bullExample(): Promise<void> {
         amount,
         isLong,
         isOpen,
-      );*/
+      );
 
     setInterval(async () => {
       /*
-      sendRfq(rfq, token);*/
+      sendRfq(rfq, token);
       counter++;
     }, 7000);
   } catch (error: any) {
@@ -193,7 +197,7 @@ async function bullExample(): Promise<void> {
     } else {
       console.error('An unknown error occurred');
     }
-  }
+  }*/
 }
 
 bullExample();

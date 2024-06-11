@@ -24,7 +24,7 @@ describe('getMarketStatus', () => {
 
     (axios.get as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-    const token = await getToken();
+    const token = await getToken(0);
 
     // Test pair1
     const result1 = await getMarketStatus(token, pair1);

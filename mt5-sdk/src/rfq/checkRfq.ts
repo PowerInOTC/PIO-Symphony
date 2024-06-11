@@ -245,6 +245,7 @@ const checkRFQCore = async (rfq: RfqResponse): Promise<rfqCheck> => {
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${checkRFQ.assetAId}/${checkRFQ.assetAId}`,
   );
+
   if (
     tripartyLatestPrice != null &&
     tripartyLatestPrice.bid > 0 &&

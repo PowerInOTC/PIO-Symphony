@@ -256,7 +256,7 @@ export function getPairConfig(
   leverage: number,
   notional: number,
 ): Row {
-  console.log(tickerA, tickerB, side, leverage, notional);
+  //console.log(tickerA, tickerB, side, leverage, notional);
 
   const rowA = getFieldFromAsset(
     'mt5.ICMarkets',

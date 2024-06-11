@@ -119,8 +119,9 @@ export async function processCloseQuotes(token: string): Promise<void> {
       const currentTime = Date.now();
       if (currentTime - lastFetchTime >= fetchInterval) {
         try {
-          const response = await getSignedCloseQuotes('v1', 1, token, {
+          const response = await getSignedCloseQuotes('1.0', 64165, token, {
             onlyActive: true,
+            targetAddress: config.publicKeys?.split(',')[0],
           });
           const quotes = response?.data;
 

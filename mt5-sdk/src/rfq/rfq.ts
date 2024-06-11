@@ -50,9 +50,9 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
       lPrice: rfq.lPrice,
       lQuantity: String(rfq.lQuantity),
       minAmount: String(minAmount),
-      maxAmount: String(
+      maxAmount: Math.floor(
         10000 / Math.min(Number(rfq.sPrice), Number(rfq.lPrice)),
-      ),
+      ).toString(),
     };
   } else {
     throw new Error('RFQ is not valid');
