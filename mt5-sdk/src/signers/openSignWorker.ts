@@ -96,23 +96,37 @@ export async function processOpenQuotes(token: string): Promise<void> {
 
     await websocketClient.startWebSocket(token);
 
-    // Run getSignedWrappedOpenQuotes in parallel every 750ms
-    setInterval(async () => {
-      try {
-        const response = await getSignedWrappedOpenQuotes('v1', 1, token, {
-          onlyActive: true,
-        });
-        const quotes = response?.data;
+    let lastFetchTime = 0;
+    const fetchInterval = 750; // Adjust the interval as needed
 
-        if (quotes) {
-          for (const quote of quotes) {
-            await signedOpenQueue.add('signedOpen', quote);
+    setInterval(async () => {
+      const currentTime = Date.now();
+      if (currentTime - lastFetchTime >= fetchInterval) {
+        try {
+          const response = await getSignedWrappedOpenQuotes(
+            '1.0',
+            64165,
+            token,
+            {
+              onlyActive: true,
+              targetAddress: config.publicKeys?.split(',')[0],
+            },
+          );
+          const quotes = response?.data;
+
+          if (quotes) {
+            for (const quote of quotes) {
+              await signedOpenQueue.add('signedOpen', quote);
+            }
           }
+
+          lastFetchTime = currentTime;
+        } catch (error) {
+          console.error('Error fetching signed wrapped open quotes:', error);
+          // Do not update lastFetchTime to ensure the interval is maintained
         }
-      } catch (error) {
-        console.error('Error fetching signed wrapped open quotes:', error);
       }
-    }, 750);
+    }, fetchInterval);
   } catch (error) {
     console.error('Error processing open quotes:', error);
   }

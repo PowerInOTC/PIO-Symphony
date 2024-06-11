@@ -112,9 +112,10 @@ async function updateCacheData(): Promise<void> {
           }
         }
       } else {
+        /*
         console.error(
           'Error retrieving prices: response or response.data is undefined',
-        );
+        );*/
         for (const pair in pairCache) {
           if (pairCache[pair].expiration > currentTime) {
             pairCache[pair].cached = { bid: 0, ask: 0 };
@@ -122,7 +123,9 @@ async function updateCacheData(): Promise<void> {
         }
       }
     } catch (error) {
+      /*
       console.error('Error updating cache data:', error);
+      */
 
       if (
         typeof error === 'object' &&
@@ -139,7 +142,9 @@ async function updateCacheData(): Promise<void> {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await updatePrices(retryCount + 1);
       } else {
+        /*
         console.error('Max retry attempts reached. Skipping cache update.');
+        */
         // Set default values for cached data when max retry attempts are reached
         for (const pair in pairCache) {
           if (pairCache[pair].expiration > currentTime) {

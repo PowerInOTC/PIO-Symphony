@@ -1,7 +1,7 @@
 {
-    "rfqProcess": true,
-    "signedOpenWorker": true,
-    "closeQuotesWorker": true,
-    "settlementWorker": false,
-    "hedgerSafetyCheck": false
-  }
+  "rfqProcess": true,
+  "signedOpenWorker": true,
+  "closeQuotesWorker": true,
+  "settlementWorker": true,
+  "hedgerSafetyCheck": true
+}

@@ -9,6 +9,7 @@ import { Worker, Queue, Job } from 'bullmq';
 import { signCloseCheck } from './signCloseCheck';
 import { settleClose } from '../blockchain/write';
 import { closeQuoteSignValueType } from '../blockchain/types';
+import { hedger } from '../broker/inventory';
 
 const signedCloseQueue = new Queue('signedClose', {
   connection: {
@@ -53,9 +54,8 @@ export function startCloseQuotesWorker(token: string): void {
             1,
             String(quote.chainId),
           );
+          processedPositions.add(positionKey);
         }
-
-        processedPositions.add(positionKey);
       } catch (error) {
         console.error(`Error processing job: ${error}`);
       }
@@ -112,23 +112,31 @@ export async function processCloseQuotes(token: string): Promise<void> {
 
     await websocketClient.startWebSocket(token);
 
-    // Run getSignedCloseQuotes in parallel every 750ms
-    setInterval(async () => {
-      try {
-        const response = await getSignedCloseQuotes('v1', 1, token, {
-          onlyActive: true,
-        });
-        const quotes = response?.data;
+    let lastFetchTime = 0;
+    const fetchInterval = 750; // Adjust the interval as needed
 
-        if (quotes) {
-          for (const quote of quotes) {
-            await signedCloseQueue.add('signedClose', quote);
+    setInterval(async () => {
+      const currentTime = Date.now();
+      if (currentTime - lastFetchTime >= fetchInterval) {
+        try {
+          const response = await getSignedCloseQuotes('v1', 1, token, {
+            onlyActive: true,
+          });
+          const quotes = response?.data;
+
+          if (quotes) {
+            for (const quote of quotes) {
+              await signedCloseQueue.add('signedClose', quote);
+            }
           }
+
+          lastFetchTime = currentTime;
+        } catch (error) {
+          console.error('Error fetching signed close quotes:', error);
+          // Do not update lastFetchTime to ensure the interval is maintained
         }
-      } catch (error) {
-        console.error('Error fetching signed close quotes:', error);
       }
-    }, 750);
+    }, fetchInterval);
   } catch (error) {
     console.error('Error processing close quotes:', error);
   }
