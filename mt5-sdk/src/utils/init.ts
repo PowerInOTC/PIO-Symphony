@@ -43,12 +43,12 @@ const fantomSonicTestnet: Chain = defineChain({
   },
 });
 
-const chains: { [key: number]: Chain } = {
+export const chains: { [key: number]: Chain } = {
   64165: fantomSonicTestnet,
   64156: avalancheFuji,
 };
-const chainName = { 64165: 'sonic', 64156: 'fuji' };
-const chainHex = { 64165: 'sonic', 64156: 'fuji' };
+export const chainName = { 64165: 'sonic', 64156: 'fuji' };
+export const chainHex = { 64165: 'sonic', 64156: 'fuji' };
 
 // Initialize the accounts and wallets objects
 const accounts: {
@@ -181,9 +181,18 @@ async function fetchNewToken(id: number): Promise<string> {
   }
 }
 
+export function getAccountData(accountId: number, chainId: string) {
+  const address = Object.keys(accounts[Number(chainId)])[accountId];
+  const account = accounts[Number(chainId)][address];
+  const wallet = createWalletClient({
+    account,
+    chain: chains[Number(chainId)],
+    transport: http(),
+  });
+  return { account, wallet, address };
+}
+
 export {
-  chains,
-  chainName,
   accounts,
   wallets,
   web3Clients,

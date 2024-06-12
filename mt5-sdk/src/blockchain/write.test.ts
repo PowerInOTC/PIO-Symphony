@@ -7,7 +7,7 @@ import {
 } from '@pionerfriends/blockchain-client';
 import { config } from '../config';
 import { accounts, wallets, web3Clients } from '../utils/init';
-import { convertToBytes32 } from './read';
+import { convertToBytes32 } from '../utils/ethersUtils';
 import { Address, bytesToHex, parseUnits, toBytes } from 'viem';
 import { ethers, Wallet } from 'ethers';
 import { settleOpen, settleClose } from './write';

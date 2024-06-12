@@ -49,7 +49,9 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
       lMarketPrice: (Number(tripartyLatestPrice.ask) * 0.999).toString(),
       lPrice: rfq.lPrice,
       lQuantity: String(rfq.lQuantity),
-      minAmount: String(minAmount),
+      minAmount: Math.floor(
+        minAmount / Math.min(Number(rfq.sPrice), Number(rfq.lPrice)),
+      ).toString(),
       maxAmount: Math.floor(
         10000 / Math.min(Number(rfq.sPrice), Number(rfq.lPrice)),
       ).toString(),

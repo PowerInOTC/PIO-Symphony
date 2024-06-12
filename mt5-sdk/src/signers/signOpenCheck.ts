@@ -16,29 +16,36 @@ import {
   BOracleSignValueType,
   openQuoteSignValueType,
 } from '../blockchain/types';
+import { parseUnits, formatUnits } from 'viem';
 
 const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
 
 export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
   let isCheck = true;
-  let acceptPrice = String(open.price);
+  const openPrice = formatUnits(parseUnits(open.price, 1), 18);
+  let acceptPrice = String(openPrice);
 
   const symbol = extractSymbolFromAssetHex(open.assetHex);
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${symbol.assetAId}/${symbol.assetAId}`,
   );
+
   if (open.isLong) {
-    if (tripartyLatestPrice.ask <= Number(open.price) * (1 + 0.0001)) {
+    if (tripartyLatestPrice.ask <= Number(openPrice) * (1 + 0.0001)) {
       isCheck = false;
-      throw new Error('check failed');
+      throw new Error(
+        `open check failed : ask : ${tripartyLatestPrice.ask} > price ${openPrice}`,
+      );
     } else {
       acceptPrice = String(tripartyLatestPrice.ask * (1 + 0.0001));
     }
   }
   if (!open.isLong) {
-    if (tripartyLatestPrice.bid >= Number(open.price) * (1 - 0.0001)) {
+    if (tripartyLatestPrice.bid >= Number(openPrice) * (1 - 0.0001)) {
       isCheck = false;
-      throw new Error('check failed');
+      throw new Error(
+        'open check failed : bid : ${tripartyLatestPrice.bid} < price ${openPrice}',
+      );
     } else {
       acceptPrice = String(tripartyLatestPrice.bid * (1 - 0.0001));
     }
@@ -55,7 +62,7 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     expiration: open.expiryA,
     assetAId: symbol.assetAId,
     assetBId: symbol.assetBId,
-    sPrice: open.price,
+    sPrice: openPrice,
     sQuantity: open.amount,
     sInterestRate: open.interestRate,
     sIsPayingApr: open.isAPayingApr,
@@ -67,7 +74,7 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     sExpirationB: open.expiryB,
     sTimelockA: open.timeLock,
     sTimelockB: open.timeLock,
-    lPrice: open.price,
+    lPrice: openPrice,
     lQuantity: open.amount,
     lInterestRate: open.interestRate,
     lIsPayingApr: open.isAPayingApr,
@@ -85,7 +92,7 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
 
   if (isRFQValid != true) {
     isCheck = false;
-    throw new Error('checkRFQ failed');
+    throw new Error('open check failed : checkRFQ failed ');
   }
 
   const domainOpen = {
@@ -107,7 +114,7 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
   };
   const openQuoteSignValue = {
     bContractId: 0,
-    acceptPrice: open.price,
+    acceptPrice: openPrice,
     backendAffiliate: '0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8',
     amount: open.amount,
     nonce: open.nonceOpenQuote,
@@ -128,7 +135,7 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
       chainId: open.chainId,
       verifyingContract: open.verifyingContract,
       bcontractId: 0,
-      acceptPrice: open.price,
+      acceptPrice: openPrice,
       backendAffiliate: '0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8',
       amount: open.amount,
       nonceAcceptQuote: open.nonceOpenQuote,
@@ -139,7 +146,7 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
 
     const isPassed = await hedger(
       `${symbol.assetAId}/${symbol.assetAId}`,
-      Number(open.price),
+      Number(openPrice),
       open.signatureOpenQuote,
       Number(open.amount), // TODO /1e18
       open.isLong,
@@ -167,7 +174,7 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     const openQuoteSignValue: openQuoteSignValueType = {
       isLong: open.isLong,
       bOracleId: 0,
-      price: open.price,
+      price: openPrice,
       amount: open.amount,
       interestRate: open.interestRate,
       isAPayingAPR: open.isAPayingApr,
@@ -188,5 +195,5 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     );
 
     return fill;
-  } else throw new Error('check failed');
+  } else throw new Error('open check failed for : unknown');
 }

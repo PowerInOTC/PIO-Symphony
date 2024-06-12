@@ -12,7 +12,6 @@ import {
   BContract,
 } from '@pionerfriends/blockchain-client';
 import { getTripartyLatestPrice } from '../broker/tripartyPrice';
-import { getbContract } from '../blockchain/read';
 import { closeQuoteSignValueType } from '../blockchain/types';
 import { minAmountSymbol } from '../broker/minAmount';
 
@@ -21,16 +20,18 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
 
   const symbol = extractSymbolFromAssetHex(close.assetHex);
   const pair = `${symbol.assetAId}/${symbol.assetAId}`;
-
+  const tripartyLatestPrice = await getTripartyLatestPrice(
+    `${symbol.assetAId}/${symbol.assetAId}`,
+  );
   /** Test price + spread is profitable for hedger  */
   if (close.isLong) {
-    if (Number(close.ask) <= Number(close.price) * (1 + 0.0001)) {
+    if (Number(tripartyLatestPrice.ask) <= Number(close.price) * (1 + 0.0001)) {
       isCheck = false;
       throw new Error('close price is too low');
     }
   }
   if (!close.isLong) {
-    if (Number(close.bid) >= Number(close.price) * (1 - 0.0001)) {
+    if (Number(tripartyLatestPrice.bid) >= Number(close.price) * (1 - 0.0001)) {
       isCheck = false;
       throw new Error('close price is too high');
     }

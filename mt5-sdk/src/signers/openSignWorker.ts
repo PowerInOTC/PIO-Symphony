@@ -109,11 +109,11 @@ export async function processOpenQuotes(token: string): Promise<void> {
             token,
             {
               onlyActive: true,
-              targetAddress: config.publicKeys?.split(',')[0],
+              targetAddress: config.publicKeys?.split(',')[1],
             },
           );
           const quotes = response?.data;
-
+          console.log(`${quotes} `);
           if (quotes) {
             for (const quote of quotes) {
               await signedOpenQueue.add('signedOpen', quote);

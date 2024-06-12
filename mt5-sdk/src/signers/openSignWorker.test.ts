@@ -8,35 +8,42 @@ import {
 } from '@pionerfriends/api-client';
 import { networks, NetworkKey } from '@pionerfriends/blockchain-client';
 import { convertToBytes32 } from '../utils/ethersUtils';
+import { initAccount } from '../blockchain/blockchainInit.test';
 
 describe('OpenQuoteButton', () => {
   let token: string;
-  let addr1: ethers.Wallet;
+  let addr2: ethers.Wallet;
   let pionerV1Open: string;
   let pionerV1Wrapper: string;
-  let addr2: ethers.Wallet;
+  let addr1: ethers.Wallet;
   let chainId: string;
 
   beforeAll(async () => {
     token = await getToken(0);
+    await getToken(1);
+
     chainId = String(64165);
 
     pionerV1Open =
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
     pionerV1Wrapper =
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
-    addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
     addr2 = new ethers.Wallet(config.privateKeys?.split(',')[1]);
+    addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
   });
 
   it('should send a signed wrapped open quote', async () => {
+    // uncomment on first time
+    //await initAccount(0);
+    //await initAccount(1);
+
     const timestamp = Math.floor(Date.now() / 1000);
     const nonce = timestamp % 100000000;
     const wallet = {
-      address: addr1.address,
+      address: addr2.address,
     };
     const bestBid = {
-      counterpartyAddress: addr2.address,
+      counterpartyAddress: addr1.address,
     };
 
     const quote: SignedWrappedOpenQuoteRequest = {
@@ -48,7 +55,7 @@ describe('OpenQuoteButton', () => {
       x: '0x20568a84796e6ade0446adfd2d8c4bba2c798c2af0e8375cc3b734f71b17f5fd',
       parity: String(0),
       maxConfidence: String(ethers.utils.parseUnits('1', 18)),
-      assetHex: convertToBytes32('forex.EURUSD/forex.GBPUSD'),
+      assetHex: convertToBytes32('forex.EURUSD/stock.nasdaq.AAPL'),
       maxDelay: '600',
       precision: 5,
       imA: String(ethers.utils.parseUnits('10', 16)),
@@ -61,13 +68,13 @@ describe('OpenQuoteButton', () => {
       nonceBoracle: nonce,
       signatureBoracle: '',
       isLong: true,
-      price: String(ethers.utils.parseUnits('1.01', 18)),
+      price: String(ethers.utils.parseUnits('11', 17)),
       amount: String(ethers.utils.parseUnits('1000', 18)),
       interestRate: String(ethers.utils.parseUnits('1', 17)),
       isAPayingApr: true,
-      frontEnd: addr1.address,
-      affiliate: addr1.address,
-      authorized: addr2.address,
+      frontEnd: addr2.address,
+      affiliate: addr2.address,
+      authorized: addr1.address,
       nonceOpenQuote: nonce,
       signatureOpenQuote: '',
       emitTime: String(Date.now()),
@@ -77,7 +84,7 @@ describe('OpenQuoteButton', () => {
     const domainOpen = {
       name: 'PionerV1Open',
       version: '1.0',
-      chainId: 31337,
+      chainId: chainId,
       verifyingContract: pionerV1Open,
     };
 
@@ -97,19 +104,19 @@ describe('OpenQuoteButton', () => {
     };
 
     const openQuoteSignValue = {
-      isLong: true,
+      isLong: quote.isLong,
       bOracleId: 0,
-      price: ethers.utils.parseUnits('50', 18),
-      amount: ethers.utils.parseUnits('10', 18),
-      interestRate: ethers.utils.parseUnits('1', 17),
-      isAPayingAPR: true,
-      frontEnd: addr1.address,
-      affiliate: addr1.address,
-      authorized: addr2.address,
+      price: quote.price,
+      amount: quote.amount,
+      interestRate: quote.interestRate,
+      isAPayingAPR: quote.isAPayingApr,
+      frontEnd: addr2.address,
+      affiliate: addr2.address,
+      authorized: addr1.address,
       nonce: quote.nonceOpenQuote,
     };
 
-    const signatureOpenQuote = await addr1._signTypedData(
+    const signatureOpenQuote = await addr2._signTypedData(
       domainOpen,
       openQuoteSignType,
       openQuoteSignValue,
@@ -143,24 +150,24 @@ describe('OpenQuoteButton', () => {
     };
 
     const bOracleSignValue = {
-      x: '0x20568a84796e6ade0446adfd2d8c4bba2c798c2af0e8375cc3b734f71b17f5fd',
-      parity: 0,
-      maxConfidence: ethers.utils.parseUnits('1', 18),
-      assetHex: convertToBytes32('forex.EURUSD/forex.GBPUSD'),
-      maxDelay: 600,
-      precision: 5,
-      imA: ethers.utils.parseUnits('10', 16),
-      imB: ethers.utils.parseUnits('10', 16),
-      dfA: ethers.utils.parseUnits('25', 15),
-      dfB: ethers.utils.parseUnits('25', 15),
-      expiryA: 60,
-      expiryB: 60,
-      timeLock: 1440 * 30 * 3,
+      x: quote.x,
+      parity: quote.parity,
+      maxConfidence: quote.maxConfidence,
+      assetHex: quote.assetHex,
+      maxDelay: quote.maxDelay,
+      precision: quote.precision,
+      imA: quote.imA,
+      imB: quote.imB,
+      dfA: quote.dfA,
+      dfB: quote.dfB,
+      expiryA: quote.expiryA,
+      expiryB: quote.expiryB,
+      timeLock: quote.timeLock,
       signatureHashOpenQuote: signatureOpenQuote,
       nonce: quote.nonceBoracle,
     };
 
-    const signaturebOracleSign = await addr1._signTypedData(
+    const signaturebOracleSign = await addr2._signTypedData(
       domainWrapper,
       bOracleSignType,
       bOracleSignValue,
@@ -170,18 +177,10 @@ describe('OpenQuoteButton', () => {
     quote.signatureOpenQuote = signatureOpenQuote;
     try {
       const tx = await sendSignedWrappedOpenQuote(quote, token);
-      console.log(tx);
+      console.log(tx?.data);
       expect(tx).toBeDefined();
     } catch (error: any) {
       console.error('Error:', error);
-      /*console.error('Error Details:', {
-        message: error.message,
-        stack: error.stack,
-        response: error.response,
-        request: error.request,
-        config: error.config,
-      });*/
-      //throw error;
     }
   });
 });

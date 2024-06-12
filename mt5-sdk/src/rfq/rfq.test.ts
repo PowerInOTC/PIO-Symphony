@@ -1,3 +1,5 @@
+// pnpm jest -- rfq.test.ts
+
 import {
   PionerWebsocketClient,
   QuoteResponse,
@@ -5,6 +7,7 @@ import {
 } from '@pionerfriends/api-client';
 import { getToken } from '../utils/init';
 
+// test websocket in @/test2.ts
 export async function testWebSocketQuote() {
   try {
     const token = await getToken(1);

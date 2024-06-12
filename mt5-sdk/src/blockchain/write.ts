@@ -1,4 +1,4 @@
-import { accounts, web3Clients, wallets } from '../utils/init';
+import { accounts, web3Clients, wallets, getAccountData } from '../utils/init';
 import { config } from '../config';
 import {
   FakeUSD,
@@ -21,26 +21,25 @@ export async function mintFUSD(
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .FakeUSD as Address,
     abi: FakeUSD.abi,
     functionName: 'mint',
     args: [amount],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
-
 export async function deposit(
   amount: string,
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1Compliance as Address,
@@ -51,33 +50,31 @@ export async function deposit(
       parseUnits('1', 0),
       config.publicKeys?.split(',')[accountId] as string,
     ],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
 
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  const hash = await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
   return hash;
 }
-
 export async function withdraw(
   amount: string,
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1Compliance as Address,
     abi: PionerV1Compliance.abi,
     functionName: 'initiateWithdraw',
     args: [amount],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
 
 export async function claim(
@@ -85,19 +82,18 @@ export async function claim(
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1Compliance as Address,
     abi: PionerV1Compliance.abi,
     functionName: 'withdraw',
     args: [amount],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
 
 export async function allowance(
@@ -105,6 +101,12 @@ export async function allowance(
   accountId: number,
   chainId: string,
 ) {
+  console.log(
+    networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1Compliance as Address,
+    'address',
+  );
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .FakeUSD as Address,
@@ -115,13 +117,11 @@ export async function allowance(
         .PionerV1Compliance as Address,
       amount,
     ],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
 
 export async function settle(
@@ -129,19 +129,18 @@ export async function settle(
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1Default as Address,
     abi: PionerV1Default.abi,
     functionName: 'settleAndLiquidate',
     args: [bContractId],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
 
 export async function settleOpen(
@@ -153,6 +152,7 @@ export async function settleOpen(
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1Wrapper as Address,
@@ -165,13 +165,11 @@ export async function settleOpen(
       signatureOpenQuote,
       acceptPrice,
     ],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
 
 export async function settleClose(
@@ -180,19 +178,18 @@ export async function settleClose(
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1Wrapper as Address,
     abi: PionerV1Wrapper.abi,
     functionName: 'wrapperCloseLimitMM',
     args: [openCloseQuoteValue, signatureCloseQuote],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
 
 export async function updatePriceAndDefault(
@@ -201,17 +198,16 @@ export async function updatePriceAndDefault(
   accountId: number,
   chainId: string,
 ) {
+  const { account, wallet, address } = getAccountData(accountId, chainId);
   const request = await web3Clients[Number(chainId)].simulateContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1Wrapper as Address,
     abi: PionerV1Wrapper.abi,
     functionName: 'wrapperUpdatePriceAndDefault',
     args: [priceSignature, bContractId],
-    account: accounts[Number(chainId)][accountId],
+    account: account,
   });
-
-  const hash = await wallets[Number(chainId)][accountId].writeContract(
-    request as unknown as WriteContractParameters,
+  return await wallet.writeContract(
+    request.request as unknown as WriteContractParameters,
   );
-  return hash;
 }
