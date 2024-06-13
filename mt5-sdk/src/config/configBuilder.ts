@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import axios from 'axios';
 import { config } from '../config';
-import { Asset, NotionalKey, Row } from '../types/config';
+import { Asset, NotionalKey, Row } from './types/config';
 
 const apiBaseUrl = config.fastApiHost;
 

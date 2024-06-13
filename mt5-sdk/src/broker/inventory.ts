@@ -3,7 +3,7 @@ import { getTripartyLatestPrice } from './tripartyPrice';
 import { minAmountSymbol } from '../broker/minAmount';
 import { getFirst12Characters, isPositionOpen } from '../broker/utils';
 import { getOpenPositions, Position } from '../broker/dispatcher';
-import { getMT5Ticker, getBrokerFromAsset } from '../configBuilder/configRead';
+import { getMT5Ticker, getBrokerFromAsset } from '../config/configRead';
 
 export async function hedger(
   pair: string,

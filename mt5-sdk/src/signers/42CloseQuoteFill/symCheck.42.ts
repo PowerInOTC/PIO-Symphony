@@ -4,16 +4,16 @@ import {
   WebSocketType,
   getSignedCloseQuotes,
 } from '@pionerfriends/api-client';
-import { hedger } from '../broker/inventory';
-import { extractSymbolFromAssetHex } from '../utils/ethersUtils';
+import { hedger } from '../../broker/inventory';
+import { extractSymbolFromAssetHex } from '../../utils/ethersUtils';
 import {
   networks,
   NetworkKey,
   BContract,
 } from '@pionerfriends/blockchain-client';
-import { getTripartyLatestPrice } from '../broker/tripartyPrice';
-import { closeQuoteSignValueType } from '../blockchain/types';
-import { minAmountSymbol } from '../broker/minAmount';
+import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
+import { closeQuoteSignValueType } from '../../blockchain/types';
+import { minAmountSymbol } from '../../broker/minAmount';
 
 export async function signCloseCheck(close: signedCloseQuoteResponse) {
   let isCheck = true;

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const rfq_test_1 = require("./rfq/rfq.test");
+const sym_12_test_1 = require("./signers/12rfqFill/sym.12.test");
 async function bullExample() {
-    (0, rfq_test_1.testWebSocketQuote)();
+    (0, sym_12_test_1.testWebSocketQuote)();
     /*
     const token = await getToken(0);
   

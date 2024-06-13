@@ -1,11 +1,11 @@
 import { RfqResponse } from '@pionerfriends/api-client';
-import { getPairConfig, getAllocatedBroker } from '../configBuilder/configRead';
-import { getBrokerMaxNotional } from '../broker/brokerMaxNotional';
+import { getPairConfig, getAllocatedBroker } from '../../config/configRead';
+import { getBrokerMaxNotional } from '../../broker/brokerMaxNotional';
 import {
   startTotalOpenAmountInfo,
   getTotalOpenAmount,
-} from '../broker/totalOpenAmountModule';
-import { getTripartyLatestPrice } from '../broker/tripartyPrice';
+} from '../../broker/totalOpenAmountModule';
+import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 
 export interface ErrorObject {
   field: string;

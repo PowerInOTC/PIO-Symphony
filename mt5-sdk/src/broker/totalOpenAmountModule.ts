@@ -1,7 +1,7 @@
 import { Queue, Worker, QueueEvents, Job } from 'bullmq';
 import { config } from '../config';
 import { totalOpenAmountInfo } from './dispatcher';
-import { getBrokerFromAsset } from '../configBuilder/configRead';
+import { getBrokerFromAsset } from '../config/configRead';
 interface WorkerData {
   symbol: string;
   broker: string;

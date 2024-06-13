@@ -1,14 +1,14 @@
 // pnpm jest -- openSignWorker.test.ts
 import { ethers } from 'ethers';
-import { config } from '../config';
-import { getToken } from '../utils/init';
+import { config } from '../../config';
+import { getToken } from '../../utils/init';
 import {
   sendSignedWrappedOpenQuote,
   SignedWrappedOpenQuoteRequest,
 } from '@pionerfriends/api-client';
 import { networks, NetworkKey } from '@pionerfriends/blockchain-client';
-import { convertToBytes32 } from '../utils/ethersUtils';
-import { initAccount } from '../blockchain/blockchainInit.test';
+import { convertToBytes32 } from '../../utils/ethersUtils';
+import { initAccount } from '../../blockchain/blockchainInit.test';
 
 describe('OpenQuoteButton', () => {
   let token: string;

@@ -16,13 +16,13 @@ import {
   getPairConfig,
   getProxyTicker,
   getBrokerFromAsset,
-} from './configBuilder/configRead';
+} from './config/configRead';
 import { getToken } from './utils/init';
 import { wallets } from './utils/init';
 import { config } from './config';
 import { getOpenPositions, Position } from './broker/dispatcher';
 import { suggestNearestAmount, isAmountOk } from './broker/utils';
-import { testWebSocketQuote } from './rfq/rfq.test';
+import { testWebSocketQuote } from './signers/12rfqFill/sym.12.test';
 
 async function bullExample(): Promise<void> {
   testWebSocketQuote();

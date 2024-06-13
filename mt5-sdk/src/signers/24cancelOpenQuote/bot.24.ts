@@ -5,22 +5,30 @@ import {
   SignedCancelOpenQuoteRequest,
   signedCancelOpenQuoteResponse,
   sendSignedCancelOpenQuote,
+  getSignedWrappedOpenQuotes,
+  signedWrappedOpenQuoteResponse,
 } from '@pionerfriends/api-client';
 import { ethers } from 'ethers';
 import { networks, NetworkKey } from '@pionerfriends/blockchain-client';
 
-const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
-
-export async function cancelAllOpenQuotes(token: string): Promise<void> {
+export async function cancelAllOpenQuotes(
+  token: string,
+  pkId: number,
+): Promise<void> {
   try {
-    const response = await getSignedCloseQuotes('1.0', 64165, token, {
+    const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[pkId]);
+
+    const response = await getSignedWrappedOpenQuotes('1.0', 64165, token, {
       onlyActive: true,
-      targetAddress: config.publicKeys?.split(',')[0],
+      targetAddress: config.publicKeys?.split(',')[pkId],
     });
-    const quotes: signedCloseQuoteResponse[] | undefined = response?.data;
+    console.log(response);
+    const quotes: signedWrappedOpenQuoteResponse[] | undefined = response?.data;
 
     if (quotes) {
       for (const quote of quotes) {
+        console.log(quote.signatureOpenQuote);
+
         const domainOpen = {
           name: 'PionerV1Open',
           version: '1.0',
@@ -61,6 +69,7 @@ export async function cancelAllOpenQuotes(token: string): Promise<void> {
         };
 
         const tx = await sendSignedCancelOpenQuote(cancel, token);
+        console.log(tx);
       }
     }
   } catch (error) {

@@ -1,7 +1,7 @@
 // hedgerSafetyCheck.ts
 import { isPositionOpen, getFirst12Characters } from '../broker/utils';
 import { hedger } from '../broker/inventory';
-import { getMT5Ticker } from '../configBuilder/configRead';
+import { getMT5Ticker } from '../config/configRead';
 import { getCachedPositions } from './cachePositions';
 import { config } from '../config';
 import { getOpenPositions, Position } from '../broker/dispatcher';

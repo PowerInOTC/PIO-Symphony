@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config } from '../config';
-import { getMT5Ticker, getBrokerFromAsset } from '../configBuilder/configRead';
+import { getMT5Ticker, getBrokerFromAsset } from '../config/configRead';
 
 const apiBaseUrl = config.apiBaseUrl;
 

@@ -6,12 +6,12 @@ import { sendErrorToTelegram } from './utils/telegram';
 import {
   startSignedOpenWorker,
   processOpenQuotes,
-} from './signers/openSignWorker';
+} from './signers/22OpenQuoteFill/sym.22';
 import {
   startCloseQuotesWorker,
   processCloseQuotes,
-} from './signers/closeSignWorker';
-import { startRfqProcess } from './rfq/rfqWorker';
+} from './signers/42CloseQuoteFill/sym.42';
+import { startRfqProcess } from './signers/12rfqFill/sym.12';
 import { getToken } from './utils/init';
 import { startHedgerSafetyCheckOpen } from './settlement/verifyHedgerOpenPositions';
 import { startHedgerSafetyCheckClose } from './settlement/verifyHedgerClosedPositions';

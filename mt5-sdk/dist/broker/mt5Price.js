@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMT5LatestPrice = void 0;
 const axios_1 = __importDefault(require("axios"));
 const config_1 = require("../config");
-const configRead_1 = require("../configBuilder/configRead");
+const configRead_1 = require("../config/configRead");
 const pairCache = {};
 async function fetchCacheData(proxyPair) {
     const [proxyTicker1, proxyTicker2] = proxyPair.split('/');

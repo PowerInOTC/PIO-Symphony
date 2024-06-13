@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { config } from '../../config';
 import {
   signedCloseQuoteResponse,
   PionerWebsocketClient,
@@ -6,10 +6,10 @@ import {
   getSignedCloseQuotes,
 } from '@pionerfriends/api-client';
 import { Worker, Queue, Job } from 'bullmq';
-import { signCloseCheck } from './signCloseCheck';
-import { settleClose } from '../blockchain/write';
-import { closeQuoteSignValueType } from '../blockchain/types';
-import { hedger } from '../broker/inventory';
+import { signCloseCheck } from './symCheck.42';
+import { settleClose } from '../../blockchain/write';
+import { closeQuoteSignValueType } from '../../blockchain/types';
+import { hedger } from '../../broker/inventory';
 
 const signedCloseQueue = new Queue('signedClose', {
   connection: {
@@ -113,7 +113,7 @@ export async function processCloseQuotes(token: string): Promise<void> {
     await websocketClient.startWebSocket(token);
 
     let lastFetchTime = 0;
-    const fetchInterval = 750; // Adjust the interval as needed
+    const fetchInterval = 1000; // Adjust the interval as needed
 
     setInterval(async () => {
       const currentTime = Date.now();
@@ -134,7 +134,6 @@ export async function processCloseQuotes(token: string): Promise<void> {
           lastFetchTime = currentTime;
         } catch (error) {
           console.error('Error fetching signed close quotes:', error);
-          // Do not update lastFetchTime to ensure the interval is maintained
         }
       }
     }, fetchInterval);

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { config } from '../config';
 import { getPrices, PricesResponse } from '@pionerfriends/api-client';
-import { verifySymbols } from '../configBuilder/configRead';
+import { verifySymbols } from '../config/configRead';
 import { getToken } from '../utils/init';
 
 interface CacheData {

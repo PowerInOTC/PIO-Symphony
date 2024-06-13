@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { config } from '../../config';
 import {
   sendSignedFillOpenQuote,
   SignedFillOpenQuoteRequest,
@@ -8,7 +8,7 @@ import {
   getSignedWrappedOpenQuotes,
 } from '@pionerfriends/api-client';
 import { Worker, Queue, Job } from 'bullmq';
-import { signOpenCheck } from './signOpenCheck';
+import { signOpenCheck } from './symCheck.22';
 
 const signedOpenQueue = new Queue('signedOpen', {
   connection: {

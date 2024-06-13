@@ -5,7 +5,7 @@ import {
   QuoteResponse,
   WebSocketType,
 } from '@pionerfriends/api-client';
-import { getToken } from '../utils/init';
+import { getToken } from '../../utils/init';
 
 // test websocket in @/test2.ts
 export async function testWebSocketQuote() {

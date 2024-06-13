@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Asset, Row } from '../types/config';
+import { Asset, Row } from './types/config';
 
 interface SymphonyJSON {
   assets: Asset[];

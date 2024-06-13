@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { config } from '../config';
 
-import { getMT5Ticker } from '../configBuilder/configRead';
+import { getMT5Ticker } from '../config/configRead';
 
 interface CacheData {
   bid: number;
