@@ -34,7 +34,7 @@ export function startSignedOpenWorker(token: string): void {
           return;
         }
 
-        const fill = await signOpenCheck(quote);
+        const fill = await signOpenCheck(quote, token);
         const tx = await sendSignedFillOpenQuote(fill, token);
 
         console.log(tx?.status, tx?.data);

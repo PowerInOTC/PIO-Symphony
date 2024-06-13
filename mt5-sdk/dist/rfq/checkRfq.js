@@ -1,214 +1,198 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkRFQCore = void 0;
 const configRead_1 = require("../configBuilder/configRead");
-const configRead_2 = require("../configBuilder/configRead");
+const brokerMaxNotional_1 = require("../broker/brokerMaxNotional");
 const tripartyPrice_1 = require("../broker/tripartyPrice");
-const checkRFQCore = async (rfq) => {
-    const checkRFQ = {
-        rfqCheckUpdateTime: Date.now(),
-        chainId: rfq.chainId,
-        checkChainId: false,
-        checkOnchainFreeCollateral: false,
-        checkOnchainSelfLeverage: false,
-        checkBrokerFreeCollateral: false,
-        checkBrokerSelfLeverage: false,
-        checkCounterpartySelfLeverage: false,
-        expiration: parseFloat(rfq.expiration),
-        assetAId: rfq.assetAId,
-        checkAssetAId: false,
-        assetBId: rfq.assetBId,
-        checkAssetBId: false,
-        checkMarketIsOpen: false,
-        sPrice: rfq.sPrice,
-        checkSPrice: false,
-        sQuantity: rfq.sQuantity,
-        checkSQuantity: false,
-        sInterestRate: rfq.sInterestRate,
-        checkSInterestRate: false,
-        sIsPayingApr: rfq.sIsPayingApr,
-        sImA: rfq.sImA,
-        checkSImA: false,
-        sImB: rfq.sImB,
-        checkSImB: false,
-        sDfA: rfq.sDfA,
-        checkSDfA: false,
-        sDfB: rfq.sDfB,
-        checkSDfB: false,
-        sExpirationA: parseFloat(rfq.sExpirationA),
-        checkSExpirationA: false,
-        sExpirationB: parseFloat(rfq.sExpirationB),
-        checkSExpirationB: false,
-        sTimelockA: parseFloat(rfq.sTimelockA),
-        checkSTimelockA: false,
-        sTimelockB: parseFloat(rfq.sTimelockB),
-        checkSTimelockB: false,
-        lPrice: rfq.lPrice,
-        checkLPrice: false,
-        lQuantity: rfq.lQuantity,
-        checkLQuantity: false,
-        lInterestRate: rfq.lInterestRate,
-        checkLInterestRate: false,
-        lIsPayingApr: rfq.lIsPayingApr,
-        lImA: rfq.lImA,
-        checkLImA: false,
-        lImB: rfq.lImB,
-        checkLImB: false,
-        lDfA: rfq.lDfA,
-        checkLDfA: false,
-        lDfB: rfq.lDfB,
-        checkLDfB: false,
-        lExpirationA: parseFloat(rfq.lExpirationA),
-        checkLExpirationA: false,
-        lExpirationB: parseFloat(rfq.lExpirationB),
-        checkLExpirationB: false,
-        lTimelockA: parseFloat(rfq.lTimelockA),
-        checkLTimelockA: false,
-        lTimelockB: parseFloat(rfq.lTimelockB),
-        checkLTimelockB: false,
-    };
-    /*
-    console.log(
-      checkRFQ.assetAId,
-      checkRFQ.assetBId,
-      parseFloat(checkRFQ.lImA) + parseFloat(checkRFQ.lDfA),
-      parseFloat(checkRFQ.lPrice),
-      parseFloat(checkRFQ.lQuantity),
-      parseFloat(checkRFQ.lPrice),
-      parseFloat(checkRFQ.lQuantity),
-    );*/
-    const configRfqL = await (0, configRead_1.getPairConfig)(checkRFQ.assetAId, checkRFQ.assetBId, 'long', 1 / (parseFloat(checkRFQ.lImA) + parseFloat(checkRFQ.lDfA)), parseFloat(checkRFQ.lPrice) * parseFloat(checkRFQ.lQuantity));
-    const configRfqS = await (0, configRead_1.getPairConfig)(checkRFQ.assetAId, checkRFQ.assetBId, 'long', 1 / (parseFloat(checkRFQ.sImA) + parseFloat(checkRFQ.sDfA)), parseFloat(checkRFQ.sPrice) * parseFloat(checkRFQ.sQuantity));
-    const brokerL = (0, configRead_2.getAllocatedBroker)(checkRFQ.assetAId);
-    const brokerS = (0, configRead_2.getAllocatedBroker)(checkRFQ.assetBId);
-    let maxNotionalL = 0, maxNotionalS = 0, openAmountL = 100000000000, openAmountS = 100000000000;
-    /*
-    if (brokerL != brokerS) {
-      brokerHealth(brokerL, 1000, 32000);
-      maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets'))
-      brokerHealth(brokerS, 1000, 32000);
-      maxNotionalS = (await getLatestMaxNotional('mt5.ICMarkets'))
-      startTotalOpenAmountInfo(checkRFQ.assetAId, brokerL, 1000, 32000);
-      openAmountL =
-        (await getTotalOpenAmount(checkRFQ.assetAId, brokerL)) ;
-      startTotalOpenAmountInfo(checkRFQ.assetAId, brokerS, 1000, 32000);
-      openAmountS =
-        (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) || ;
-    } else {
-      brokerHealth(brokerL, 1000, 32000);
-      maxNotionalL = (await getLatestMaxNotional('mt5.ICMarkets'))
-      maxNotionalS = maxNotionalL;
-      startTotalOpenAmountInfo(checkRFQ.assetAId, brokerS, 1000, 32000);
-      openAmountL =
-        (await getTotalOpenAmount(checkRFQ.assetAId, brokerS)) ;
-      openAmountS = openAmountL;
+class RfqChecker {
+    constructor(rfq) {
+        this.errors = [];
+        this.configRfqL = null;
+        this.configRfqS = null;
+        this.brokerL = null;
+        this.brokerS = null;
+        this.maxNotionalL = 10000;
+        this.maxNotionalS = 10000;
+        this.openAmountL = 100000000000;
+        this.openAmountS = 100000000000;
+        this.rfq = rfq;
     }
-    */
-    if ((configRfqL.imA ?? 0) <= parseFloat(checkRFQ.lImA)) {
-        checkRFQ.checkLImA = true;
+    async init() {
+        this.configRfqL = await this.getConfig('long', this.rfq.lImA, this.rfq.lDfA, this.rfq.lPrice, this.rfq.lQuantity);
+        this.configRfqS = await this.getConfig('short', this.rfq.sImA, this.rfq.sDfA, this.rfq.sPrice, this.rfq.sQuantity);
+        this.brokerL = (0, configRead_1.getAllocatedBroker)(this.rfq.assetAId) ?? null;
+        this.brokerS = (0, configRead_1.getAllocatedBroker)(this.rfq.assetBId) ?? null;
+        await this.fetchBrokerData();
     }
-    if ((configRfqS.imA ?? 0) <= parseFloat(checkRFQ.sImA)) {
-        checkRFQ.checkSImA = true;
+    async getConfig(direction, im, df, price, quantity) {
+        return (0, configRead_1.getPairConfig)(this.rfq.assetAId, this.rfq.assetBId, direction, 1 / (parseFloat(im) + parseFloat(df)), parseFloat(price) * parseFloat(quantity));
     }
-    if ((configRfqL.imB ?? 0) <= parseFloat(checkRFQ.lImB)) {
-        checkRFQ.checkLImB = true;
+    async fetchBrokerData() {
+        if (this.brokerL && this.brokerS) {
+            this.maxNotionalL = await (0, brokerMaxNotional_1.getBrokerMaxNotional)(this.brokerL);
+            this.maxNotionalS = await (0, brokerMaxNotional_1.getBrokerMaxNotional)(this.brokerS);
+            if (this.maxNotionalL > 0) {
+                this.errors.push({ field: 'brokerL', value: this.brokerL });
+            }
+            if (this.maxNotionalS > 0) {
+                this.errors.push({ field: 'brokerS', value: this.brokerS });
+            }
+        }
     }
-    if ((configRfqS.imB ?? 0) <= parseFloat(checkRFQ.sImB)) {
-        checkRFQ.checkSImB = true;
+    async check() {
+        await this.init();
+        this.checkImA();
+        this.checkImB();
+        this.checkDfA();
+        this.checkDfB();
+        this.checkExpirationA();
+        this.checkExpirationB();
+        this.checkTimelockA();
+        this.checkTimelockB();
+        this.checkInterestRate();
+        this.checkBrokerFreeCollateral();
+        this.checkQuantities();
+        this.checkOnchainFreeCollateral();
+        this.checkOnchainSelfLeverage();
+        this.checkCounterpartySelfLeverage();
+        this.checkMarketIsOpen();
+        this.checkAssets();
+        this.checkPrices();
+        this.checkBrokerSelfLeverage();
+        this.checkChainId();
+        return this.errors;
     }
-    if ((configRfqL.dfA ?? 0) <= parseFloat(checkRFQ.lDfA)) {
-        checkRFQ.checkLDfA = true;
+    checkImA() {
+        if ((this.configRfqL.imA ?? 0) > parseFloat(this.rfq.lImA)) {
+            this.errors.push({ field: 'lImA', value: this.rfq.lImA });
+        }
+        if ((this.configRfqS.imA ?? 0) > parseFloat(this.rfq.sImA)) {
+            this.errors.push({ field: 'sImA', value: this.rfq.sImA });
+        }
     }
-    if ((configRfqS.dfA ?? 0) <= parseFloat(checkRFQ.sDfA)) {
-        checkRFQ.checkSDfA = true;
+    checkImB() {
+        if ((this.configRfqL.imB ?? 0) > parseFloat(this.rfq.lImB)) {
+            this.errors.push({ field: 'lImB', value: this.rfq.lImB });
+        }
+        if ((this.configRfqS.imB ?? 0) > parseFloat(this.rfq.sImB)) {
+            this.errors.push({ field: 'sImB', value: this.rfq.sImB });
+        }
     }
-    if ((configRfqL.dfB ?? 0) <= parseFloat(checkRFQ.lDfB)) {
-        checkRFQ.checkLDfB = true;
+    checkDfA() {
+        if ((this.configRfqL.dfA ?? 0) > parseFloat(this.rfq.lDfA)) {
+            this.errors.push({ field: 'lDfA', value: this.rfq.lDfA });
+        }
+        if ((this.configRfqS.dfA ?? 0) > parseFloat(this.rfq.sDfA)) {
+            this.errors.push({ field: 'sDfA', value: this.rfq.sDfA });
+        }
     }
-    if ((configRfqS.dfB ?? 0) <= parseFloat(checkRFQ.sDfB)) {
-        checkRFQ.checkSDfB = true;
+    checkDfB() {
+        if ((this.configRfqL.dfB ?? 0) > parseFloat(this.rfq.lDfB)) {
+            this.errors.push({ field: 'lDfB', value: this.rfq.lDfB });
+        }
+        if ((this.configRfqS.dfB ?? 0) > parseFloat(this.rfq.sDfB)) {
+            this.errors.push({ field: 'sDfB', value: this.rfq.sDfB });
+        }
     }
-    if ((configRfqL.expiryA ?? 0) <= checkRFQ.lExpirationA) {
-        checkRFQ.checkLExpirationA = true;
+    checkExpirationA() {
+        if ((this.configRfqL.expiryA ?? 0) > this.rfq.lExpirationA) {
+            this.errors.push({ field: 'lExpirationA', value: this.rfq.lExpirationA });
+        }
+        if ((this.configRfqS.expiryA ?? 0) > this.rfq.sExpirationA) {
+            this.errors.push({ field: 'sExpirationA', value: this.rfq.sExpirationA });
+        }
     }
-    if ((configRfqS.expiryA ?? 0) <= checkRFQ.sExpirationA) {
-        checkRFQ.checkSExpirationA = true;
+    checkExpirationB() {
+        if ((this.configRfqL.expiryB ?? 0) > this.rfq.lExpirationB) {
+            this.errors.push({ field: 'lExpirationB', value: this.rfq.lExpirationB });
+        }
+        if ((this.configRfqS.expiryB ?? 0) > this.rfq.sExpirationB) {
+            this.errors.push({ field: 'sExpirationB', value: this.rfq.sExpirationB });
+        }
     }
-    if ((configRfqL.expiryB ?? 0) <= checkRFQ.lExpirationB) {
-        checkRFQ.checkLExpirationB = true;
+    checkTimelockA() {
+        if ((this.configRfqL.timeLockA ?? 0) > this.rfq.lTimelockA) {
+            this.errors.push({ field: 'lTimelockA', value: this.rfq.lTimelockA });
+        }
+        if ((this.configRfqS.timeLockA ?? 0) > this.rfq.sTimelockA) {
+            this.errors.push({ field: 'sTimelockA', value: this.rfq.sTimelockA });
+        }
     }
-    if ((configRfqS.expiryB ?? 0) <= checkRFQ.sExpirationB) {
-        checkRFQ.checkSExpirationB = true;
+    checkTimelockB() {
+        if ((this.configRfqL.timeLockB ?? 0) > this.rfq.lTimelockB) {
+            this.errors.push({ field: 'lTimelockB', value: this.rfq.lTimelockB });
+        }
+        if ((this.configRfqS.timeLockB ?? 0) > this.rfq.sTimelockB) {
+            this.errors.push({ field: 'sTimelockB', value: this.rfq.sTimelockB });
+        }
     }
-    if ((configRfqL.timeLockA ?? 0) <= checkRFQ.lTimelockA) {
-        checkRFQ.checkLTimelockA = true;
+    checkInterestRate() {
+        if (!this.isValidInterestRate(this.configRfqS, this.rfq.sInterestRate, this.rfq.sIsPayingApr)) {
+            this.errors.push({
+                field: 'sInterestRate',
+                value: this.rfq.sInterestRate,
+            });
+        }
+        if (!this.isValidInterestRate(this.configRfqL, this.rfq.lInterestRate, this.rfq.lIsPayingApr)) {
+            this.errors.push({
+                field: 'lInterestRate',
+                value: this.rfq.lInterestRate,
+            });
+        }
     }
-    if ((configRfqS.timeLockA ?? 0) <= checkRFQ.sTimelockA) {
-        checkRFQ.checkSTimelockA = true;
+    isValidInterestRate(config, rate, isPayingApr) {
+        return (((config.funding ?? 0) <= Number(rate) &&
+            (config.isAPayingApr == isPayingApr ||
+                (config.isAPayingApr == true && isPayingApr == false))) ||
+            (Number(config.funding) <= 0 &&
+                Math.abs(Number(config.funding ?? 0)) <= Math.abs(Number(rate))));
     }
-    if ((configRfqL.timeLockB ?? 0) <= checkRFQ.lTimelockB) {
-        checkRFQ.checkLTimelockB = true;
+    checkBrokerFreeCollateral() {
+        if (Number(this.maxNotionalL) <=
+            Number(this.rfq.lPrice) * Number(this.rfq.lQuantity)) {
+            this.errors.push({ field: 'brokerFreeCollateral', value: this.rfq });
+        }
+        if (Number(this.maxNotionalS) <=
+            Number(this.rfq.sPrice) * Number(this.rfq.sQuantity)) {
+            this.errors.push({ field: 'brokerFreeCollateral', value: this.rfq });
+        }
     }
-    if ((configRfqS.timeLockB ?? 0) <= checkRFQ.sTimelockB) {
-        checkRFQ.checkSTimelockB = true;
+    checkQuantities() {
+        if (!this.rfq.sQuantity || !this.rfq.lQuantity) {
+            this.errors.push({ field: 'quantities', value: this.rfq });
+        }
     }
-    if (((configRfqS.funding ?? 0) <= Number(checkRFQ.sInterestRate) &&
-        (configRfqS.isAPayingApr == checkRFQ.sIsPayingApr ||
-            (configRfqS.isAPayingApr == true && checkRFQ.sIsPayingApr == false))) ||
-        (Number(configRfqS.funding) <= 0 &&
-            Math.abs(Number(configRfqS.funding ?? 0)) <=
-                Math.abs(Number(checkRFQ.sInterestRate)))) {
-        checkRFQ.checkSInterestRate = true;
+    checkOnchainFreeCollateral() {
+        // Implement logic to check on-chain free collateral
     }
-    if (((configRfqL.funding ?? 0) <= Number(checkRFQ.lInterestRate) &&
-        (configRfqL.isAPayingApr == checkRFQ.lIsPayingApr ||
-            (configRfqL.isAPayingApr == true && checkRFQ.lIsPayingApr == false))) ||
-        (Number(configRfqL.funding) <= 0 &&
-            Math.abs(Number(configRfqL.funding ?? 0)) <=
-                Math.abs(Number(checkRFQ.lInterestRate)))) {
-        checkRFQ.checkLInterestRate = true;
+    checkOnchainSelfLeverage() {
+        // Implement logic to check on-chain self-leverage
     }
-    if (Number(maxNotionalL) <=
-        Number(checkRFQ.checkSPrice) * Number(checkRFQ.sQuantity) &&
-        Number(maxNotionalS) <=
-            Number(checkRFQ.checkLPrice) * Number(checkRFQ.lQuantity)) {
-        checkRFQ.checkBrokerFreeCollateral = true;
+    checkCounterpartySelfLeverage() {
+        // Implement logic to check counterparty self-leverage
     }
-    if (Number(configRfqS.minAmount) <= Number(checkRFQ.sQuantity) &&
-        Number(configRfqS.minAmount) <= Number(checkRFQ.lQuantity) &&
-        Number(configRfqS.maxAmount) <= Number(checkRFQ.sQuantity) &&
-        Number(configRfqS.maxAmount) <= Number(checkRFQ.lQuantity) &&
-        Number(configRfqS.maxNotional) <=
-            Number(checkRFQ.checkSPrice) * Number(checkRFQ.sQuantity) &&
-        Number(configRfqS.maxNotional) <=
-            Number(checkRFQ.checkLPrice) * Number(checkRFQ.lQuantity) &&
-        Number(configRfqS.maxLeverageShortGlobalNotional) <= openAmountS &&
-        Number(configRfqS.maxLeverageLongGlobalNotional) <= openAmountL &&
-        Number(configRfqS.maxLeverageDeltaGlobalNotional) <=
-            Math.abs(openAmountS - openAmountL)) {
-        checkRFQ.checkBrokerFreeCollateral = true;
-        checkRFQ.checkSQuantity = true;
-        checkRFQ.checkLQuantity = true;
+    checkMarketIsOpen() {
+        // Implement logic to check if the market is open
     }
-    checkRFQ.checkOnchainFreeCollateral = true;
-    checkRFQ.checkOnchainSelfLeverage = true;
-    checkRFQ.checkCounterpartySelfLeverage = true;
-    checkRFQ.checkMarketIsOpen = true;
-    const tripartyLatestPrice = await (0, tripartyPrice_1.getTripartyLatestPrice)(`${checkRFQ.assetAId}/${checkRFQ.assetAId}`);
-    if (tripartyLatestPrice != null &&
-        tripartyLatestPrice.bid > 0 &&
-        tripartyLatestPrice.ask > 0) {
-        checkRFQ.checkAssetAId = true;
-        checkRFQ.checkAssetBId = true;
+    async checkAssets() {
+        const tripartyLatestPrice = await (0, tripartyPrice_1.getTripartyLatestPrice)(`${this.rfq.assetAId}/${this.rfq.assetAId}`);
+        if (tripartyLatestPrice != null &&
+            tripartyLatestPrice.bid > 0 &&
+            tripartyLatestPrice.ask > 0) {
+            this.errors.push({ field: 'assets', value: this.rfq });
+        }
     }
-    checkRFQ.checkSPrice = true;
-    checkRFQ.checkLPrice = true;
-    checkRFQ.checkBrokerSelfLeverage = true;
-    if (checkRFQ.chainId == 64165) {
-        checkRFQ.checkChainId = true;
+    checkPrices() {
+        if (this.rfq.sPrice && this.rfq.lPrice) {
+            this.errors.push({ field: 'prices', value: this.rfq });
+        }
     }
-    checkRFQ.checkSQuantity = true;
-    checkRFQ.checkLQuantity = true;
-    return checkRFQ;
-};
-exports.checkRFQCore = checkRFQCore;
+    checkBrokerSelfLeverage() {
+        // Implement logic to check broker self-leverage
+    }
+    checkChainId() {
+        if (this.rfq.chainId !== 64165) {
+            this.errors.push({ field: 'chainId', value: this.rfq.chainId });
+        }
+    }
+}
+exports.default = RfqChecker;

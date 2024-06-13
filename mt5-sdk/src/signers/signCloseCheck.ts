@@ -19,9 +19,9 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
   let isCheck = true;
 
   const symbol = extractSymbolFromAssetHex(close.assetHex);
-  const pair = `${symbol.assetAId}/${symbol.assetAId}`;
+  const pair = `${symbol.assetAId}/${symbol.assetBId}`;
   const tripartyLatestPrice = await getTripartyLatestPrice(
-    `${symbol.assetAId}/${symbol.assetAId}`,
+    `${symbol.assetAId}/${symbol.assetBId}`,
   );
   /** Test price + spread is profitable for hedger  */
   if (close.isLong) {

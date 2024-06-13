@@ -5,8 +5,7 @@ import {
 } from '@pionerfriends/api-client';
 import { config } from '../config';
 import { ethers } from 'ethers';
-import { checkRFQCore } from '../rfq/checkRfq';
-import { verifyCheckRFQ } from '../rfq/rfq';
+import RfqChecker, { ErrorObject } from '../rfq/RfqChecker';
 import { extractSymbolFromAssetHex } from '../utils/ethersUtils';
 import { networks, NetworkKey } from '@pionerfriends/blockchain-client';
 import { getTripartyLatestPrice } from '../broker/tripartyPrice';
@@ -17,18 +16,32 @@ import {
   openQuoteSignValueType,
 } from '../blockchain/types';
 import { parseUnits, formatUnits } from 'viem';
+import { getMarketStatus, MarketStatusResponse } from '../broker/marketStatus';
 
 const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
 
-export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
+export async function signOpenCheck(
+  open: signedWrappedOpenQuoteResponse,
+  token: string,
+) {
+  open.isLong = !open.isLong;
   let isCheck = true;
   const openPrice = formatUnits(parseUnits(open.price, 1), 18);
   let acceptPrice = String(openPrice);
 
   const symbol = extractSymbolFromAssetHex(open.assetHex);
   const tripartyLatestPrice = await getTripartyLatestPrice(
-    `${symbol.assetAId}/${symbol.assetAId}`,
+    `${symbol.assetAId}/${symbol.assetBId}`,
   );
+
+  const marketStatus = getMarketStatus(
+    token,
+    `${symbol.assetAId}/${symbol.assetBId}`,
+  );
+  if (!marketStatus) {
+    isCheck = false;
+    throw new Error('open check failed : market status is not open');
+  }
 
   if (open.isLong) {
     if (tripartyLatestPrice.ask <= Number(openPrice) * (1 + 0.0001)) {
@@ -63,37 +76,45 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     assetAId: symbol.assetAId,
     assetBId: symbol.assetBId,
     sPrice: openPrice,
-    sQuantity: open.amount,
-    sInterestRate: open.interestRate,
+    sQuantity: formatUnits(parseUnits(open.amount, 1), 18),
+    sInterestRate: formatUnits(parseUnits(open.interestRate, 1), 18),
     sIsPayingApr: open.isAPayingApr,
-    sImA: open.imA,
-    sImB: open.imB,
-    sDfA: open.dfA,
-    sDfB: open.dfB,
+    sImA: formatUnits(parseUnits(open.imA, 1), 18),
+    sImB: formatUnits(parseUnits(open.imB, 1), 18),
+    sDfA: formatUnits(parseUnits(open.dfA, 1), 18),
+    sDfB: formatUnits(parseUnits(open.dfB, 1), 18),
     sExpirationA: open.expiryA,
     sExpirationB: open.expiryB,
     sTimelockA: open.timeLock,
     sTimelockB: open.timeLock,
-    lPrice: openPrice,
-    lQuantity: open.amount,
-    lInterestRate: open.interestRate,
+    lPrice: formatUnits(parseUnits(openPrice, 1), 18),
+    lQuantity: formatUnits(parseUnits(open.amount, 1), 18),
+    lInterestRate: formatUnits(parseUnits(open.interestRate, 1), 18),
     lIsPayingApr: open.isAPayingApr,
-    lImA: open.imA,
-    lImB: open.imB,
-    lDfA: open.dfA,
-    lDfB: open.dfB,
+    lImA: formatUnits(parseUnits(open.imA, 1), 18),
+    lImB: formatUnits(parseUnits(open.imB, 1), 18),
+    lDfA: formatUnits(parseUnits(open.dfA, 1), 18),
+    lDfB: formatUnits(parseUnits(open.dfB, 1), 18),
     lExpirationA: open.expiryA,
     lExpirationB: open.expiryB,
     lTimelockA: open.timeLock,
     lTimelockB: open.timeLock,
   };
-  const checkOpenSign = await checkRFQCore(rfqResponse);
-  const isRFQValid = await verifyCheckRFQ(checkOpenSign);
-
-  if (isRFQValid != true) {
-    isCheck = false;
-    throw new Error('open check failed : checkRFQ failed ');
-  }
+  const checker = new RfqChecker(rfqResponse);
+  checker
+    .check()
+    .then((errors: ErrorObject[]) => {
+      if (errors.length === 0) {
+      } else {
+        console.log('RFQ failed the following checks:');
+        errors.forEach((error) => {
+          console.log(`Field: ${error.field}, Value: ${error.value}`);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error('An error occurred during RFQ checking:', error);
+    });
 
   const domainOpen = {
     name: 'PionerV1Open',
@@ -145,13 +166,17 @@ export async function signOpenCheck(open: signedWrappedOpenQuoteResponse) {
     };
 
     const isPassed = await hedger(
-      `${symbol.assetAId}/${symbol.assetAId}`,
+      `${symbol.assetAId}/${symbol.assetBId}`,
       Number(openPrice),
       open.signatureOpenQuote,
       Number(open.amount), // TODO /1e18
       open.isLong,
       true,
     );
+    if (!isPassed) {
+      isCheck = false;
+      throw new Error('open check failed for : hedger failed');
+    }
 
     const bOracleSignValue = {
       x: open.x,

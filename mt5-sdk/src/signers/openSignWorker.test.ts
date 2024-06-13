@@ -19,8 +19,8 @@ describe('OpenQuoteButton', () => {
   let chainId: string;
 
   beforeAll(async () => {
-    token = await getToken(0);
-    await getToken(1);
+    await getToken(0);
+    token = await getToken(1);
 
     chainId = String(64165);
 
@@ -55,7 +55,7 @@ describe('OpenQuoteButton', () => {
       x: '0x20568a84796e6ade0446adfd2d8c4bba2c798c2af0e8375cc3b734f71b17f5fd',
       parity: String(0),
       maxConfidence: String(ethers.utils.parseUnits('1', 18)),
-      assetHex: convertToBytes32('forex.EURUSD/stock.nasdaq.AAPL'),
+      assetHex: convertToBytes32('forex.EURUSD/forex.USDCHF'),
       maxDelay: '600',
       precision: 5,
       imA: String(ethers.utils.parseUnits('10', 16)),
@@ -67,9 +67,9 @@ describe('OpenQuoteButton', () => {
       timeLock: '129600',
       nonceBoracle: nonce,
       signatureBoracle: '',
-      isLong: true,
+      isLong: false,
       price: String(ethers.utils.parseUnits('11', 17)),
-      amount: String(ethers.utils.parseUnits('1000', 18)),
+      amount: String(ethers.utils.parseUnits('100', 18)),
       interestRate: String(ethers.utils.parseUnits('1', 17)),
       isAPayingApr: true,
       frontEnd: addr2.address,
@@ -110,8 +110,8 @@ describe('OpenQuoteButton', () => {
       amount: quote.amount,
       interestRate: quote.interestRate,
       isAPayingAPR: quote.isAPayingApr,
-      frontEnd: addr2.address,
-      affiliate: addr2.address,
+      frontEnd: quote.frontEnd,
+      affiliate: quote.affiliate,
       authorized: addr1.address,
       nonce: quote.nonceOpenQuote,
     };
