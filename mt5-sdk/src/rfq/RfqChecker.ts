@@ -30,7 +30,7 @@ class RfqChecker {
 
   async init(): Promise<void> {
     const livePrice = await getTripartyLatestPrice(
-      `${this.rfq.assetAId}/${this.rfq.assetAId}`,
+      `${this.rfq.assetAId}/${this.rfq.assetBId}`,
     );
     this.tripartyBid = livePrice.bid;
     this.tripartyAsk = livePrice.ask;
@@ -144,19 +144,31 @@ class RfqChecker {
 
   private checkExpirationA(): void {
     if ((this.configRfqL.expiryA ?? 0) > this.rfq.lExpirationA) {
-      this.errors.push({ field: 'lExpirationA', value: this.rfq.lExpirationA });
+      this.errors.push({
+        field: 'lExpirationA',
+        value: [this.rfq.lExpirationA, this.configRfqL.expiryA],
+      });
     }
     if ((this.configRfqS.expiryA ?? 0) > this.rfq.sExpirationA) {
-      this.errors.push({ field: 'sExpirationA', value: this.rfq.sExpirationA });
+      this.errors.push({
+        field: 'sExpirationA',
+        value: [this.rfq.sExpirationA, this.configRfqS.expiryA],
+      });
     }
   }
 
   private checkExpirationB(): void {
     if ((this.configRfqL.expiryB ?? 0) > this.rfq.lExpirationB) {
-      this.errors.push({ field: 'lExpirationB', value: this.rfq.lExpirationB });
+      this.errors.push({
+        field: 'lExpirationB',
+        value: [this.rfq.lExpirationB, this.configRfqL.expiryB],
+      });
     }
     if ((this.configRfqS.expiryB ?? 0) > this.rfq.sExpirationB) {
-      this.errors.push({ field: 'sExpirationB', value: this.rfq.sExpirationB });
+      this.errors.push({
+        field: 'sExpirationB',
+        value: [this.rfq.sExpirationB, this.configRfqS.expiryB],
+      });
     }
   }
 
@@ -188,7 +200,7 @@ class RfqChecker {
     ) {
       this.errors.push({
         field: 'sInterestRate',
-        value: this.rfq.sInterestRate,
+        value: [this.rfq.sInterestRate, this.configRfqS.funding],
       });
     }
 
@@ -201,7 +213,7 @@ class RfqChecker {
     ) {
       this.errors.push({
         field: 'lInterestRate',
-        value: this.rfq.lInterestRate,
+        value: [this.rfq.lInterestRate, this.configRfqL.funding],
       });
     }
   }
@@ -225,13 +237,19 @@ class RfqChecker {
       Number(this.maxNotionalL) <=
       Number(this.rfq.lPrice) * Number(this.rfq.lQuantity)
     ) {
-      this.errors.push({ field: 'brokerFreeCollateral', value: this.rfq });
+      this.errors.push({
+        field: 'brokerFreeCollateral',
+        value: [this.maxNotionalL, this.rfq.lPrice, this.rfq.lQuantity],
+      });
     }
     if (
       Number(this.maxNotionalS) <=
       Number(this.rfq.sPrice) * Number(this.rfq.sQuantity)
     ) {
-      this.errors.push({ field: 'brokerFreeCollateral', value: this.rfq });
+      this.errors.push({
+        field: 'brokerFreeCollateral',
+        value: [this.maxNotionalS, this.rfq.sPrice, this.rfq.sQuantity],
+      });
     }
   }
 
@@ -262,11 +280,17 @@ class RfqChecker {
       this.errors.push({ field: 'assets', value: this.rfq });
     }
     if (Number(this.rfq.sPrice) > this.tripartyBid) {
-      this.errors.push({ field: 'sPrice', value: this.rfq.sPrice });
+      this.errors.push({
+        field: 'sPrice',
+        value: [this.rfq.sPrice, this.tripartyBid],
+      });
     }
     if (Number(this.rfq.lPrice) < this.tripartyAsk) {
     }
-    this.errors.push({ field: 'lPrice', value: this.rfq.lPrice });
+    this.errors.push({
+      field: 'lPrice',
+      value: [this.rfq.lPrice, this.tripartyAsk],
+    });
   }
 
   private checkBrokerSelfLeverage(): void {

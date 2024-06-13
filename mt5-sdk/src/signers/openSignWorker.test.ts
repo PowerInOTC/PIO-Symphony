@@ -37,8 +37,7 @@ describe('OpenQuoteButton', () => {
     //await initAccount(0);
     //await initAccount(1);
 
-    const timestamp = Math.floor(Date.now() / 1000);
-    const nonce = timestamp % 100000000;
+    const nonce = Date.now().toString();
     const wallet = {
       address: addr2.address,
     };
@@ -62,15 +61,15 @@ describe('OpenQuoteButton', () => {
       imB: String(ethers.utils.parseUnits('10', 16)),
       dfA: String(ethers.utils.parseUnits('25', 15)),
       dfB: String(ethers.utils.parseUnits('25', 15)),
-      expiryA: '60',
-      expiryB: '60',
+      expiryA: '129600',
+      expiryB: '129600',
       timeLock: '129600',
       nonceBoracle: nonce,
       signatureBoracle: '',
       isLong: false,
       price: String(ethers.utils.parseUnits('11', 17)),
       amount: String(ethers.utils.parseUnits('100', 18)),
-      interestRate: String(ethers.utils.parseUnits('1', 17)),
+      interestRate: String(ethers.utils.parseUnits('497', 16)),
       isAPayingApr: true,
       frontEnd: addr2.address,
       affiliate: addr2.address,

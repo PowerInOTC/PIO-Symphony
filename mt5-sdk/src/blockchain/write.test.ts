@@ -25,7 +25,7 @@ async function testSignCloseQuote() {
   const limitOrStop = 0;
   const expiry = 60000000000;
   const authorized = config.publicKeys?.split(',')[0];
-  const nonce = 0;
+  const nonce = Date.now().toString();
 
   const provider = new ethers.providers.JsonRpcProvider(
     'https://rpc.sonic.fantom.network/',

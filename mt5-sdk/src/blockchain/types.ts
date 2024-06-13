@@ -15,7 +15,7 @@ export type BOracleSignValueType = {
   expiryB: number;
   timeLock: number;
   signatureHashOpenQuote: string;
-  nonce: number;
+  nonce: string;
 };
 
 export type openQuoteSignValueType = {
@@ -28,7 +28,7 @@ export type openQuoteSignValueType = {
   frontEnd: string;
   affiliate: string;
   authorized: string;
-  nonce: number;
+  nonce: string;
 };
 
 export type closeQuoteSignValueType = {
@@ -38,7 +38,7 @@ export type closeQuoteSignValueType = {
   limitOrStop: string;
   expiry: number;
   authorized: string;
-  nonce: number;
+  nonce: string;
 };
 
 interface BOracle {

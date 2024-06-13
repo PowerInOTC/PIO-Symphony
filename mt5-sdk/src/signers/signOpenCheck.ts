@@ -87,7 +87,7 @@ export async function signOpenCheck(
     sExpirationB: open.expiryB,
     sTimelockA: open.timeLock,
     sTimelockB: open.timeLock,
-    lPrice: formatUnits(parseUnits(openPrice, 1), 18),
+    lPrice: openPrice,
     lQuantity: formatUnits(parseUnits(open.amount, 1), 18),
     lInterestRate: formatUnits(parseUnits(open.interestRate, 1), 18),
     lIsPayingApr: open.isAPayingApr,
