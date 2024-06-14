@@ -109,7 +109,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
             token,
             {
               onlyActive: true,
-              targetAddress: config.publicKeys?.split(',')[1],
+              targetAddress: config.publicKeys?.split(',')[0],
             },
           );
           const quotes = response?.data;

@@ -28,8 +28,8 @@ describe('OpenQuoteButton', () => {
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
     pionerV1Wrapper =
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
-    addr2 = new ethers.Wallet(config.privateKeys?.split(',')[1]);
     addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
+    addr2 = new ethers.Wallet(config.privateKeys?.split(',')[1]);
   });
 
   it('should send a signed wrapped open quote', async () => {
@@ -38,16 +38,10 @@ describe('OpenQuoteButton', () => {
     //await initAccount(1);
 
     const nonce = Date.now().toString();
-    const wallet = {
-      address: addr2.address,
-    };
-    const bestBid = {
-      counterpartyAddress: addr1.address,
-    };
 
     const quote: SignedWrappedOpenQuoteRequest = {
-      issuerAddress: wallet.address,
-      counterpartyAddress: bestBid.counterpartyAddress,
+      issuerAddress: addr2.address,
+      counterpartyAddress: addr1.address,
       version: '1.0',
       chainId: Number(chainId),
       verifyingContract: pionerV1Open,
@@ -69,7 +63,7 @@ describe('OpenQuoteButton', () => {
       isLong: false,
       price: String(ethers.utils.parseUnits('11', 17)),
       amount: String(ethers.utils.parseUnits('100', 18)),
-      interestRate: String(ethers.utils.parseUnits('497', 16)),
+      interestRate: String(ethers.utils.parseUnits('4970', 16)),
       isAPayingApr: true,
       frontEnd: addr2.address,
       affiliate: addr2.address,

@@ -20,7 +20,7 @@ export async function cancelAllOpenQuotes(
 
     const response = await getSignedWrappedOpenQuotes('1.0', 64165, token, {
       onlyActive: true,
-      targetAddress: config.publicKeys?.split(',')[pkId],
+      issuerAddress: config.publicKeys?.split(',')[pkId],
     });
     console.log(response);
     const quotes: signedWrappedOpenQuoteResponse[] | undefined = response?.data;
@@ -46,7 +46,7 @@ export async function cancelAllOpenQuotes(
         };
         const cancelSignValue = {
           orderHash: quote.signatureOpenQuote,
-          nonce: 0,
+          nonce: Date.now().toString(),
         };
 
         const signatureCancel = await addr1._signTypedData(
@@ -62,10 +62,10 @@ export async function cancelAllOpenQuotes(
           chainId: quote.chainId,
           verifyingContract: quote.verifyingContract,
           targetHash: quote.signatureOpenQuote,
-          nonceCancel: Date.now().toString(),
+          nonceCancel: cancelSignValue.nonce,
           signatureCancel: signatureCancel,
           emitTime: Date.now().toString(),
-          messageState: quote.messageState,
+          messageState: 0,
         };
 
         const tx = await sendSignedCancelOpenQuote(cancel, token);

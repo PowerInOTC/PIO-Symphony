@@ -41,19 +41,21 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
   const minAmount = await minAmountSymbol(pair);
   if (Number(close.amount) < Number(minAmount)) {
     isCheck = false;
-    throw new Error('close amount is too low');
+    throw new Error(
+      `Close amount is too low : ${Number(close.amount)} / ${Number(minAmount)}`,
+    );
   }
 
-  const isPassed = await hedger(
-    pair,
-    Number(close.price),
-    close.signatureOpenQuote,
-    Number(close.amount),
-    close.isLong,
-    false,
-  );
-
-  isPassed === true ? (isCheck = false) : (isCheck = true);
+  if (isCheck) {
+    isCheck = await hedger(
+      pair,
+      Number(close.price),
+      close.signatureOpenQuote,
+      Number(close.amount),
+      close.isLong,
+      false,
+    );
+  }
 
   if (isCheck === false) {
     throw new Error('hedger failed');

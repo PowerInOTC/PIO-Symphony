@@ -27,9 +27,9 @@ export async function signOpenCheck(
   open: signedWrappedOpenQuoteResponse,
   token: string,
 ) {
-  open.isLong = !open.isLong;
   let isCheck = true;
   const openPrice = formatUnits(parseUnits(open.price, 1), 18);
+  const openAmount: string = formatUnits(parseUnits(open.amount, 1), 18);
   let acceptPrice = String(openPrice);
 
   const symbol = extractSymbolFromAssetHex(open.assetHex);
@@ -79,7 +79,7 @@ export async function signOpenCheck(
     assetAId: symbol.assetAId,
     assetBId: symbol.assetBId,
     sPrice: openPrice,
-    sQuantity: formatUnits(parseUnits(open.amount, 1), 18),
+    sQuantity: openAmount,
     sInterestRate: formatUnits(parseUnits(open.interestRate, 1), 18),
     sIsPayingApr: open.isAPayingApr,
     sImA: formatUnits(parseUnits(open.imA, 1), 18),
@@ -91,7 +91,7 @@ export async function signOpenCheck(
     sTimelockA: open.timeLock,
     sTimelockB: open.timeLock,
     lPrice: openPrice,
-    lQuantity: formatUnits(parseUnits(open.amount, 1), 18),
+    lQuantity: openAmount,
     lInterestRate: formatUnits(parseUnits(open.interestRate, 1), 18),
     lIsPayingApr: open.isAPayingApr,
     lImA: formatUnits(parseUnits(open.imA, 1), 18),
@@ -109,6 +109,7 @@ export async function signOpenCheck(
     .then((errors: ErrorObject[]) => {
       if (errors.length === 0) {
       } else {
+        isCheck = false;
         console.log('RFQ failed the following checks:');
         errors.forEach((error) => {
           console.log(`Field: ${error.field}, Value: ${error.value}`);
@@ -138,7 +139,7 @@ export async function signOpenCheck(
   };
   const openQuoteSignValue = {
     bContractId: 0,
-    acceptPrice: openPrice,
+    acceptPrice: open.price,
     backendAffiliate: '0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8',
     amount: open.amount,
     nonce: open.nonceOpenQuote,
@@ -151,6 +152,9 @@ export async function signOpenCheck(
   );
 
   if (isCheck) {
+    const fill2 = new SignedFillOpenQuoteRequest
+    // fill3
+  
     const fill: SignedFillOpenQuoteRequest = {
       issuerAddress: open.counterpartyAddress,
       counterpartyAddress: open.issuerAddress,
@@ -159,7 +163,7 @@ export async function signOpenCheck(
       chainId: open.chainId,
       verifyingContract: open.verifyingContract,
       bcontractId: 0,
-      acceptPrice: openPrice,
+      acceptPrice: open.price,
       backendAffiliate: '0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8',
       amount: open.amount,
       nonceAcceptQuote: open.nonceOpenQuote,
@@ -168,11 +172,13 @@ export async function signOpenCheck(
       messageState: 0,
     };
 
+    console.log('fill', fill);
+
     const isPassed = await hedger(
       `${symbol.assetAId}/${symbol.assetBId}`,
       Number(openPrice),
       open.signatureOpenQuote,
-      Number(open.amount), // TODO /1e18
+      Number(openAmount), // TODO /1e18
       open.isLong,
       true,
     );
@@ -184,44 +190,56 @@ export async function signOpenCheck(
     const bOracleSignValue = {
       x: open.x,
       parity: Number(open.parity),
-      maxConfidence: open.maxConfidence,
+      maxConfidence: parseUnits(open.maxConfidence, 0),
       assetHex: open.assetHex,
       maxDelay: Number(open.maxDelay),
       precision: open.precision,
-      imA: open.imA,
-      imB: open.imB,
-      dfA: open.dfA,
-      dfB: open.dfB,
+      imA: parseUnits(open.imA,0),
+      imB: parseUnits(open.imB,0),
+      dfA: parseUnits(open.dfA,0),
+      dfB: parseUnits(open.dfB,0),
       expiryA: Number(open.expiryA),
       expiryB: Number(open.expiryB),
       timeLock: Number(open.timeLock),
       signatureHashOpenQuote: open.signatureOpenQuote,
-      nonce: open.nonceOpenQuote,
+      nonce: parseUnits(open.nonceOpenQuote,0),
     };
 
-    const openQuoteSignValue: openQuoteSignValueType = {
+    const openQuoteSignValue = {
       isLong: open.isLong,
       bOracleId: 0,
-      price: openPrice,
-      amount: open.amount,
-      interestRate: open.interestRate,
+      price: parseUnits(openPrice,0),
+      amount: parseUnits(open.amount,0),
+      interestRate: parseUnits(open.interestRate,0),
       isAPayingAPR: open.isAPayingApr,
       frontEnd: open.frontEnd,
       affiliate: open.affiliate,
       authorized: open.authorized,
       nonce: open.nonceOpenQuote,
     };
-
-    const isFilled = settleOpen(
-      bOracleSignValue,
-      open.signatureBoracle,
-      openQuoteSignValue,
-      open.signatureOpenQuote,
-      acceptPrice,
-      0,
-      String(open.chainId),
-    );
+    try {
+      const isFilled = settleOpen(
+        bOracleSignValue,
+        open.signatureBoracle,
+        openQuoteSignValue,
+        open.signatureOpenQuote,
+        open.price,
+        0,
+        String(open.chainId),
+      );
+    } catch (e) {}
 
     return fill;
   } else throw new Error('open check failed for : unknown');
 }
+
+
+
+The contract function "wrapperOpenQuoteMM" reverted with the following reason:
+signers mismatch
+
+Contract Call:
+  address:   0x49161e5F8b03765a126184e337f6E6234D05E816
+  function:  wrapperOpenQuoteMM((uint256 x, uint8 parity, uint256 maxConfidence, bytes32 assetHex, uint256 maxDelay, uint256 precision, uint256 imA, uint256 imB, uint256 dfA, uint256 dfB, uint256 expiryA, uint256 expiryB, uint256 timeLock, bytes signatureHashOpenQuote, uint256 nonce), bytes signaturebOracleSign, (bool isLong, uint256 bOracleId, uint256 price, uint256 amount, uint256 interestRate, bool isAPayingAPR, address frontEnd, address affiliate, address authorized, uint256 nonce), bytes openQuoteSignature, uint256 _acceptPrice)       
+  args:                        ({"x":"0x20568a84796e6ade0446adfd2d8c4bba2c798c2af0e8375cc3b734f71b17f5fd","parity":0,"maxConfidence":"1000000000000000000","assetHex":"0x666f7265782e4555525553442f666f7265782e55534443484600000000000000","maxDelay":600,"precision":5,"imA":"100000000000000000","imB":"100000000000000000","dfA":"25000000000000000","dfB":"25000000000000000","expiryA":129600,"expiryB":129600,"timeLock":129600,"signatureHashOpenQuote":"0x1bbc476fff01cfb1abfd95aa50a86b356e187686d742457d0f89613988a2bd54056f798fa53a173bb94b502b1f399a1bdb7956f52131803ff06350991290c3161b","nonce":"1718328201519"}, 0xeff6d8f53f56b974f3b89dcf18bab47b7d03d8ae8e1be11df96e3573e10086de0fee0bf898cda98a39d119fb2289df429470f97e88d6b13ed3a3ea7d45774e211c, {"isLong":false,"bOracleId":0,"price":"11","amount":"100000000000000000000","interestRate":"49700000000000000000","isAPayingAPR":true,"frontEnd":"0x734A5a550744F16CCe335f5735bf5eeE24412ba2","affiliate":"0x734A5a550744F16CCe335f5735bf5eeE24412ba2","authorized":"0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8","nonce":"1718328201519"}, 0x1bbc476fff01cfb1abfd95aa50a86b356e187686d742457d0f89613988a2bd54056f798fa53a173bb94b502b1f399a1bdb7956f52131803ff06350991290c3161b, 1100000000000000000)
+  sender:    0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8

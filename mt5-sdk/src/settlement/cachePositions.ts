@@ -25,7 +25,7 @@ export async function fetchPositions(chainId: number, token: string) {
 
     if (response && response.data) {
       cachedPositions = response.data;
-      //console.log('Positions fetched successfully:', cachedPositions);
+      console.log('Positions fetched successfully:', cachedPositions);
     } else {
       console.error('Invalid response from getPositions');
     }

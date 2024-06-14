@@ -23,6 +23,7 @@ class RfqChecker {
   private maxNotionalS: number = 10_000;
   private tripartyBid: number = 0;
   private tripartyAsk: number = 0;
+  private brokerLeverage: number = 500;
 
   constructor(rfq: RfqResponse) {
     this.rfq = rfq;
@@ -51,7 +52,6 @@ class RfqChecker {
     );
     this.brokerL = getAllocatedBroker(this.rfq.assetAId) ?? null;
     this.brokerS = getAllocatedBroker(this.rfq.assetBId) ?? null;
-    await this.fetchBrokerData();
   }
 
   private async getConfig(
@@ -68,19 +68,6 @@ class RfqChecker {
       1 / (parseFloat(im) + parseFloat(df)),
       parseFloat(price) * parseFloat(quantity),
     );
-  }
-
-  private async fetchBrokerData(): Promise<void> {
-    if (this.brokerL && this.brokerS) {
-      this.maxNotionalL = await getBrokerMaxNotional(this.brokerL);
-      this.maxNotionalS = await getBrokerMaxNotional(this.brokerS);
-      if (this.maxNotionalL > 0) {
-        this.errors.push({ field: 'brokerL', value: this.brokerL });
-      }
-      if (this.maxNotionalS > 0) {
-        this.errors.push({ field: 'brokerS', value: this.brokerS });
-      }
-    }
   }
 
   async check(): Promise<ErrorObject[]> {
@@ -100,7 +87,6 @@ class RfqChecker {
     this.checkOnchainSelfLeverage();
     this.checkCounterpartySelfLeverage();
     this.checkMarketIsOpen();
-    this.checkPrices();
     this.checkBrokerSelfLeverage();
     this.checkChainId();
     return this.errors;
@@ -108,37 +94,61 @@ class RfqChecker {
 
   private checkImA(): void {
     if ((this.configRfqL.imA ?? 0) > parseFloat(this.rfq.lImA)) {
-      this.errors.push({ field: 'lImA', value: this.rfq.lImA });
+      this.errors.push({
+        field: 'lImA',
+        value: [this.rfq.lImA, this.configRfqL.imA],
+      });
     }
     if ((this.configRfqS.imA ?? 0) > parseFloat(this.rfq.sImA)) {
-      this.errors.push({ field: 'sImA', value: this.rfq.sImA });
+      this.errors.push({
+        field: 'sImA',
+        value: [this.rfq.sImA, this.configRfqS.imA],
+      });
     }
   }
 
   private checkImB(): void {
     if ((this.configRfqL.imB ?? 0) > parseFloat(this.rfq.lImB)) {
-      this.errors.push({ field: 'lImB', value: this.rfq.lImB });
+      this.errors.push({
+        field: 'lImB',
+        value: [this.rfq.lImB, this.configRfqL.imB],
+      });
     }
     if ((this.configRfqS.imB ?? 0) > parseFloat(this.rfq.sImB)) {
-      this.errors.push({ field: 'sImB', value: this.rfq.sImB });
+      this.errors.push({
+        field: 'sImB',
+        value: [this.rfq.sImB, this.configRfqS.imB],
+      });
     }
   }
 
   private checkDfA(): void {
     if ((this.configRfqL.dfA ?? 0) > parseFloat(this.rfq.lDfA)) {
-      this.errors.push({ field: 'lDfA', value: this.rfq.lDfA });
+      this.errors.push({
+        field: 'lDfA',
+        value: [this.rfq.lDfA, this.configRfqL.dfA],
+      });
     }
     if ((this.configRfqS.dfA ?? 0) > parseFloat(this.rfq.sDfA)) {
-      this.errors.push({ field: 'sDfA', value: this.rfq.sDfA });
+      this.errors.push({
+        field: 'sDfA',
+        value: [this.rfq.sDfA, this.configRfqS.dfA],
+      });
     }
   }
 
   private checkDfB(): void {
     if ((this.configRfqL.dfB ?? 0) > parseFloat(this.rfq.lDfB)) {
-      this.errors.push({ field: 'lDfB', value: this.rfq.lDfB });
+      this.errors.push({
+        field: 'lDfB',
+        value: [this.rfq.lDfB, this.configRfqL.dfB],
+      });
     }
     if ((this.configRfqS.dfB ?? 0) > parseFloat(this.rfq.sDfB)) {
-      this.errors.push({ field: 'sDfB', value: this.rfq.sDfB });
+      this.errors.push({
+        field: 'sDfB',
+        value: [this.rfq.sDfB, this.configRfqS.dfB],
+      });
     }
   }
 
@@ -235,7 +245,8 @@ class RfqChecker {
   private checkBrokerFreeCollateral(): void {
     if (
       Number(this.maxNotionalL) <=
-      Number(this.rfq.lPrice) * Number(this.rfq.lQuantity)
+      (Number(this.rfq.lPrice) * Number(this.rfq.lQuantity)) /
+        this.brokerLeverage
     ) {
       this.errors.push({
         field: 'brokerFreeCollateral',
@@ -244,7 +255,8 @@ class RfqChecker {
     }
     if (
       Number(this.maxNotionalS) <=
-      Number(this.rfq.sPrice) * Number(this.rfq.sQuantity)
+      (Number(this.rfq.sPrice) * Number(this.rfq.sQuantity)) /
+        this.brokerLeverage
     ) {
       this.errors.push({
         field: 'brokerFreeCollateral',
@@ -276,16 +288,16 @@ class RfqChecker {
   }
 
   private async checkPrices(): Promise<void> {
-    if (this.tripartyBid > 0 && this.tripartyAsk > 0) {
+    if (this.tripartyBid <= 0 && this.tripartyAsk <= 0) {
       this.errors.push({ field: 'assets', value: this.rfq });
     }
-    if (Number(this.rfq.sPrice) > this.tripartyBid) {
+    if (Number(this.rfq.sPrice) <= this.tripartyBid) {
       this.errors.push({
         field: 'sPrice',
         value: [this.rfq.sPrice, this.tripartyBid],
       });
     }
-    if (Number(this.rfq.lPrice) < this.tripartyAsk) {
+    if (Number(this.rfq.lPrice) >= this.tripartyAsk) {
     }
     this.errors.push({
       field: 'lPrice',

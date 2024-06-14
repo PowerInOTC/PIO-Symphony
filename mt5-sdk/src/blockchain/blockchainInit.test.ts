@@ -12,7 +12,9 @@ export async function initAccount(id: number) {
   // Mint FUSD
   const prevBalance: string = (await getMintFUSD(id, '64165')) as string;
   hash = await mintFUSD(amount.toString(), id, '64165');
-  await web3Clients[64165].waitForTransactionReceipt({ hash });
+  if (hash) {
+    await web3Clients[64165].waitForTransactionReceipt({ hash });
+  }
   const nextBalance: string = (await getMintFUSD(id, '64165')) as string;
   console.log('Mint Balance Account:', nextBalance);
 
