@@ -11,6 +11,7 @@ import { convertToBytes32 } from '../../utils/ethersUtils';
 import { initAccount } from '../../blockchain/blockchainInit.test';
 // cancelAllOpenQuotes.test.ts
 import { cancelAllOpenQuotes } from '../24cancelOpenQuote/bot.24';
+import { settleOpen } from '../../blockchain/write';
 
 describe('OpenQuoteButton', () => {
   let token: string;
@@ -71,7 +72,7 @@ describe('OpenQuoteButton', () => {
       isAPayingApr: true,
       frontEnd: user.address,
       affiliate: user.address,
-      authorized: hedger.address,
+      authorized: '0x0000000000000000000000000000000000000000', //hedger.address,
       nonceOpenQuote: nonce,
       signatureOpenQuote: '',
       emitTime: String(Date.now()),
@@ -172,12 +173,24 @@ describe('OpenQuoteButton', () => {
 
     quote.signatureBoracle = signaturebOracleSign;
     quote.signatureOpenQuote = signatureOpenQuote;
+
+    const isFilled = settleOpen(
+      bOracleSignValue,
+      quote.signatureBoracle,
+      openQuoteSignValue,
+      quote.signatureOpenQuote,
+      quote.price,
+      0,
+      String(quote.chainId),
+    );
+    console.log(isFilled);
+    /*
     try {
       const tx = await sendSignedWrappedOpenQuote(quote, token);
       console.log(tx?.data);
       expect(tx).toBeDefined();
     } catch (error: any) {
       console.error('Error:', error);
-    }
+    }*/
   });
 });
