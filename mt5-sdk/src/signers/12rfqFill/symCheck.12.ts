@@ -6,6 +6,7 @@ import {
   getTotalOpenAmount,
 } from '../../broker/totalOpenAmountModule';
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
+import { isValidInterestRate, isMarketOpen } from '../../utils/check';
 
 export interface ErrorObject {
   field: string;
@@ -24,15 +25,15 @@ class RfqChecker {
   private tripartyBid: number = 0;
   private tripartyAsk: number = 0;
   private brokerLeverage: number = 500;
-
+  private pair = '';
   constructor(rfq: RfqResponse) {
     this.rfq = rfq;
   }
 
   async init(): Promise<void> {
-    const livePrice = await getTripartyLatestPrice(
-      `${this.rfq.assetAId}/${this.rfq.assetBId}`,
-    );
+    this.pair = `${this.rfq.assetAId}/${this.rfq.assetBId}`;
+
+    const livePrice = await getTripartyLatestPrice(this.pair);
     this.tripartyBid = livePrice.bid;
     this.tripartyAsk = livePrice.ask;
 
@@ -72,27 +73,29 @@ class RfqChecker {
 
   async check(): Promise<ErrorObject[]> {
     await this.init();
-    this.checkImA();
-    this.checkImB();
-    this.checkDfA();
-    this.checkDfB();
-    this.checkExpirationA();
-    this.checkExpirationB();
-    this.checkTimelockA();
-    this.checkTimelockB();
-    this.checkInterestRate();
-    this.checkBrokerFreeCollateral();
-    this.checkQuantities();
-    this.checkOnchainFreeCollateral();
-    this.checkOnchainSelfLeverage();
-    this.checkCounterpartySelfLeverage();
-    this.checkMarketIsOpen();
-    this.checkBrokerSelfLeverage();
-    this.checkChainId();
+    await Promise.all([
+      this.checkImA(),
+      this.checkImB(),
+      this.checkDfA(),
+      this.checkDfB(),
+      this.checkExpirationA(),
+      this.checkExpirationB(),
+      this.checkTimelockA(),
+      this.checkTimelockB(),
+      this.checkInterestRate(),
+      this.checkBrokerFreeCollateral(),
+      this.checkQuantities(),
+      this.checkOnchainFreeCollateral(),
+      this.checkOnchainSelfLeverage(),
+      this.checkCounterpartySelfLeverage(),
+      this.checkMarketIsOpen(),
+      this.checkBrokerSelfLeverage(),
+      this.checkChainId(),
+    ]);
     return this.errors;
   }
 
-  private checkImA(): void {
+  private async checkImA(): Promise<void> {
     if ((this.configRfqL.imA ?? 0) > parseFloat(this.rfq.lImA)) {
       this.errors.push({
         field: 'lImA',
@@ -107,7 +110,7 @@ class RfqChecker {
     }
   }
 
-  private checkImB(): void {
+  private async checkImB(): Promise<void> {
     if ((this.configRfqL.imB ?? 0) > parseFloat(this.rfq.lImB)) {
       this.errors.push({
         field: 'lImB',
@@ -122,7 +125,7 @@ class RfqChecker {
     }
   }
 
-  private checkDfA(): void {
+  private async checkDfA(): Promise<void> {
     if ((this.configRfqL.dfA ?? 0) > parseFloat(this.rfq.lDfA)) {
       this.errors.push({
         field: 'lDfA',
@@ -137,7 +140,7 @@ class RfqChecker {
     }
   }
 
-  private checkDfB(): void {
+  private async checkDfB(): Promise<void> {
     if ((this.configRfqL.dfB ?? 0) > parseFloat(this.rfq.lDfB)) {
       this.errors.push({
         field: 'lDfB',
@@ -152,7 +155,7 @@ class RfqChecker {
     }
   }
 
-  private checkExpirationA(): void {
+  private async checkExpirationA(): Promise<void> {
     if ((this.configRfqL.expiryA ?? 0) > this.rfq.lExpirationA) {
       this.errors.push({
         field: 'lExpirationA',
@@ -167,7 +170,7 @@ class RfqChecker {
     }
   }
 
-  private checkExpirationB(): void {
+  private async checkExpirationB(): Promise<void> {
     if ((this.configRfqL.expiryB ?? 0) > this.rfq.lExpirationB) {
       this.errors.push({
         field: 'lExpirationB',
@@ -182,7 +185,7 @@ class RfqChecker {
     }
   }
 
-  private checkTimelockA(): void {
+  private async checkTimelockA(): Promise<void> {
     if ((this.configRfqL.timeLockA ?? 0) > this.rfq.lTimelockA) {
       this.errors.push({ field: 'lTimelockA', value: this.rfq.lTimelockA });
     }
@@ -191,7 +194,7 @@ class RfqChecker {
     }
   }
 
-  private checkTimelockB(): void {
+  private async checkTimelockB(): Promise<void> {
     if ((this.configRfqL.timeLockB ?? 0) > this.rfq.lTimelockB) {
       this.errors.push({ field: 'lTimelockB', value: this.rfq.lTimelockB });
     }
@@ -200,12 +203,13 @@ class RfqChecker {
     }
   }
 
-  private checkInterestRate(): void {
+  private async checkInterestRate(): Promise<void> {
     if (
-      !this.isValidInterestRate(
+      isValidInterestRate(
         this.configRfqS,
         this.rfq.sInterestRate,
         this.rfq.sIsPayingApr,
+        false,
       )
     ) {
       this.errors.push({
@@ -215,10 +219,11 @@ class RfqChecker {
     }
 
     if (
-      !this.isValidInterestRate(
+      isValidInterestRate(
         this.configRfqL,
         this.rfq.lInterestRate,
         this.rfq.lIsPayingApr,
+        true,
       )
     ) {
       this.errors.push({
@@ -228,21 +233,7 @@ class RfqChecker {
     }
   }
 
-  private isValidInterestRate(
-    config: any,
-    rate: string,
-    isPayingApr: boolean,
-  ): boolean {
-    return (
-      ((config.funding ?? 0) <= Number(rate) &&
-        (config.isAPayingApr == isPayingApr ||
-          (config.isAPayingApr == true && isPayingApr == false))) ||
-      (Number(config.funding) <= 0 &&
-        Math.abs(Number(config.funding ?? 0)) <= Math.abs(Number(rate)))
-    );
-  }
-
-  private checkBrokerFreeCollateral(): void {
+  private async checkBrokerFreeCollateral(): Promise<void> {
     if (
       Number(this.maxNotionalL) <=
       (Number(this.rfq.lPrice) * Number(this.rfq.lQuantity)) /
@@ -265,53 +256,38 @@ class RfqChecker {
     }
   }
 
-  private checkQuantities(): void {
+  private async checkQuantities(): Promise<void> {
     if (!this.rfq.sQuantity || !this.rfq.lQuantity) {
       this.errors.push({ field: 'quantities', value: this.rfq });
     }
   }
 
-  private checkOnchainFreeCollateral(): void {
+  private async checkOnchainFreeCollateral(): Promise<void> {
     // Implement logic to check on-chain free collateral
   }
 
-  private checkOnchainSelfLeverage(): void {
+  private async checkOnchainSelfLeverage(): Promise<void> {
     // Implement logic to check on-chain self-leverage
   }
 
-  private checkCounterpartySelfLeverage(): void {
+  private async checkCounterpartySelfLeverage(): Promise<void> {
     // Implement logic to check counterparty self-leverage
   }
 
-  private checkMarketIsOpen(): void {
-    // Implement logic to check if the market is open
-  }
-
-  private async checkPrices(): Promise<void> {
-    if (this.tripartyBid <= 0 && this.tripartyAsk <= 0) {
-      this.errors.push({ field: 'assets', value: this.rfq });
-    }
-    if (Number(this.rfq.sPrice) <= this.tripartyBid) {
-      this.errors.push({
-        field: 'sPrice',
-        value: [this.rfq.sPrice, this.tripartyBid],
-      });
-    }
-    if (Number(this.rfq.lPrice) >= this.tripartyAsk) {
-    }
-    this.errors.push({
-      field: 'lPrice',
-      value: [this.rfq.lPrice, this.tripartyAsk],
-    });
-  }
-
-  private checkBrokerSelfLeverage(): void {
+  private async checkBrokerSelfLeverage(): Promise<void> {
     // Implement logic to check broker self-leverage
   }
 
-  private checkChainId(): void {
+  private async checkChainId(): Promise<void> {
     if (this.rfq.chainId !== 64165) {
       this.errors.push({ field: 'chainId', value: this.rfq.chainId });
+    }
+  }
+
+  private async checkMarketIsOpen(): Promise<void> {
+    const result = await isMarketOpen(this.pair);
+    if (!result) {
+      this.errors.push({ field: 'market', value: this.pair });
     }
   }
 }

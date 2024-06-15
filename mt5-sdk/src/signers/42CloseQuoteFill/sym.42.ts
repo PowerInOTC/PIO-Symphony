@@ -9,7 +9,6 @@ import { Worker, Queue, Job } from 'bullmq';
 import { signCloseCheck } from './symCheck.42';
 import { settleClose } from '../../blockchain/write';
 import { closeQuoteSignValueType } from '../../blockchain/types';
-import { hedger } from '../../broker/inventory';
 
 const signedCloseQueue = new Queue('signedClose', {
   connection: {

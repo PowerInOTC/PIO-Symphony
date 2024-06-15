@@ -2,25 +2,25 @@ import { BigNumber } from 'ethers';
 
 export type BOracleSignValueType = {
   x: string;
-  parity: number;
+  parity: string;
   maxConfidence: string;
   assetHex: string;
-  maxDelay: number;
-  precision: number;
+  maxDelay: string;
+  precision: string;
   imA: string;
   imB: string;
   dfA: string;
   dfB: string;
-  expiryA: number;
-  expiryB: number;
-  timeLock: number;
+  expiryA: string;
+  expiryB: string;
+  timeLock: string;
   signatureHashOpenQuote: string;
   nonce: string;
 };
 
 export type openQuoteSignValueType = {
   isLong: boolean;
-  bOracleId: number;
+  bOracleId: string;
   price: string;
   amount: string;
   interestRate: string;

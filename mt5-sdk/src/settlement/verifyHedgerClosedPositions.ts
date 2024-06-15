@@ -1,96 +1,148 @@
 // hedgerSafetyCheck.ts
 import { isPositionOpen, getFirst12Characters } from '../broker/utils';
-import { hedger } from '../broker/inventory';
+import { Hedger } from '../broker/inventory';
 import { getMT5Ticker } from '../config/configRead';
 import { getCachedPositions } from './cachePositions';
 import { config } from '../config';
 import { getOpenPositions, Position } from '../broker/dispatcher';
+import { getPositions, PositionResponse } from '@pionerfriends/api-client';
+import * as fs from 'fs';
 
-const localClosedPositions: { [key: string]: number } = {};
+class HedgerSafetyCheck {
+  private localClosedPositions: { [key: string]: number } = {};
+  private hedger: Hedger;
+  private noHedgeList: string[] = [];
 
-// @dev case of position been liquidated ( Not optimized ( to be updated with V2 repo architecture ))
-// @dev check each second if a contract is open in hedger, but no longer in openPosition and close on hedger side. The 1 min buffer is ok with DF defined, but won't scale with optimized df.
-async function verifyHedgerClosedPositions(token: string) {
-  const openPositions = await getOpenPositions('mt5.ICMarkets');
-  const cachedPositions = getCachedPositions();
+  constructor() {
+    this.hedger = new Hedger();
+    this.loadNoHedgeList();
+  }
 
-  // Check closed trades
-  for (const position of cachedPositions) {
-    const identifier = getFirst12Characters(position.signatureOpenQuote);
-    const [assetA, assetB] = position.symbol.split('/');
-    const mt5TickerA = getMT5Ticker(assetA);
-    const mt5TickerB = getMT5Ticker(assetB);
-
-    if (!mt5TickerA || !mt5TickerB) {
-      continue;
+  private loadNoHedgeList() {
+    try {
+      const data = fs.readFileSync('../broker/noHedgeList.json', 'utf8');
+      this.noHedgeList = JSON.parse(data);
+    } catch (error) {
+      console.error('Error loading noHedgeList:', error);
     }
+  }
 
-    const isLong = config.publicKeys?.split(',')[0] === position.pB;
-    const isAOpenned = await isPositionOpen(
+  private async isPositionClosed(
+    openPositions: Position[],
+    mt5Ticker: string,
+    identifier: string,
+    isLong: boolean,
+  ): Promise<boolean> {
+    return !(await isPositionOpen(
       openPositions,
-      mt5TickerA,
+      mt5Ticker,
       identifier,
       isLong,
-    );
-    const isBOpenned = await isPositionOpen(
-      openPositions,
-      mt5TickerB,
-      identifier,
-      !isLong,
-    );
+    ));
+  }
 
-    if (!isAOpenned && !isBOpenned) {
-      const positionKey = `${position.symbol}_${position.signatureOpenQuote}`;
+  private async processClosedPosition(
+    position: PositionResponse,
+    isLong: boolean,
+  ) {
+    const isPassed = await this.hedger.hedge(
+      position.symbol,
+      parseFloat(position.mtm),
+      position.signatureOpenQuote,
+      Number(position.amount),
+      isLong,
+      false,
+      '0x0000000000000000000000000000000000000000',
+    );
+    if (!isPassed) {
+      console.log('Hedger failed');
+    }
+  }
 
-      // Check if the position is already being processed
-      if (localClosedPositions[positionKey]) {
+  private isNoHedgeAddress(address: string): boolean {
+    return this.noHedgeList.includes(address);
+  }
+
+  private async verifyHedgerClosedPositions(token: string) {
+    const openPositions = await getOpenPositions('mt5.ICMarkets');
+    const cachedPositions = await getCachedPositions();
+
+    for (const position of cachedPositions) {
+      const identifier = getFirst12Characters(position.signatureOpenQuote);
+      const [assetA, assetB] = position.symbol.split('/');
+      const mt5TickerA = getMT5Ticker(assetA);
+      const mt5TickerB = getMT5Ticker(assetB);
+
+      if (!mt5TickerA || !mt5TickerB) {
         continue;
       }
 
-      // Store the position locally with a timestamp
-      localClosedPositions[positionKey] = Date.now();
+      const isLong = config.publicKeys?.split(',')[0] === position.pB;
 
-      // Check if the position is still not in openPositions after 1 minute
-      setTimeout(async () => {
-        const updatedOpenPositions = await getOpenPositions('mt5.ICMarkets');
-        const isAStillClosed = !(await isPositionOpen(
-          updatedOpenPositions,
-          mt5TickerA,
-          identifier,
-          isLong,
-        ));
-        const isBStillClosed = !(await isPositionOpen(
-          updatedOpenPositions,
-          mt5TickerB,
-          identifier,
-          !isLong,
-        ));
+      if (
+        this.isNoHedgeAddress(position.pA) ||
+        this.isNoHedgeAddress(position.pB)
+      ) {
+        continue;
+      }
 
-        if (isAStillClosed || isBStillClosed) {
-          const isPassed = await hedger(
-            position.symbol,
-            parseFloat(position.mtm),
-            position.signatureOpenQuote,
-            Number(position.amount),
-            isLong,
-            false,
-          );
-          if (!isPassed) {
-            console.log('Hedger failed');
-          }
+      const isAOpenned = await this.isPositionClosed(
+        openPositions,
+        mt5TickerA,
+        identifier,
+        isLong,
+      );
+      const isBOpenned = await this.isPositionClosed(
+        openPositions,
+        mt5TickerB,
+        identifier,
+        !isLong,
+      );
+
+      if (!isAOpenned && !isBOpenned) {
+        const positionKey = `${position.symbol}_${position.signatureOpenQuote}`;
+
+        if (this.localClosedPositions[positionKey]) {
+          continue;
         }
 
-        // Remove the position from local storage after processing
-        delete localClosedPositions[positionKey];
-      }, 60000); // 1 minute delay
+        this.localClosedPositions[positionKey] = Date.now();
+
+        setTimeout(async () => {
+          const updatedOpenPositions = await getOpenPositions('mt5.ICMarkets');
+          const isAStillClosed = await this.isPositionClosed(
+            updatedOpenPositions,
+            mt5TickerA,
+            identifier,
+            isLong,
+          );
+          const isBStillClosed = await this.isPositionClosed(
+            updatedOpenPositions,
+            mt5TickerB,
+            identifier,
+            !isLong,
+          );
+
+          if (isAStillClosed || isBStillClosed) {
+            await this.processClosedPosition(position, isLong);
+          }
+
+          delete this.localClosedPositions[positionKey];
+        }, 60000);
+      }
     }
+  }
+
+  public startHedgerSafetyCheckClose(token: string) {
+    setInterval(() => {
+      this.verifyHedgerClosedPositions(token).catch((error) => {
+        console.error('Error during verification:', error);
+      });
+    }, 1000);
   }
 }
 
 export function startHedgerSafetyCheckClose(token: string) {
-  setInterval(() => {
-    verifyHedgerClosedPositions(token).catch((error) => {
-      console.error('Error during verification:', error);
-    });
-  }, 1000);
+  const hedgerSafetyCheck = new HedgerSafetyCheck();
+  hedgerSafetyCheck.startHedgerSafetyCheckClose(token);
 }

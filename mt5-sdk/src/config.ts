@@ -27,4 +27,7 @@ export const config = {
   activeChainIds: process.env.ACTIVE_CHAIN_IDS || '64165',
   apiBaseUrl: process.env.API_BASE_URL || '',
   azureMt5AuthToken: process.env.AZURE_MT5_IDENTIFICATION_TOKEN || '',
+
+  hedgerId: process.env.HEDGER_ID || '0',
+  isDevMode: process.env.DEV_MODE || true,
 };

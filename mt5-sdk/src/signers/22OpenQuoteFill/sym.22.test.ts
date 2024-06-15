@@ -9,27 +9,31 @@ import {
 import { networks, NetworkKey } from '@pionerfriends/blockchain-client';
 import { convertToBytes32 } from '../../utils/ethersUtils';
 import { initAccount } from '../../blockchain/blockchainInit.test';
+// cancelAllOpenQuotes.test.ts
+import { cancelAllOpenQuotes } from '../24cancelOpenQuote/bot.24';
 
 describe('OpenQuoteButton', () => {
   let token: string;
-  let addr2: ethers.Wallet;
+  let user: ethers.Wallet;
   let pionerV1Open: string;
   let pionerV1Wrapper: string;
-  let addr1: ethers.Wallet;
+  let hedger: ethers.Wallet;
   let chainId: string;
 
   beforeAll(async () => {
-    await getToken(0);
-    token = await getToken(1);
-
+    const userId = 1;
+    const hedgerId = 0;
     chainId = String(64165);
+
+    token = await getToken(userId);
+    await cancelAllOpenQuotes(token, userId);
 
     pionerV1Open =
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
     pionerV1Wrapper =
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
-    addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
-    addr2 = new ethers.Wallet(config.privateKeys?.split(',')[1]);
+    hedger = new ethers.Wallet(config.privateKeys?.split(',')[hedgerId]);
+    user = new ethers.Wallet(config.privateKeys?.split(',')[userId]);
   });
 
   it('should send a signed wrapped open quote', async () => {
@@ -40,8 +44,8 @@ describe('OpenQuoteButton', () => {
     const nonce = Date.now().toString();
 
     const quote: SignedWrappedOpenQuoteRequest = {
-      issuerAddress: addr2.address,
-      counterpartyAddress: addr1.address,
+      issuerAddress: user.address,
+      counterpartyAddress: hedger.address,
       version: '1.0',
       chainId: Number(chainId),
       verifyingContract: pionerV1Open,
@@ -65,9 +69,9 @@ describe('OpenQuoteButton', () => {
       amount: String(ethers.utils.parseUnits('100', 18)),
       interestRate: String(ethers.utils.parseUnits('4970', 16)),
       isAPayingApr: true,
-      frontEnd: addr2.address,
-      affiliate: addr2.address,
-      authorized: addr1.address,
+      frontEnd: user.address,
+      affiliate: user.address,
+      authorized: hedger.address,
       nonceOpenQuote: nonce,
       signatureOpenQuote: '',
       emitTime: String(Date.now()),
@@ -98,18 +102,18 @@ describe('OpenQuoteButton', () => {
 
     const openQuoteSignValue = {
       isLong: quote.isLong,
-      bOracleId: 0,
+      bOracleId: '0',
       price: quote.price,
       amount: quote.amount,
       interestRate: quote.interestRate,
       isAPayingAPR: quote.isAPayingApr,
       frontEnd: quote.frontEnd,
       affiliate: quote.affiliate,
-      authorized: addr1.address,
+      authorized: hedger.address,
       nonce: quote.nonceOpenQuote,
     };
 
-    const signatureOpenQuote = await addr2._signTypedData(
+    const signatureOpenQuote = await user._signTypedData(
       domainOpen,
       openQuoteSignType,
       openQuoteSignValue,
@@ -148,7 +152,7 @@ describe('OpenQuoteButton', () => {
       maxConfidence: quote.maxConfidence,
       assetHex: quote.assetHex,
       maxDelay: quote.maxDelay,
-      precision: quote.precision,
+      precision: String(quote.precision),
       imA: quote.imA,
       imB: quote.imB,
       dfA: quote.dfA,
@@ -160,7 +164,7 @@ describe('OpenQuoteButton', () => {
       nonce: quote.nonceBoracle,
     };
 
-    const signaturebOracleSign = await addr2._signTypedData(
+    const signaturebOracleSign = await user._signTypedData(
       domainWrapper,
       bOracleSignType,
       bOracleSignValue,

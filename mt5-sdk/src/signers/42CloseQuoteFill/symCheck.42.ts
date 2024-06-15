@@ -4,7 +4,7 @@ import {
   WebSocketType,
   getSignedCloseQuotes,
 } from '@pionerfriends/api-client';
-import { hedger } from '../../broker/inventory';
+import { Hedger } from '../../broker/inventory';
 import { extractSymbolFromAssetHex } from '../../utils/ethersUtils';
 import {
   networks,
@@ -17,6 +17,7 @@ import { minAmountSymbol } from '../../broker/minAmount';
 
 export async function signCloseCheck(close: signedCloseQuoteResponse) {
   let isCheck = true;
+  const hedger = new Hedger();
 
   const symbol = extractSymbolFromAssetHex(close.assetHex);
   const pair = `${symbol.assetAId}/${symbol.assetBId}`;
@@ -47,13 +48,14 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
   }
 
   if (isCheck) {
-    isCheck = await hedger(
+    isCheck = await hedger.hedge(
       pair,
       Number(close.price),
       close.signatureOpenQuote,
       Number(close.amount),
       close.isLong,
       false,
+      close.issuerAddress,
     );
   }
 

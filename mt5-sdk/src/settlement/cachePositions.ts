@@ -1,5 +1,5 @@
 // cachePositions.ts
-import { getPositions } from '@pionerfriends/api-client';
+import { getPositions, PositionResponse } from '@pionerfriends/api-client';
 import { config } from '../config';
 
 let cachedPositions: any[] = [];

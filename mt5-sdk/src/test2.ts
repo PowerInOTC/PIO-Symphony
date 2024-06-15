@@ -10,7 +10,6 @@ import {
   totalOpenAmountInfo,
   verifyTradeOpenable,
 } from './broker/dispatcher';
-import { hedger } from './broker/inventory';
 import {
   adjustQuantities,
   getPairConfig,
