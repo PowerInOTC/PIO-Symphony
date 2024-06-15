@@ -6,7 +6,7 @@ import { getCachedPositions } from './cachePositions';
 import { config } from '../config';
 import { getOpenPositions, Position } from '../broker/dispatcher';
 import { getPositions, PositionResponse } from '@pionerfriends/api-client';
-import * as fs from 'fs';
+import { isNoHedgeAddress } from '../utils/check';
 
 class HedgerSafetyCheck {
   private localClosedPositions: { [key: string]: number } = {};
@@ -15,16 +15,6 @@ class HedgerSafetyCheck {
 
   constructor() {
     this.hedger = new Hedger();
-    this.loadNoHedgeList();
-  }
-
-  private loadNoHedgeList() {
-    try {
-      const data = fs.readFileSync('../broker/noHedgeList.json', 'utf8');
-      this.noHedgeList = JSON.parse(data);
-    } catch (error) {
-      console.error('Error loading noHedgeList:', error);
-    }
   }
 
   private async isPositionClosed(
@@ -59,10 +49,6 @@ class HedgerSafetyCheck {
     }
   }
 
-  private isNoHedgeAddress(address: string): boolean {
-    return this.noHedgeList.includes(address);
-  }
-
   private async verifyHedgerClosedPositions(token: string) {
     const openPositions = await getOpenPositions('mt5.ICMarkets');
     const cachedPositions = await getCachedPositions();
@@ -80,8 +66,8 @@ class HedgerSafetyCheck {
       const isLong = config.publicKeys?.split(',')[0] === position.pB;
 
       if (
-        this.isNoHedgeAddress(position.pA) ||
-        this.isNoHedgeAddress(position.pB)
+        (await isNoHedgeAddress(position.pA)) ||
+        (await isNoHedgeAddress(position.pB))
       ) {
         continue;
       }

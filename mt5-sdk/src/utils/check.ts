@@ -1,6 +1,7 @@
 import { config } from '../config';
 import { getToken } from '../utils/init';
 import { getMarketStatus } from '../broker/marketStatus';
+import noHedgeList from '../broker/noHedgeList.json';
 
 export function isValidInterestRate(
   config: any,
@@ -43,4 +44,8 @@ export async function isMarketOpen(pair: string) {
   }
 
   return await getMarketStatus(token, pair);
+}
+
+export async function isNoHedgeAddress(address: string): Promise<boolean> {
+  return noHedgeList.includes(address);
 }

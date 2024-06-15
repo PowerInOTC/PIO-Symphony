@@ -176,7 +176,7 @@ export async function signOpenCheck(
       `${symbol.assetAId}/${symbol.assetBId}`,
       Number(openPrice),
       open.signatureOpenQuote,
-      Number(openAmount), // TODO /1e18
+      Number(openAmount),
       open.isLong,
       true,
       open.issuerAddress,

@@ -24,7 +24,7 @@ describe('OpenQuoteButton', () => {
     const userId = 1;
     const hedgerId = 0;
     chainId = String(64165);
-
+    await getToken(hedgerId);
     token = await getToken(userId);
     await cancelAllOpenQuotes(token, userId);
 

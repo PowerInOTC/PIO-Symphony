@@ -1,12 +1,8 @@
 import { manageSymbolInventory } from './dispatcher';
 import { getBrokerFromAsset } from '../config/configRead';
-import noHedgeList from './noHedgeList.json';
+import { isNoHedgeAddress } from '../utils/check';
 
 export class Hedger {
-  private async isNoHedgeAddress(address: string): Promise<boolean> {
-    return noHedgeList.includes(address);
-  }
-
   private async openPositions(
     assetA: string,
     assetB: string,
@@ -81,7 +77,10 @@ export class Hedger {
     counterparty: string,
   ): Promise<boolean> {
     try {
-      if (await this.isNoHedgeAddress(counterparty)) {
+      console.log(`Hedging ${pair} for ${counterparty}`);
+
+      if (await isNoHedgeAddress(counterparty)) {
+        console.log('No hedge for this address');
         return true;
       }
 

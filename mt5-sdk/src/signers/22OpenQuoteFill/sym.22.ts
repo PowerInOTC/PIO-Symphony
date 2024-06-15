@@ -97,7 +97,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
     await websocketClient.startWebSocket(token);
 
     let lastFetchTime = 0;
-    const fetchInterval = 750; // Adjust the interval as needed
+    const fetchInterval = 2500; // Adjust the interval as needed
 
     setInterval(async () => {
       const currentTime = Date.now();
