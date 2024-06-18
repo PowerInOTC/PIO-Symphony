@@ -13,15 +13,20 @@ import {
 } from './signers/42CloseQuoteFill/sym.42';
 import { startRfqProcess } from './signers/12rfqFill/sym.12';
 import { getToken } from './utils/init';
-import { startHedgerSafetyCheckOpen } from './settlement/verifyHedgerOpenPositions';
-import { startHedgerSafetyCheckClose } from './settlement/verifyHedgerClosedPositions';
-import { startSettlementWorker } from './settlement/settlementWorker';
-import { startPositionFetching } from './settlement/cachePositions';
+import { startHedgerSafetyCheckOpen } from './signers/31settlement/verifyHedgerOpenPositions';
+import { startHedgerSafetyCheckClose } from './signers/31settlement/verifyHedgerClosedPositions';
+import { startSettlementWorker } from './signers/31settlement/sym.31';
+import { startPositionFetching } from './signers/31settlement/cachePositions';
 
 async function index(): Promise<void> {
   try {
     console.log('Start');
     const token = await getToken(0);
+    /* Test init ***
+    await getToken(1);
+    await getToken(2);
+    await getToken(3);
+    /**************/
     console.log(token);
 
     const config = JSON.parse(fs.readFileSync('hedger.config.json', 'utf-8'));

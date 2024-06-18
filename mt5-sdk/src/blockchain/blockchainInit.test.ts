@@ -6,7 +6,7 @@ import { mintFUSD, allowance, deposit } from './write';
 import { getBalance, getAllowance, getMintFUSD } from './read';
 
 export async function initAccount(id: number) {
-  const amount = parseUnits('10000', 18);
+  const amount = parseUnits('100000000', 18);
   let hash;
 
   // Mint FUSD

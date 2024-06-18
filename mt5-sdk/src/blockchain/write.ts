@@ -5,6 +5,7 @@ import {
   PionerV1Compliance,
   PionerV1Default,
   PionerV1Wrapper,
+  PionerV1Close,
   NetworkKey,
   networks,
 } from '@pionerfriends/blockchain-client';
@@ -24,6 +25,9 @@ export async function mintFUSD(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .FakeUSD as Address,
@@ -32,8 +36,12 @@ export async function mintFUSD(
       args: [amount],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
     console.log(`[Blockchain] [mintFUSD] : ${e}`);
@@ -46,6 +54,9 @@ export async function deposit(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Compliance as Address,
@@ -74,6 +85,9 @@ export async function withdraw(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Compliance as Address,
@@ -82,8 +96,12 @@ export async function withdraw(
       args: [amount],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
     console.log(`[Blockchain] [withdraw] : ${e}`);
@@ -97,6 +115,9 @@ export async function claim(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Compliance as Address,
@@ -105,8 +126,12 @@ export async function claim(
       args: [amount],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
     console.log(`[Blockchain] [claim] : ${e}`);
@@ -125,6 +150,9 @@ export async function allowance(
       'address',
     );
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .FakeUSD as Address,
@@ -137,8 +165,12 @@ export async function allowance(
       ],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
     console.log(`[Blockchain] [settleClose] : ${e}`);
@@ -152,6 +184,9 @@ export async function settle(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Default as Address,
@@ -160,8 +195,12 @@ export async function settle(
       args: [bContractId],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
     console.log(`[Blockchain] [settleClose] : ${e}`);
@@ -179,6 +218,9 @@ export async function settleOpen(
 ): Promise<any> {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Wrapper as Address,
@@ -193,8 +235,12 @@ export async function settleOpen(
       ],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (error) {
     if (isAxiosError(error)) {
@@ -223,6 +269,7 @@ export async function settleOpen(
 function isAxiosError(error: unknown): error is AxiosError {
   return (error as AxiosError).isAxiosError !== undefined;
 }
+
 export async function settleClose(
   openCloseQuoteValue: closeQuoteSignValueType,
   signatureCloseQuote: string,
@@ -231,6 +278,9 @@ export async function settleClose(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Wrapper as Address,
@@ -239,11 +289,83 @@ export async function settleClose(
       args: [openCloseQuoteValue, signatureCloseQuote],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
     console.log(`[Blockchain] [settleClose] : ${e}`);
+  }
+}
+
+export async function openCloseQuoteSigned(
+  openCloseQuoteValue: closeQuoteSignValueType,
+  signatureCloseQuote: string,
+  accountId: number,
+  chainId: string,
+) {
+  try {
+    const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
+    const request = await web3Clients[Number(chainId)].simulateContract({
+      address: networks[chainId as unknown as NetworkKey].contracts
+        .PionerV1Close as Address,
+      abi: PionerV1Close.abi,
+      functionName: 'openCloseQuoteSigned',
+      args: [
+        openCloseQuoteValue,
+        signatureCloseQuote,
+        config.publicKeys?.split(',')[accountId],
+      ],
+      account: account,
+    });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
+    return await wallet.writeContract(
+      transactionParameters as unknown as WriteContractParameters,
+    );
+  } catch (e) {
+    console.log(`[Blockchain] [settleClose] : ${e}`);
+  }
+}
+
+export async function acceptCloseQuote(
+  bCloseQuoteId: number,
+  amount: string,
+  accountId: number,
+  chainId: string,
+) {
+  try {
+    const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
+    const network = networks[chainId as unknown as NetworkKey];
+    const web3Client = web3Clients[Number(chainId)];
+    if (!web3Client) {
+      throw new Error('Invalid web3 client configuration');
+    }
+    const request = await web3Client.simulateContract({
+      address: network.contracts.PionerV1Close as Address,
+      abi: PionerV1Close.abi,
+      functionName: 'acceptCloseQuote',
+      args: [BigInt(bCloseQuoteId), BigInt(amount)],
+      account: account,
+    });
+    const result = await wallet.writeContract(
+      request.request as unknown as WriteContractParameters,
+    );
+    return result;
+  } catch (e) {
+    console.log(`[Blockchain] [settleClose] : ${e}`);
+    throw e;
   }
 }
 
@@ -255,6 +377,9 @@ export async function updatePriceAndDefault(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Wrapper as Address,
@@ -263,8 +388,12 @@ export async function updatePriceAndDefault(
       args: [priceSignature, bContractId],
       account: account,
     });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
     return await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+      transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
     console.log(`[Blockchain] [updatePriceAndDefault] : ${e}`);

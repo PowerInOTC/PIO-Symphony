@@ -1,6 +1,6 @@
 // cachePositions.ts
 import { getPositions, PositionResponse } from '@pionerfriends/api-client';
-import { config } from '../config';
+import { config } from '../../config';
 
 let cachedPositions: any[] = [];
 let isFetching = false;
@@ -20,12 +20,11 @@ export async function fetchPositions(chainId: number, token: string) {
 
     const response = await getPositions(chainId, token, {
       onlyActive: true,
-      address: config.publicKeys?.split(',')[0],
+      address: config.publicKeys?.split(',')[config.hedgerId],
     });
 
     if (response && response.data) {
       cachedPositions = response.data;
-      console.log('Positions fetched successfully:', cachedPositions);
     } else {
       console.error('Invalid response from getPositions');
     }

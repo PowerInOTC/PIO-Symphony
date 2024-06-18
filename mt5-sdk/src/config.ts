@@ -28,6 +28,6 @@ export const config = {
   apiBaseUrl: process.env.API_BASE_URL || '',
   azureMt5AuthToken: process.env.AZURE_MT5_IDENTIFICATION_TOKEN || '',
 
-  hedgerId: process.env.HEDGER_ID || '0',
+  hedgerId: Number(process.env.HEDGER_ID) || 0,
   isDevMode: process.env.DEV_MODE || true,
 };

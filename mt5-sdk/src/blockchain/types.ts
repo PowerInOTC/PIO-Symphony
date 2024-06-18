@@ -32,11 +32,11 @@ export type openQuoteSignValueType = {
 };
 
 export type closeQuoteSignValueType = {
-  bContractId: number;
+  bContractId: string;
   price: string;
   amount: string;
   limitOrStop: string;
-  expiry: number;
+  expiry: string;
   authorized: string;
   nonce: string;
 };

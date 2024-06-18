@@ -34,13 +34,12 @@ export function startCloseQuotesWorker(token: string): void {
           return;
         }
 
-        /** todo */
         const closeQuoteSignValueType: closeQuoteSignValueType = {
-          bContractId: quote.chainId,
+          bContractId: String(quote.chainId),
           price: quote.price,
           amount: quote.amount,
           limitOrStop: String(quote.limitOrStop),
-          expiry: Number(quote.expiry),
+          expiry: String(quote.expiry),
           authorized: quote.authorized,
           nonce: quote.nonce,
         };

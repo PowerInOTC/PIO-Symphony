@@ -12,6 +12,7 @@ import { initAccount } from '../../blockchain/blockchainInit.test';
 // cancelAllOpenQuotes.test.ts
 import { cancelAllOpenQuotes } from '../24cancelOpenQuote/bot.24';
 import { settleOpen } from '../../blockchain/write';
+import { getAddress } from 'viem';
 
 describe('OpenQuoteButton', () => {
   let token: string;
@@ -20,10 +21,12 @@ describe('OpenQuoteButton', () => {
   let pionerV1Wrapper: string;
   let hedger: ethers.Wallet;
   let chainId: string;
+  let userId: number;
+  let hedgerId: number;
 
   beforeAll(async () => {
-    const userId = 1;
-    const hedgerId = 0;
+    userId = 1;
+    hedgerId = 0;
     chainId = String(64165);
     await getToken(hedgerId);
     token = await getToken(userId);
@@ -32,15 +35,15 @@ describe('OpenQuoteButton', () => {
     pionerV1Open =
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
     pionerV1Wrapper =
-      networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
+      networks[chainId as unknown as NetworkKey].contracts.PionerV1Wrapper;
     hedger = new ethers.Wallet(config.privateKeys?.split(',')[hedgerId]);
     user = new ethers.Wallet(config.privateKeys?.split(',')[userId]);
   });
 
   it('should send a signed wrapped open quote', async () => {
     // uncomment on first time
-    //await initAccount(0);
-    //await initAccount(1);
+    //await initAccount(hedgerId);
+    //await initAccount(userId);
 
     const nonce = Date.now().toString();
 
@@ -67,12 +70,12 @@ describe('OpenQuoteButton', () => {
       signatureBoracle: '',
       isLong: false,
       price: String(ethers.utils.parseUnits('11', 17)),
-      amount: String(ethers.utils.parseUnits('100', 18)),
+      amount: String(ethers.utils.parseUnits('1000', 18)),
       interestRate: String(ethers.utils.parseUnits('4970', 16)),
       isAPayingApr: true,
       frontEnd: user.address,
       affiliate: user.address,
-      authorized: '0x0000000000000000000000000000000000000000', //hedger.address,
+      authorized: hedger.address,
       nonceOpenQuote: nonce,
       signatureOpenQuote: '',
       emitTime: String(Date.now()),
@@ -113,6 +116,8 @@ describe('OpenQuoteButton', () => {
       authorized: hedger.address,
       nonce: quote.nonceOpenQuote,
     };
+
+    console.log(openQuoteSignValue);
 
     const signatureOpenQuote = await user._signTypedData(
       domainOpen,
@@ -173,8 +178,8 @@ describe('OpenQuoteButton', () => {
 
     quote.signatureBoracle = signaturebOracleSign;
     quote.signatureOpenQuote = signatureOpenQuote;
-
-    const isFilled = settleOpen(
+    /*
+    const isFilled = await settleOpen(
       bOracleSignValue,
       quote.signatureBoracle,
       openQuoteSignValue,
@@ -183,14 +188,14 @@ describe('OpenQuoteButton', () => {
       0,
       String(quote.chainId),
     );
-    console.log(isFilled);
-    /*
+    console.log(isFilled);*/
+
     try {
       const tx = await sendSignedWrappedOpenQuote(quote, token);
       console.log(tx?.data);
       expect(tx).toBeDefined();
     } catch (error: any) {
       console.error('Error:', error);
-    }*/
+    }
   });
 });

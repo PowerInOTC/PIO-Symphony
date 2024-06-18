@@ -25,7 +25,9 @@ export async function signOpenCheck(
   open: signedWrappedOpenQuoteResponse,
   token: string,
 ) {
-  const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0]);
+  const addr1 = new ethers.Wallet(
+    config.privateKeys?.split(',')[config.hedgerId],
+  );
   const hedger = new Hedger();
 
   let isCheck = true;
@@ -167,7 +169,7 @@ export async function signOpenCheck(
       nonceAcceptQuote: open.nonceOpenQuote,
       signatureAcceptQuote: signatureFillOpen,
       emitTime: open.emitTime,
-      messageState: 0,
+      messageState: 1,
     };
 
     console.log('fill', fill);
@@ -217,45 +219,19 @@ export async function signOpenCheck(
       nonce: open.nonceOpenQuote,
     };
     try {
-      const isFilled = settleOpen(
+      const isFilled = await settleOpen(
         bOracleSignValue,
         open.signatureBoracle,
         openQuoteSignValue,
         open.signatureOpenQuote,
         open.price,
-        0,
+        config.hedgerId,
         String(open.chainId),
       );
+
       console.log('isFilled', isFilled);
     } catch (e) {}
 
     return fill;
   } else throw new Error('open check failed for : unknown');
 }
-
-/*export type BOracleSignValueType = {
-  x: string;
-  parity: number;
-  maxConfidence: string;
-  assetHex: string;
-  maxDelay: number;
-  precision: number;
-  imA: string;
-  imB: string;
-  dfA: string;
-  dfB: string;
-  expiryA: number;
-  expiryB: number;
-  timeLock: number;
-  signatureHashOpenQuote: string;
-  nonce: string;
-};
-The contract function "wrapperOpenQuoteMM" reverted with the following reason:
-signers mismatch
-
-Contract Call:
-  address:   0x49161e5F8b03765a126184e337f6E6234D05E816
-  function:  wrapperOpenQuoteMM((uint256 x, uint8 parity, uint256 maxConfidence, bytes32 assetHex, uint256 maxDelay, uint256 precision, uint256 imA, uint256 imB, uint256 dfA, uint256 dfB, uint256 expiryA, uint256 expiryB, uint256 timeLock, bytes signatureHashOpenQuote, uint256 nonce), bytes signaturebOracleSign, (bool isLong, uint256 bOracleId, uint256 price, uint256 amount, uint256 interestRate, bool isAPayingAPR, address frontEnd, address affiliate, address authorized, uint256 nonce), bytes openQuoteSignature, uint256 _acceptPrice)       
-  args:                        ({"x":"0x20568a84796e6ade0446adfd2d8c4bba2c798c2af0e8375cc3b734f71b17f5fd","parity":0,"maxConfidence":"1000000000000000000","assetHex":"0x666f7265782e4555525553442f666f7265782e55534443484600000000000000","maxDelay":600,"precision":5,"imA":"100000000000000000","imB":"100000000000000000","dfA":"25000000000000000","dfB":"25000000000000000","expiryA":129600,"expiryB":129600,"timeLock":129600,"signatureHashOpenQuote":"0x1bbc476fff01cfb1abfd95aa50a86b356e187686d742457d0f89613988a2bd54056f798fa53a173bb94b502b1f399a1bdb7956f52131803ff06350991290c3161b","nonce":"1718328201519"}, 0xeff6d8f53f56b974f3b89dcf18bab47b7d03d8ae8e1be11df96e3573e10086de0fee0bf898cda98a39d119fb2289df429470f97e88d6b13ed3a3ea7d45774e211c, {"isLong":false,"bOracleId":0,"price":"11","amount":"100000000000000000000","interestRate":"49700000000000000000","isAPayingAPR":true,"frontEnd":"0x734A5a550744F16CCe335f5735bf5eeE24412ba2","affiliate":"0x734A5a550744F16CCe335f5735bf5eeE24412ba2","authorized":"0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8","nonce":"1718328201519"}, 0x1bbc476fff01cfb1abfd95aa50a86b356e187686d742457d0f89613988a2bd54056f798fa53a173bb94b502b1f399a1bdb7956f52131803ff06350991290c3161b, 1100000000000000000)
-  sender:    0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8
-  */

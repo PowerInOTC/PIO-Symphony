@@ -54,11 +54,11 @@ async function testSignCloseQuote() {
   };
 
   const closeQuoteValue: closeQuoteSignValueType = {
-    bContractId: bContractId,
+    bContractId: String(bContractId),
     price: String(price),
     amount: String(amount),
     limitOrStop: String(ethers.BigNumber.from(limitOrStop)),
-    expiry: expiry,
+    expiry: String(expiry),
     authorized: authorized,
     nonce: nonce,
   };

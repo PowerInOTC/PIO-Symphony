@@ -75,7 +75,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
           // Retry connecting to the WebSocket
           setTimeout(() => {
             websocketClient.startWebSocket(token);
-          }, 5000); // Retry after 5 seconds, adjust the delay as needed
+          }, 5000);
         },
         () => {
           console.log('WebSocket OpenQuote reconnected');
@@ -97,7 +97,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
     await websocketClient.startWebSocket(token);
 
     let lastFetchTime = 0;
-    const fetchInterval = 2500; // Adjust the interval as needed
+    const fetchInterval = 1500;
 
     setInterval(async () => {
       const currentTime = Date.now();
