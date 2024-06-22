@@ -1,5 +1,5 @@
 // hedgerSafetyCheck.ts
-import { isPositionOpen, getFirst12Characters } from '../../broker/utils';
+import { isPositionOpen } from '../../broker/utils';
 import { Hedger } from '../../broker/inventory';
 import { getMT5Ticker } from '../../config/configRead';
 import { getCachedPositions } from './cachePositions';
@@ -20,15 +20,10 @@ class HedgerSafetyCheck {
   private async isPositionClosed(
     openPositions: Position[],
     mt5Ticker: string,
-    identifier: string,
+    hash: string,
     isLong: boolean,
   ): Promise<boolean> {
-    return !(await isPositionOpen(
-      openPositions,
-      mt5Ticker,
-      identifier,
-      isLong,
-    ));
+    return !(await isPositionOpen(openPositions, mt5Ticker, hash, isLong));
   }
 
   private async processClosedPosition(
@@ -54,84 +49,74 @@ class HedgerSafetyCheck {
     const cachedPositions = await getCachedPositions();
 
     for (const position of cachedPositions) {
-      const extractHash = (input: string): string | null => {
-        const match = input.match(/"hash":"(0x[0-9a-fA-F]+)"/);
-        return match ? match[1] : null;
-      };
-
-      const hash = extractHash(position.signatureOpenQuote);
       console.log(
         'position',
         position.bContractId,
         position.symbol,
         position.entryPrice,
-        hash,
+        position.signatureOpenQuote,
       );
 
-      if (hash !== null) {
-        const identifier = getFirst12Characters(hash);
-        const [assetA, assetB] = position.symbol.split('/');
-        const mt5TickerA = getMT5Ticker(assetA);
-        const mt5TickerB = getMT5Ticker(assetB);
+      const [assetA, assetB] = position.symbol.split('/');
+      const mt5TickerA = getMT5Ticker(assetA);
+      const mt5TickerB = getMT5Ticker(assetB);
 
-        if (!mt5TickerA || !mt5TickerB) {
+      if (!mt5TickerA || !mt5TickerB) {
+        continue;
+      }
+
+      const isLong = config.publicKeys?.split(',')[0] === position.pB;
+
+      if (
+        (await isNoHedgeAddress(position.pA)) ||
+        (await isNoHedgeAddress(position.pB))
+      ) {
+        continue;
+      }
+
+      const isAOpenned = await this.isPositionClosed(
+        openPositions,
+        mt5TickerA,
+        position.signatureOpenQuote,
+        isLong,
+      );
+      const isBOpenned = await this.isPositionClosed(
+        openPositions,
+        mt5TickerB,
+        position.signatureOpenQuote,
+        !isLong,
+      );
+
+      if (!isAOpenned && !isBOpenned) {
+        const positionKey = `${position.symbol}_${position.signatureOpenQuote}`;
+
+        if (this.localClosedPositions[positionKey]) {
           continue;
         }
 
-        const isLong = config.publicKeys?.split(',')[0] === position.pB;
+        this.localClosedPositions[positionKey] = Date.now();
 
-        if (
-          (await isNoHedgeAddress(position.pA)) ||
-          (await isNoHedgeAddress(position.pB))
-        ) {
-          continue;
-        }
+        setTimeout(async () => {
+          const updatedOpenPositions = await getOpenPositions('mt5.ICMarkets');
+          const isAStillClosed = await this.isPositionClosed(
+            updatedOpenPositions,
+            mt5TickerA,
+            position.signatureOpenQuote,
+            isLong,
+          );
+          const isBStillClosed = await this.isPositionClosed(
+            updatedOpenPositions,
+            mt5TickerB,
+            position.signatureOpenQuote,
+            !isLong,
+          );
 
-        const isAOpenned = await this.isPositionClosed(
-          openPositions,
-          mt5TickerA,
-          identifier,
-          isLong,
-        );
-        const isBOpenned = await this.isPositionClosed(
-          openPositions,
-          mt5TickerB,
-          identifier,
-          !isLong,
-        );
-
-        if (!isAOpenned && !isBOpenned) {
-          const positionKey = `${position.symbol}_${position.signatureOpenQuote}`;
-
-          if (this.localClosedPositions[positionKey]) {
-            continue;
+          if (isAStillClosed || isBStillClosed) {
+            await this.processClosedPosition(position, isLong);
           }
 
-          this.localClosedPositions[positionKey] = Date.now();
-
-          setTimeout(async () => {
-            const updatedOpenPositions =
-              await getOpenPositions('mt5.ICMarkets');
-            const isAStillClosed = await this.isPositionClosed(
-              updatedOpenPositions,
-              mt5TickerA,
-              identifier,
-              isLong,
-            );
-            const isBStillClosed = await this.isPositionClosed(
-              updatedOpenPositions,
-              mt5TickerB,
-              identifier,
-              !isLong,
-            );
-
-            if (isAStillClosed || isBStillClosed) {
-              await this.processClosedPosition(position, isLong);
-            }
-
-            delete this.localClosedPositions[positionKey];
-          }, 60000);
-        }
+          delete this.localClosedPositions[positionKey];
+        }, 60000);
       }
     }
   }

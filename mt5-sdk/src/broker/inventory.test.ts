@@ -16,9 +16,7 @@ describe('Hedger', () => {
   const assetBId = 'forex.EURUSD';
   const pair = `${assetAId}/${assetBId}`;
   const isLong = true;
-  const hexString = getFirst12Characters(
-    `0x81ecwaf5bca8e50573e0183wad582d6b6426bd988c9c7fd40c529bea86232136c8`,
-  );
+  const hexString = `0x81ecwaf5bca8e50573e0183wad582d6b6426bd988c9c7fd40c529bea86232136c8`;
 
   test('openPositions', async () => {
     const token = await getToken(userId);

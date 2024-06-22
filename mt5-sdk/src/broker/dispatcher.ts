@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '../config';
 import { getMT5Ticker, getBrokerFromAsset } from '../config/configRead';
+import { getFirst12Characters } from '../broker/utils';
 
 const apiBaseUrl = config.apiBaseUrl;
 
@@ -163,12 +164,13 @@ async function manageSymbolInventory(
   isOpen: boolean,
   broker: string,
 ): Promise<boolean> {
+  const hexString = getFirst12Characters(hash);
   switch (broker) {
     case 'mt5.ICMarkets':
       try {
         const payload = {
           pair: pair,
-          b_contract_id: hash,
+          b_contract_id: hexString,
           amount: amount,
           is_long: isLong,
           is_open: isOpen,

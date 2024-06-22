@@ -16,19 +16,19 @@ export async function initAccount(id: number) {
     await web3Clients[64165].waitForTransactionReceipt({ hash });
   }
   const nextBalance: string = (await getMintFUSD(id, '64165')) as string;
-  console.log('Mint Balance Account:', nextBalance);
+  console.log('Mint Balance Account:', id, nextBalance);
 
   // Approve allowance
   const prevAllowance: string = (await getAllowance(id, '64165')) as string;
   await allowance(amount.toString(), id, '64165');
   const nextAllowance: string = (await getAllowance(id, '64165')) as string;
-  console.log('Allowance Account:', nextAllowance);
+  console.log('Allowance Account:', id, nextAllowance);
 
   // Deposit
   const prevDepositBalance: string = (await getBalance(id, '64165')) as string;
   await deposit(amount.toString(), id, '64165');
   const nextDepositBalance: string = (await getBalance(id, '64165')) as string;
-  console.log('Deposit Balance Account:', nextDepositBalance);
+  console.log('Deposit Balance Account:', id, nextDepositBalance);
 
   return {
     prevBalance,

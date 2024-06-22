@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMT5LatestPrice = void 0;
+exports.getMT5LatestPrice = getMT5LatestPrice;
 const axios_1 = __importDefault(require("axios"));
 const config_1 = require("../config");
 const configRead_1 = require("../config/configRead");
@@ -49,7 +49,6 @@ async function getMT5LatestPrice(proxyPair) {
     }
     return cacheData;
 }
-exports.getMT5LatestPrice = getMT5LatestPrice;
 async function updateCacheData() {
     const currentTime = Date.now();
     const updatePrices = async (retryCount = 0) => {

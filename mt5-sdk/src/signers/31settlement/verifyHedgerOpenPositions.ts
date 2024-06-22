@@ -1,5 +1,5 @@
 // hedgerSafetyCheck.ts
-import { isPositionOpen, getFirst12Characters } from '../../broker/utils';
+import { isPositionOpen } from '../../broker/utils';
 import { Hedger } from '../../broker/inventory';
 import { getMT5Ticker } from '../../config/configRead';
 import { getCachedPositions } from './cachePositions';
@@ -19,10 +19,10 @@ class HedgerSafetyCheck {
   private async isPositionOpen(
     openPositions: Position[],
     mt5Ticker: string,
-    identifier: string,
+    hash: string,
     isLong: boolean,
   ): Promise<boolean> {
-    return await isPositionOpen(openPositions, mt5Ticker, identifier, isLong);
+    return await isPositionOpen(openPositions, mt5Ticker, hash, isLong);
   }
 
   private async processOpenPosition(
@@ -48,47 +48,38 @@ class HedgerSafetyCheck {
     const cachedPositions = await getCachedPositions();
 
     for (const position of cachedPositions) {
-      const extractHash = (input: string): string | null => {
-        const match = input.match(/"hash":"(0x[0-9a-fA-F]+)"/);
-        return match ? match[1] : null;
-      };
+      const [assetA, assetB] = position.symbol.split('/');
+      const mt5TickerA = getMT5Ticker(assetA);
+      const mt5TickerB = getMT5Ticker(assetB);
 
-      const hash = extractHash(position.signatureOpenQuote);
-      if (hash !== null) {
-        const identifier = getFirst12Characters(hash);
-        const [assetA, assetB] = position.symbol.split('/');
-        const mt5TickerA = getMT5Ticker(assetA);
-        const mt5TickerB = getMT5Ticker(assetB);
+      if (!mt5TickerA || !mt5TickerB) {
+        continue;
+      }
 
-        if (!mt5TickerA || !mt5TickerB) {
-          continue;
-        }
+      const isLong = config.publicKeys?.split(',')[0] === position.pB;
 
-        const isLong = config.publicKeys?.split(',')[0] === position.pB;
+      if (
+        (await isNoHedgeAddress(position.pA)) ||
+        (await isNoHedgeAddress(position.pB))
+      ) {
+        continue;
+      }
 
-        if (
-          (await isNoHedgeAddress(position.pA)) ||
-          (await isNoHedgeAddress(position.pB))
-        ) {
-          continue;
-        }
+      const isAOpenned = await this.isPositionOpen(
+        openPositions,
+        mt5TickerA,
+        position.signatureOpenQuote,
+        isLong,
+      );
+      const isBOpenned = await this.isPositionOpen(
+        openPositions,
+        mt5TickerB,
+        position.signatureOpenQuote,
+        !isLong,
+      );
 
-        const isAOpenned = await this.isPositionOpen(
-          openPositions,
-          mt5TickerA,
-          identifier,
-          isLong,
-        );
-        const isBOpenned = await this.isPositionOpen(
-          openPositions,
-          mt5TickerB,
-          identifier,
-          !isLong,
-        );
-
-        if (!isAOpenned || !isBOpenned) {
-          await this.processOpenPosition(position, isLong);
-        }
+      if (!isAOpenned || !isBOpenned) {
+        await this.processOpenPosition(position, isLong);
       }
     }
   }

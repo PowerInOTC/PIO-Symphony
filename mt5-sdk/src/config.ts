@@ -30,4 +30,5 @@ export const config = {
 
   hedgerId: Number(process.env.HEDGER_ID) || 0,
   isDevMode: process.env.DEV_MODE || true,
+  isPionLive: process.env.IS_PION_LIVE || false,
 };

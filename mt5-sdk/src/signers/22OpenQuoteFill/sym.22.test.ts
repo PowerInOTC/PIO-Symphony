@@ -30,7 +30,7 @@ describe('OpenQuoteButton', () => {
     chainId = String(64165);
     await getToken(hedgerId);
     token = await getToken(userId);
-    await cancelAllOpenQuotes(token, userId);
+    //await cancelAllOpenQuotes(token, userId);
 
     pionerV1Open =
       networks[chainId as unknown as NetworkKey].contracts.PionerV1Open;
@@ -42,8 +42,8 @@ describe('OpenQuoteButton', () => {
 
   it('should send a signed wrapped open quote', async () => {
     // uncomment on first time
-    //await initAccount(hedgerId);
-    //await initAccount(userId);
+    await initAccount(hedgerId);
+    await initAccount(userId);
 
     const nonce = Date.now().toString();
 

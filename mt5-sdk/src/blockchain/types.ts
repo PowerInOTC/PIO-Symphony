@@ -41,7 +41,7 @@ export type closeQuoteSignValueType = {
   nonce: string;
 };
 
-interface BOracle {
+export interface BOracle {
   assetHex: string;
   oracleType: string;
   lastBid: string;
@@ -68,15 +68,15 @@ interface BOracle {
 }
 
 export interface pionSignType {
-  appId: bigint;
+  appId: string;
   reqId: string;
   requestassetHex: string;
-  requestPairBid: bigint;
-  requestPairAsk: bigint;
-  requestConfidence: bigint;
-  requestSignTime: bigint;
-  requestPrecision: bigint;
-  signature: bigint;
+  requestPairBid: string;
+  requestPairAsk: string;
+  requestConfidence: string;
+  requestSignTime: string;
+  requestPrecision: string;
+  signature: string;
   owner: string;
   nonce: string;
 }

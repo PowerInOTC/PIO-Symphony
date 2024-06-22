@@ -1,9 +1,10 @@
 // settlementWorker.ts
 import { fetchPositions, getCachedPositions } from './cachePositions';
-import { getPionSignature } from '@pionerfriends/api-client';
 import { updatePriceAndDefault } from '../../blockchain/write';
 import { PionResult, pionSignType } from '../../blockchain/types';
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
+import { getPionSignatureWithRetry } from '../../utils/pion';
+import { convertToBytes32 } from '../../utils/ethersUtils';
 
 async function settlementWorker(token: string): Promise<void> {
   try {
@@ -37,7 +38,7 @@ async function settlementWorker(token: string): Promise<void> {
   } catch (error) {
     console.error('Error checking positions:', error);
   } finally {
-    setTimeout(() => settlementWorker(token), 1000);
+    setTimeout(() => settlementWorker(token), 10000);
   }
 }
 
@@ -62,7 +63,7 @@ export async function defaultAndLiquidation(
 ) {
   const [assetAId, assetBId]: string[] = assetHex.split('/');
 
-  const pionResponse = await getPionSignature(
+  const pionResponse = await getPionSignatureWithRetry(
     assetAId,
     assetBId,
     String(price),
@@ -73,33 +74,40 @@ export async function defaultAndLiquidation(
     {
       requestPrecision: '5',
       requestConfPrecision: '5',
-      maxTimestampDiff: '600',
-      timeout: 10000,
+      maxTimestampDiff: '0',
+      timeout: '10000',
     },
   );
 
-  if (!pionResponse || !pionResponse.data) {
+  if (!pionResponse) {
     throw new Error('Failed to get Pion signature');
   }
 
-  const pionResult: PionResult = pionResponse.data as PionResult;
+  const pionResult: PionResult = pionResponse as PionResult;
 
   const priceSignature: pionSignType = {
-    appId: BigInt(pionResult.result.appId),
+    appId: pionResult.result.appId,
     reqId: pionResult.result.reqId,
-    requestassetHex:
-      pionResult.result.data.params.asset1 +
-      '/' +
-      pionResult.result.data.params.asset2,
-    requestPairBid: BigInt(pionResult.result.data.params.requestPairBid),
-    requestPairAsk: BigInt(pionResult.result.data.params.requestPairAsk),
-    requestConfidence: BigInt(pionResult.result.data.params.requestConfidence),
-    requestSignTime: BigInt(pionResult.result.data.params.requestSignTime),
-    requestPrecision: BigInt(5),
-    signature: BigInt(pionResult.result.signatures[0].signature),
+    requestassetHex: convertToBytes32(`${assetAId}/${assetBId}`),
+    requestPairBid: String(
+      BigInt(pionResult.result.data.params.requestPairBid),
+    ),
+    requestPairAsk: String(
+      BigInt(pionResult.result.data.params.requestPairAsk),
+    ),
+    requestConfidence: pionResult.result.data.params.requestConfidence,
+    requestSignTime: pionResult.result.data.params.requestSignTime,
+    requestPrecision: '5',
+    signature: pionResult.result.signatures[0].signature,
     owner: '0x237A6Ec18AC7D9693C06f097c0EEdc16518d7c21',
     nonce: '0x1365a32bDd33661a3282992D1C334D5aB2faaDc7',
   };
 
-  await updatePriceAndDefault(priceSignature, bContractId, 0, chainId);
+  const tx = await updatePriceAndDefault(
+    priceSignature,
+    bContractId,
+    0,
+    chainId,
+  );
+  console.log('tx:', tx);
 }

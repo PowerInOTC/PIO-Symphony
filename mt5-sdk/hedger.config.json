@@ -3,5 +3,5 @@
   "signedOpenWorker": true,
   "closeQuotesWorker": true,
   "settlementWorker": true,
-  "hedgerSafetyCheck": true
+  "hedgerSafetyCheck": false
 }
