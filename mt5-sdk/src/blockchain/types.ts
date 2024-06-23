@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers';
+import { ethers } from 'ethers';
 
 export type BOracleSignValueType = {
   x: string;
@@ -68,14 +68,14 @@ export interface BOracle {
 }
 
 export interface pionSignType {
-  appId: string;
+  appId: ethers.BigNumber;
   reqId: string;
   requestassetHex: string;
-  requestPairBid: string;
-  requestPairAsk: string;
-  requestConfidence: string;
-  requestSignTime: string;
-  requestPrecision: string;
+  requestPairBid: ethers.BigNumber;
+  requestPairAsk: ethers.BigNumber;
+  requestConfidence: ethers.BigNumber;
+  requestSignTime: ethers.BigNumber;
+  requestPrecision: ethers.BigNumber;
   signature: string;
   owner: string;
   nonce: string;

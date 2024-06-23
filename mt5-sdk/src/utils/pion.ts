@@ -16,7 +16,7 @@ export async function getPionSignatureWithRetry(
   retryInterval = 500,
   timeout = 10000,
 ): Promise<PionResult> {
-  if (options.maxTimestampDiff == '0' && config.isPionLive == 'false') {
+  if (options.maxTimestampDiff == '0' && !config.isPionLive) {
     console.log('Using mock Pion response');
     const mockPionValues = {
       appId: '12345',
@@ -89,7 +89,7 @@ export async function getPionSignatureWithRetry(
     return mockData as unknown as PionResult;
   }
 
-  const price = await getTripartyLatestPrice('${assetAId}/${assetBId}');
+  const price = await getTripartyLatestPrice(assetAId + '/' + assetBId);
 
   const maxRetries = Math.floor(timeout / retryInterval);
   let attempts = 0;
@@ -106,7 +106,7 @@ export async function getPionSignatureWithRetry(
         token,
         options,
       );
-      console.log('Pion response:', pionResponse);
+      //console.log('Pion response:', pionResponse);
 
       if (pionResponse?.data?.success) {
         return pionResponse.data as PionResult;

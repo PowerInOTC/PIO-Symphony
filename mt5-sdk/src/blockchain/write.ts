@@ -14,7 +14,6 @@ import {
   BOracleSignValueType,
   openQuoteSignValueType,
   closeQuoteSignValueType,
-  pionSignType,
 } from './types';
 import { AxiosError } from 'axios';
 
@@ -370,7 +369,7 @@ export async function acceptCloseQuote(
 }
 
 export async function updatePriceAndDefault(
-  priceSignature: pionSignType,
+  priceSignature: any,
   bContractId: string,
   accountId: number,
   chainId: string,
