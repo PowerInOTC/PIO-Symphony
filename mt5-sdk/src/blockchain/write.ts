@@ -70,10 +70,13 @@ export async function deposit(
       account: account,
     });
 
-    const hash = await wallet.writeContract(
-      request.request as unknown as WriteContractParameters,
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
+    return await wallet.writeContract(
+      transactionParameters as unknown as WriteContractParameters,
     );
-    return hash;
   } catch (e) {
     console.log(`[Blockchain] [deposit] : ${e}`);
   }
@@ -149,6 +152,10 @@ export async function allowance(
         .PionerV1Compliance as Address,
       'address',
     );
+    console.log(
+      'address',
+      networks[chainId as unknown as NetworkKey].contracts.PionerV1Compliance,
+    );
     const { account, wallet, address } = getAccountData(accountId, chainId);
     const nonce = await web3Clients[Number(chainId)].getTransactionCount({
       address: address as `0x${string}`,
@@ -173,7 +180,7 @@ export async function allowance(
       transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
-    console.log(`[Blockchain] [settleClose] : ${e}`);
+    console.log(`[Blockchain] [Allowance] : ${e}`);
   }
 }
 

@@ -93,7 +93,7 @@ export function getFieldFromAsset(
     const row = asset.notional?.find(
       (r) =>
         r.side === side &&
-        r.leverage <= leverage &&
+        r.leverage === leverage &&
         (r.maxNotional ?? Infinity) > notional,
     );
 

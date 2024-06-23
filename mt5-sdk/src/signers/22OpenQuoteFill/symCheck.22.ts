@@ -31,8 +31,8 @@ export async function signOpenCheck(
   const hedger = new Hedger();
 
   let isCheck = true;
-  const openPrice = formatUnits(parseUnits(open.price, 1), 18);
-  const openAmount: string = formatUnits(parseUnits(open.amount, 1), 18);
+  const openPrice = formatUnits(parseUnits(open.price, 0), 18);
+  const openAmount: string = formatUnits(parseUnits(open.amount, 0), 18);
   let acceptPrice = String(openPrice);
 
   const symbol = extractSymbolFromAssetHex(open.assetHex);
@@ -50,23 +50,23 @@ export async function signOpenCheck(
   }
 
   if (open.isLong) {
-    if (tripartyLatestPrice.ask <= Number(openPrice) * (1 + 0.0001)) {
+    if (tripartyLatestPrice.ask < Number(openPrice) * (1 + 0.0001)) {
       isCheck = false;
       throw new Error(
-        `open check failed : ask : ${tripartyLatestPrice.ask} > price ${openPrice}`,
+        `open check failed : ask : ${tripartyLatestPrice.ask} > price ${Number(openPrice) * (1 + 0.0001)}`,
       );
     } else {
-      acceptPrice = String(tripartyLatestPrice.ask * (1 + 0.0001));
+      acceptPrice = openPrice;
     }
   }
   if (!open.isLong) {
-    if (tripartyLatestPrice.bid >= Number(openPrice) * (1 - 0.0001)) {
+    if (tripartyLatestPrice.bid > Number(openPrice) * (1 - 0.0001)) {
       isCheck = false;
       throw new Error(
-        'open check failed : bid : ${tripartyLatestPrice.bid} < price ${openPrice}',
+        `open check failed : bid : ${tripartyLatestPrice.bid} < price ${Number(openPrice) * (1 - 0.0001)}`,
       );
     } else {
-      acceptPrice = String(tripartyLatestPrice.bid * (1 - 0.0001));
+      acceptPrice = openPrice;
     }
   }
 
@@ -230,7 +230,19 @@ export async function signOpenCheck(
       );
 
       console.log('isFilled', isFilled);
-    } catch (e) {}
+    } catch (e) {
+      console.log(
+        'settleOpen error',
+        e,
+        bOracleSignValue,
+        open.signatureBoracle,
+        openQuoteSignValue,
+        open.signatureOpenQuote,
+        open.price,
+        config.hedgerId,
+        String(open.chainId),
+      );
+    }
 
     return fill;
   } else throw new Error('open check failed for : unknown');

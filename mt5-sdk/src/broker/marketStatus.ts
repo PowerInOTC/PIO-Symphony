@@ -21,7 +21,7 @@ async function fetchMarketStatus(token: string): Promise<MarketStatusResponse> {
   try {
     //https://api.pio.finance:2096/api/v1/is_market_open
     const response = await axios.get<MarketStatusResponse>(
-      'http://127.0.0.1:3007/api/v1/is_market_open',
+      'https://api.pio.finance:2096/api/v1/is_market_open',
       {
         headers: {
           Authorization: token,

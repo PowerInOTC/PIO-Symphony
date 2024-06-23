@@ -46,8 +46,8 @@ class RfqChecker {
     );
     this.configRfqS = await this.getConfig(
       'short',
-      this.rfq.sImA,
-      this.rfq.sDfA,
+      this.rfq.sImB,
+      this.rfq.sDfB,
       this.rfq.sPrice,
       this.rfq.sQuantity,
     );

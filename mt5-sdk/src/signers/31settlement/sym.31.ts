@@ -5,6 +5,7 @@ import { PionResult, pionSignType } from '../../blockchain/types';
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { getPionSignatureWithRetry } from '../../utils/pion';
 import { convertToBytes32 } from '../../utils/ethersUtils';
+import { formatUnits, parseUnits } from 'viem';
 
 async function settlementWorker(token: string): Promise<void> {
   try {
@@ -14,6 +15,7 @@ async function settlementWorker(token: string): Promise<void> {
 
     // Settle & liquidate if IM is lacking
     for (const position of cachedPositions) {
+      console.log('position1:', position);
       const { id, imA, imB, entryPrice, mtm, symbol, amount } = position;
       const imAValue = parseFloat(imA);
       const imBValue = parseFloat(imB);

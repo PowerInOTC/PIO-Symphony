@@ -42,8 +42,7 @@ describe('OpenQuoteButton', () => {
 
   it('should send a signed wrapped open quote', async () => {
     // uncomment on first time
-    await initAccount(hedgerId);
-    await initAccount(userId);
+    Promise.all([await initAccount(userId), await initAccount(hedgerId)]);
 
     const nonce = Date.now().toString();
 
@@ -178,7 +177,7 @@ describe('OpenQuoteButton', () => {
 
     quote.signatureBoracle = signaturebOracleSign;
     quote.signatureOpenQuote = signatureOpenQuote;
-    /*
+
     const isFilled = await settleOpen(
       bOracleSignValue,
       quote.signatureBoracle,
@@ -188,14 +187,14 @@ describe('OpenQuoteButton', () => {
       0,
       String(quote.chainId),
     );
-    console.log(isFilled);*/
-
+    console.log(isFilled);
+    /*
     try {
       const tx = await sendSignedWrappedOpenQuote(quote, token);
       console.log(tx?.data);
       expect(tx).toBeDefined();
     } catch (error: any) {
       console.error('Error:', error);
-    }
+    }*/
   });
 });
