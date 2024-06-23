@@ -1,5 +1,4 @@
 import { getToken } from '../utils/init';
-import { PionResult, pionSignType } from '../blockchain/types';
 import { config } from '../config';
 import { getPionSignatureWithRetry } from '../utils/pion';
 

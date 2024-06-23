@@ -6,8 +6,10 @@ import { PionResult, pionSignType } from '../../blockchain/types';
 import { config } from '../../config';
 import { getPionSignatureWithRetry } from '../../utils/pion';
 import { convertToBytes32 } from '../../utils/ethersUtils';
+import { ethers } from 'ethers';
 
 describe('pionTest', () => {
+  jest.setTimeout(30000);
   let token: string;
   let pionerV1Open: string;
   let pionerV1Wrapper: string;
@@ -40,37 +42,34 @@ describe('pionTest', () => {
       options,
     );
 
+    console.log(pionResult.result)
     const priceSignature: pionSignType = {
-      appId: pionResult.result.appId,
-      reqId: pionResult.result.reqId,
+      appId: ethers.BigNumber.from(pionResult.result.appId),
+      reqId: ethers.utils.formatBytes32String(pionResult.result.reqId),
       requestassetHex: convertToBytes32(`${assetAId}/${assetBId}`),
-      requestPairBid: String(
-        BigInt(pionResult.result.data.params.requestPairBid),
-      ),
-      requestPairAsk: String(
-        BigInt(pionResult.result.data.params.requestPairAsk),
-      ),
-      requestConfidence: pionResult.result.data.params.requestConfidence,
-      requestSignTime: pionResult.result.data.params.requestSignTime,
-      requestPrecision: '5',
+      requestPairBid: ethers.BigNumber.from(pionResult.result.data.params.requestPairBid),
+      requestPairAsk: ethers.BigNumber.from(pionResult.result.data.params.requestPairAsk),
+      requestConfidence: ethers.BigNumber.from(pionResult.result.data.params.requestConfidence),
+      requestSignTime: ethers.BigNumber.from(pionResult.result.data.params.requestSignTime),
+      requestPrecision: ethers.BigNumber.from("5"),
       signature: pionResult.result.signatures[0].signature,
-      owner: '0x237A6Ec18AC7D9693C06f097c0EEdc16518d7c21',
-      nonce: '0x1365a32bDd33661a3282992D1C334D5aB2faaDc7',
+      owner: "0x237A6Ec18AC7D9693C06f097c0EEdc16518d7c21",
+      nonce: "0x1365a32bDd33661a3282992D1C334D5aB2faaDc7"
     };
 
-    console.log('Pion Result:', pionResult);
+    //console.log('Pion Result:', pionResult);
 
     const bContractId = '1';
     const accountId = 0;
     const chainId = '64165';
 
-    const tx = updatePriceAndDefault(
+    const tx = await updatePriceAndDefault(
       priceSignature,
       bContractId,
       accountId,
       chainId,
     );
-    console.log('tx:', tx);
+    //console.log('tx:', tx);
 
     expect(pionResult).toBeDefined();
     expect(tx).toBeDefined();
