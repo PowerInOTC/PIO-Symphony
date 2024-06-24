@@ -49,14 +49,6 @@ class HedgerSafetyCheck {
     const cachedPositions = await getCachedPositions();
 
     for (const position of cachedPositions) {
-      console.log(
-        'position',
-        position.bContractId,
-        position.symbol,
-        position.entryPrice,
-        position.signatureOpenQuote,
-      );
-
       const [assetA, assetB] = position.symbol.split('/');
       const mt5TickerA = getMT5Ticker(assetA);
       const mt5TickerB = getMT5Ticker(assetB);
@@ -116,7 +108,7 @@ class HedgerSafetyCheck {
           }
 
           delete this.localClosedPositions[positionKey];
-        }, 60000);
+        }, config.verifyHedgerCloseRefreshRate);
       }
     }
   }

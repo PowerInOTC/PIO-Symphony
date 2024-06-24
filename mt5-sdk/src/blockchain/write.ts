@@ -61,11 +61,7 @@ export async function deposit(
         .PionerV1Compliance as Address,
       abi: PionerV1Compliance.abi,
       functionName: 'deposit',
-      args: [
-        amount,
-        parseUnits('1', 0),
-        config.publicKeys?.split(',')[accountId] as string,
-      ],
+      args: [parseUnits(amount, 0)],
       account: account,
     });
 

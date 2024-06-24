@@ -18,7 +18,7 @@ import {
 } from './types';
 
 async function testSignCloseQuote() {
-  const chainId = '64165';
+  const chainId = config.activeChainId;
   const bContractId = 0;
   const price = ethers.utils.parseUnits('55', 18);
   const amount = ethers.utils.parseUnits('10', 18);
@@ -76,7 +76,7 @@ async function testSignOpenQuote() {
   const provider = new ethers.providers.JsonRpcProvider(
     'https://rpc.sonic.fantom.network/',
   );
-  const chainId = '64165';
+  const chainId = config.activeChainId;
 
   const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[0], provider);
   const addr2 = new ethers.Wallet(config.privateKeys?.split(',')[1], provider);
@@ -94,7 +94,7 @@ async function testSignOpenQuote() {
   const domainOpen = {
     name: 'PionerV1Open',
     version: '1.0',
-    chainId: 64165,
+    chainId: config.activeChainId,
     verifyingContract: PionerV1OpenAddress,
   };
 
@@ -134,7 +134,7 @@ async function testSignOpenQuote() {
   const domainWrapper = {
     name: 'PionerV1Wrapper',
     version: '1.0',
-    chainId: 64165,
+    chainId: config.activeChainId,
     verifyingContract: PionerV1WrapperAddress,
   };
 

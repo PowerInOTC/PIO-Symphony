@@ -68,14 +68,14 @@ export interface BOracle {
 }
 
 export interface pionSignType {
-  appId: ethers.BigNumber;
+  appId: string;
   reqId: string;
   requestassetHex: string;
-  requestPairBid: ethers.BigNumber;
-  requestPairAsk: ethers.BigNumber;
-  requestConfidence: ethers.BigNumber;
-  requestSignTime: ethers.BigNumber;
-  requestPrecision: ethers.BigNumber;
+  requestPairBid: string;
+  requestPairAsk: string;
+  requestConfidence: string;
+  requestSignTime: string;
+  requestPrecision: string;
   signature: string;
   owner: string;
   nonce: string;

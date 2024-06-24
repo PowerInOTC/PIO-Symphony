@@ -24,11 +24,16 @@ export const config = {
 
   botToken: process.env.BOT_TOKEN || '0',
   chatId: process.env.CHAT_ID || 'abc',
-  activeChainIds: process.env.ACTIVE_CHAIN_IDS || '64165',
+  activeChainId: process.env.ACTIVE_CHAIN_ID || '4002',
   apiBaseUrl: process.env.API_BASE_URL || '',
   azureMt5AuthToken: process.env.AZURE_MT5_IDENTIFICATION_TOKEN || '',
 
   hedgerId: Number(process.env.HEDGER_ID) || 0,
-  isDevMode: process.env.DEV_MODE || true,
+  isDevMode: process.env.DEV_MODE || false,
   isPionLive: process.env.IS_PION_LIVE || false,
+  verifyHedgerOpenRefreshRate: 20000,
+  verifyHedgerCloseRefreshRate: 20000,
+  '22RefreshRate': 20000,
+  '31RefreshRate': 20000,
+  '42RefreshRate': 20000,
 };

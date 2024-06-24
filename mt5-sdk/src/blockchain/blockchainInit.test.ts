@@ -10,24 +10,44 @@ export async function initAccount(id: number) {
   let hash;
 
   // Mint FUSD
-  const prevBalance: string = (await getMintFUSD(id, '64165')) as string;
-  hash = await mintFUSD(amount.toString(), id, '64165');
+  const prevBalance: string = (await getMintFUSD(
+    id,
+    config.activeChainId,
+  )) as string;
+  hash = await mintFUSD(amount.toString(), id, config.activeChainId);
   if (hash) {
-    await web3Clients[64165].waitForTransactionReceipt({ hash });
+    await web3Clients[Number(config.activeChainId)].waitForTransactionReceipt({
+      hash,
+    });
   }
-  const nextBalance: string = (await getMintFUSD(id, '64165')) as string;
+  const nextBalance: string = (await getMintFUSD(
+    id,
+    config.activeChainId,
+  )) as string;
   console.log('Mint Balance Account:', id, nextBalance);
 
   // Approve allowance
-  const prevAllowance: string = (await getAllowance(id, '64165')) as string;
-  await allowance(amount.toString(), id, '64165');
-  const nextAllowance: string = (await getAllowance(id, '64165')) as string;
+  const prevAllowance: string = (await getAllowance(
+    id,
+    config.activeChainId,
+  )) as string;
+  await allowance(amount.toString(), id, config.activeChainId);
+  const nextAllowance: string = (await getAllowance(
+    id,
+    config.activeChainId,
+  )) as string;
   console.log('Allowance Account:', id, nextAllowance);
 
   // Deposit
-  const prevDepositBalance: string = (await getBalance(id, '64165')) as string;
-  await deposit(amount.toString(), id, '64165');
-  const nextDepositBalance: string = (await getBalance(id, '64165')) as string;
+  const prevDepositBalance: string = (await getBalance(
+    id,
+    config.activeChainId,
+  )) as string;
+  await deposit(amount.toString(), id, config.activeChainId);
+  const nextDepositBalance: string = (await getBalance(
+    id,
+    config.activeChainId,
+  )) as string;
   console.log('Deposit Balance Account:', id, nextDepositBalance);
 
   return {

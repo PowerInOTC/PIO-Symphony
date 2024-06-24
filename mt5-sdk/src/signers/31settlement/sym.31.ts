@@ -6,16 +6,16 @@ import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { getPionSignatureWithRetry } from '../../utils/pion';
 import { convertToBytes32 } from '../../utils/ethersUtils';
 import { formatUnits, parseUnits } from 'viem';
+import { config } from '../../config';
 
 async function settlementWorker(token: string): Promise<void> {
   try {
-    const chainId = 64165;
-    await fetchPositions(chainId, token);
+    await fetchPositions(Number(config.activeChainId), token);
     const cachedPositions = getCachedPositions();
 
     // Settle & liquidate if IM is lacking
     for (const position of cachedPositions) {
-      console.log('position1:', position);
+      console.log('position1:', position.state, position.entry, position.mtm);
       const { id, imA, imB, entryPrice, mtm, symbol, amount } = position;
       const imAValue = parseFloat(imA);
       const imBValue = parseFloat(imB);
@@ -29,10 +29,10 @@ async function settlementWorker(token: string): Promise<void> {
       if (imAValue * 0.8 < -upnl || imBValue * 0.8 < -upnl) {
         console.log(`Position ${id} has reached the threshold!`);
         await defaultAndLiquidation(
-          position.bContractId.toString(),
+          position.bContractId,
           position.symbol,
           lastPriceValue,
-          String(chainId),
+          String(config.activeChainId),
           token,
         );
       }
@@ -53,7 +53,7 @@ export function startSettlementWorker(token: string) {
     settlementWorker(token).catch((error) => {
       console.error('Error during verification:', error);
     });
-  }, 2500);
+  }, config['31RefreshRate']);
 }
 
 export async function defaultAndLiquidation(

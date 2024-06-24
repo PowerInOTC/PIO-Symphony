@@ -97,7 +97,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
     await websocketClient.startWebSocket(token);
 
     let lastFetchTime = 0;
-    const fetchInterval = 1500;
+    const fetchInterval = config['22RefreshRate'];
 
     setInterval(async () => {
       const currentTime = Date.now();
@@ -105,7 +105,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
         try {
           const response = await getSignedWrappedOpenQuotes(
             '1.0',
-            64165,
+            Number(config.activeChainId),
             token,
             {
               onlyActive: true,

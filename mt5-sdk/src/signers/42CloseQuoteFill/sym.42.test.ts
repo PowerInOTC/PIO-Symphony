@@ -30,7 +30,7 @@ describe('OpenQuoteButton', () => {
   beforeAll(async () => {
     userId = 1;
     hedgerId = 0;
-    chainId = String(64165);
+    chainId = String(config.activeChainId);
     await getToken(hedgerId);
     token = await getToken(userId);
 
@@ -58,7 +58,7 @@ describe('OpenQuoteButton', () => {
       isLong: true,
       price: String(ethers.utils.parseUnits('10', 17)),
       amount: String(ethers.utils.parseUnits('50', 18)),
-      limitOrStop: 0,
+      limitOrStop: '0',
       expiry: '60000000000',
       authorized: hedger.address,
       nonce: nonce,

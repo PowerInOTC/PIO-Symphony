@@ -55,6 +55,14 @@ export async function getUserBalance(accountId: string, chainId: string) {
 }
 
 export async function getMintFUSD(accountId: number, chainId: string) {
+  console.log(
+    'getMintFUSD',
+    accountId,
+    chainId,
+    chainId as unknown as NetworkKey,
+    //networks[chainId as unknown as NetworkKey].contracts.PionerV1Default,
+  );
+
   const balance = await web3Clients[Number(chainId)].readContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .FakeUSD as Address,
@@ -66,7 +74,7 @@ export async function getMintFUSD(accountId: number, chainId: string) {
 }
 
 export async function getbOracle(
-  bOracleId: bigint,
+  bOracleId: string,
   chainId: string,
 ): Promise<BOracle> {
   const oracle = await web3Clients[Number(chainId)].readContract({

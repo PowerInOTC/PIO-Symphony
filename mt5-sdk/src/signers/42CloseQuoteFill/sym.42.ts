@@ -86,10 +86,9 @@ export async function processCloseQuotes(token: string): Promise<void> {
         },
         () => {
           console.log('WebSocket CloseQuote  closed');
-          // Retry connecting to the WebSocket
           setTimeout(() => {
             websocketClient.startWebSocket(token);
-          }, 5000); // Retry after 5 seconds, adjust the delay as needed
+          }, 5000);
         },
         () => {
           console.log('WebSocket CloseQuote  reconnected');
@@ -102,7 +101,6 @@ export async function processCloseQuotes(token: string): Promise<void> {
               'Ignoring error 400 and keeping the WebSocket connection open',
             );
           } else {
-            // Close the WebSocket connection for other errors
             websocketClient.closeWebSocket();
           }
         },
@@ -111,16 +109,21 @@ export async function processCloseQuotes(token: string): Promise<void> {
     await websocketClient.startWebSocket(token);
 
     let lastFetchTime = 0;
-    const fetchInterval = 1000; // Adjust the interval as needed
+    const fetchInterval = config['42RefreshRate'];
 
     setInterval(async () => {
       const currentTime = Date.now();
       if (currentTime - lastFetchTime >= fetchInterval) {
         try {
-          const response = await getSignedCloseQuotes('1.0', 64165, token, {
-            onlyActive: true,
-            targetAddress: config.publicKeys?.split(',')[0],
-          });
+          const response = await getSignedCloseQuotes(
+            '1.0',
+            Number(config.activeChainId),
+            token,
+            {
+              onlyActive: true,
+              targetAddress: config.publicKeys?.split(',')[0],
+            },
+          );
           const quotes = response?.data;
 
           if (quotes) {

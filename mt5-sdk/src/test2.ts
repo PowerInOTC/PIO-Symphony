@@ -29,7 +29,7 @@ async function bullExample(): Promise<void> {
   /*
   const token = await getToken(0);
 
-  const chainId = 64165;
+  const chainId = config.activeChainId;
   const assetAId = 'forex.EURUSD';
   const assetBId = 'stock.nasdaq.AAPL';
   const Leverage = 100;

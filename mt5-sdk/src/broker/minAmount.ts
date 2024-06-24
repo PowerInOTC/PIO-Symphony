@@ -2,7 +2,7 @@ import axios from 'axios';
 import { config } from '../config';
 
 import { getMT5Ticker, getBrokerFromAsset } from '../config/configRead';
-
+import { getTripartyLatestPrice } from './tripartyPrice';
 interface CacheItem {
   expiration: number;
   cached?: number;
@@ -92,6 +92,7 @@ async function minAmountSymbol(proxyPair: string): Promise<number> {
     getMinAmountForSymbol(proxyTicker1, broker1),
     getMinAmountForSymbol(proxyTicker2, broker2),
   ]);
+  const price = await getTripartyLatestPrice(proxyPair);
 
   return Math.max(minAmount1, minAmount2);
 }

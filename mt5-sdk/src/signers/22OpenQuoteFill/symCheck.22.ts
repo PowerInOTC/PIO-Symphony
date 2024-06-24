@@ -126,7 +126,7 @@ export async function signOpenCheck(
   const domainOpen = {
     name: 'PionerV1Open',
     version: '1.0',
-    chainId: 64165,
+    chainId: config.activeChainId,
     verifyingContract:
       networks[open.chainId as unknown as NetworkKey].contracts.PionerV1Open,
   };

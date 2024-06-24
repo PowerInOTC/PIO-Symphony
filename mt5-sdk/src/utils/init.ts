@@ -18,7 +18,7 @@ import {
   WalletClient,
   http,
 } from 'viem';
-import { avalancheFuji } from 'viem/chains';
+import { avalancheFuji, fantomTestnet } from 'viem/chains';
 
 const client: RedisClientType = createClient({
   socket: {
@@ -46,9 +46,18 @@ const fantomSonicTestnet: Chain = defineChain({
 export const chains: { [key: number]: Chain } = {
   64165: fantomSonicTestnet,
   64156: avalancheFuji,
+  4002: fantomTestnet,
 };
-export const chainName = { 64165: 'sonic', 64156: 'fuji' };
-export const chainHex = { 64165: 'sonic', 64156: 'fuji' };
+export const chainName = {
+  64165: 'sonic',
+  64156: 'fuji',
+  4002: 'fantomTestnet',
+};
+export const chainHex = {
+  64165: 'sonic',
+  64156: 'fuji',
+  4002: 'fantomTestnet',
+};
 
 // Initialize the accounts and wallets objects
 const accounts: {

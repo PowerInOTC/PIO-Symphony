@@ -7,6 +7,7 @@ import {
 } from '../../broker/totalOpenAmountModule';
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { isValidInterestRate, isMarketOpen } from '../../utils/check';
+import { config } from '../../config';
 
 export interface ErrorObject {
   field: string;
@@ -279,7 +280,7 @@ class RfqChecker {
   }
 
   private async checkChainId(): Promise<void> {
-    if (this.rfq.chainId !== 64165) {
+    if (this.rfq.chainId !== Number(config.activeChainId)) {
       this.errors.push({ field: 'chainId', value: this.rfq.chainId });
     }
   }

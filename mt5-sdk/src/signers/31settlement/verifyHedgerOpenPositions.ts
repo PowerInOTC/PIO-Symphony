@@ -89,7 +89,7 @@ class HedgerSafetyCheck {
       this.verifyHedgerOpenPositions(token).catch((error) => {
         console.error('Error during verification:', error);
       });
-    }, 1000);
+    }, config.verifyHedgerOpenRefreshRate);
   }
 }
 

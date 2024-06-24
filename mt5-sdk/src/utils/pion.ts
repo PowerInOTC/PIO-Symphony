@@ -16,7 +16,12 @@ export async function getPionSignatureWithRetry(
   retryInterval = 500,
   timeout = 10000,
 ): Promise<PionResult> {
-  if (options.maxTimestampDiff == '0' && !config.isPionLive) {
+  console.log('config.isPionLive:', config.isPionLive);
+  console.log('typeof config.isPionLive:', typeof config.isPionLive);
+  console.log('config.isPionLive === false:', config.isPionLive === false);
+  console.log('!config.isPionLive:', !config.isPionLive);
+
+  if (config.isPionLive === false) {
     console.log('Using mock Pion response');
     const mockPionValues = {
       appId: '12345',
@@ -49,7 +54,7 @@ export async function getPionSignatureWithRetry(
             requestConfidence: mockPionValues.requestConfidence,
             requestSignTime: mockPionValues.requestSignTime,
           },
-          timestamp: 1687363200000,
+          timestamp: Date.now(),
           result: {
             asset1: 'BTC',
             asset2: 'USD',
@@ -60,7 +65,7 @@ export async function getPionSignatureWithRetry(
             confidence: '97',
             requestConfidence: mockPionValues.requestConfidence,
             requestSignTime: mockPionValues.requestSignTime,
-            oldestTimestamp: '1687362900',
+            oldestTimestamp: 'mockPionValues.requestSignTime',
           },
           resultHash:
             '0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba',
@@ -72,8 +77,8 @@ export async function getPionSignatureWithRetry(
             nonceAddress: '0x2468101214161820222426283032343638',
           },
         },
-        startedAt: 1687363190000,
-        confirmedAt: 1687363200000,
+        startedAt: mockPionValues.requestSignTime,
+        confirmedAt: Date.now(),
         signatures: [
           {
             owner: '0x237A6Ec18AC7D9693C06f097c0EEdc16518d7c21',
@@ -88,8 +93,8 @@ export async function getPionSignatureWithRetry(
     };
     return mockData as unknown as PionResult;
   }
-
-  const price = await getTripartyLatestPrice(assetAId + '/' + assetBId);
+  const price = await getTripartyLatestPrice(`${assetAId}/${assetBId}`);
+  //console.log('Triparty price:', price);
 
   const maxRetries = Math.floor(timeout / retryInterval);
   let attempts = 0;

@@ -27,7 +27,7 @@ describe('OpenQuoteButton', () => {
   beforeAll(async () => {
     userId = 1;
     hedgerId = 0;
-    chainId = String(64165);
+    chainId = String(config.activeChainId);
     await getToken(hedgerId);
     token = await getToken(userId);
     //await cancelAllOpenQuotes(token, userId);
@@ -43,6 +43,7 @@ describe('OpenQuoteButton', () => {
   it('should send a signed wrapped open quote', async () => {
     // uncomment on first time
     Promise.all([await initAccount(userId), await initAccount(hedgerId)]);
+    throw new Error('uncomment on first time');
 
     const nonce = Date.now().toString();
 

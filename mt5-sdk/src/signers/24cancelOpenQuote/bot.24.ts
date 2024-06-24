@@ -18,10 +18,15 @@ export async function cancelAllOpenQuotes(
   try {
     const addr1 = new ethers.Wallet(config.privateKeys?.split(',')[pkId]);
 
-    const response = await getSignedWrappedOpenQuotes('1.0', 64165, token, {
-      onlyActive: true,
-      issuerAddress: config.publicKeys?.split(',')[pkId],
-    });
+    const response = await getSignedWrappedOpenQuotes(
+      '1.0',
+      Number(config.activeChainId),
+      token,
+      {
+        onlyActive: true,
+        issuerAddress: config.publicKeys?.split(',')[pkId],
+      },
+    );
     console.log(response);
     const quotes: signedWrappedOpenQuoteResponse[] | undefined = response?.data;
 

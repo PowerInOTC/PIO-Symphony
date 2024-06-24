@@ -17,6 +17,7 @@ import { startHedgerSafetyCheckOpen } from './signers/31settlement/verifyHedgerO
 import { startHedgerSafetyCheckClose } from './signers/31settlement/verifyHedgerClosedPositions';
 import { startSettlementWorker } from './signers/31settlement/sym.31';
 import { startPositionFetching } from './signers/31settlement/cachePositions';
+import { config } from './config';
 
 async function index(): Promise<void> {
   try {
@@ -29,9 +30,11 @@ async function index(): Promise<void> {
     /**************/
     console.log(token);
 
-    const config = JSON.parse(fs.readFileSync('hedger.config.json', 'utf-8'));
+    const hedgeConfig = JSON.parse(
+      fs.readFileSync('hedger.config.json', 'utf-8'),
+    );
 
-    if (config.rfqProcess) {
+    if (hedgeConfig.rfqProcess) {
       try {
         await startRfqProcess(token);
       } catch (error) {
@@ -39,7 +42,7 @@ async function index(): Promise<void> {
       }
     }
 
-    if (config.signedOpenWorker) {
+    if (hedgeConfig.signedOpenWorker) {
       try {
         await processOpenQuotes(token);
         await startSignedOpenWorker(token);
@@ -51,7 +54,7 @@ async function index(): Promise<void> {
       }
     }
 
-    if (config.closeQuotesWorker) {
+    if (hedgeConfig.closeQuotesWorker) {
       try {
         processCloseQuotes(token);
         startCloseQuotesWorker(token);
@@ -63,7 +66,7 @@ async function index(): Promise<void> {
       }
     }
 
-    if (config.settlementWorker) {
+    if (hedgeConfig.settlementWorker) {
       try {
         startSettlementWorker(token);
       } catch (error) {
@@ -71,7 +74,7 @@ async function index(): Promise<void> {
       }
     }
 
-    if (config.hedgerSafetyCheck) {
+    if (hedgeConfig.hedgerSafetyCheck) {
       try {
         await startHedgerSafetyCheckOpen(token);
         await startHedgerSafetyCheckClose(token);
@@ -80,9 +83,11 @@ async function index(): Promise<void> {
       }
     }
 
-    if (config.hedgerSafetyCheck || config.settlementWorker) {
+    if (hedgeConfig.hedgerSafetyCheck || hedgeConfig.settlementWorker) {
       try {
-        startPositionFetching(64165, token);
+        console.log('Cache Positions');
+        console.log(config.activeChainId);
+        startPositionFetching(Number(config.activeChainId), token);
       } catch (error) {
         console.error('Error in Cache Positions:', error);
       }
