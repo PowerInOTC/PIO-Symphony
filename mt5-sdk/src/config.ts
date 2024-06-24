@@ -36,4 +36,5 @@ export const config = {
   '22RefreshRate': 20000,
   '31RefreshRate': 20000,
   '42RefreshRate': 20000,
+  SixToTwoInterval: 20000,
 };

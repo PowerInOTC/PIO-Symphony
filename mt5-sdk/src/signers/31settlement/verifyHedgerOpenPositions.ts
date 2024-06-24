@@ -48,6 +48,8 @@ class HedgerSafetyCheck {
     const cachedPositions = await getCachedPositions();
 
     for (const position of cachedPositions) {
+
+      
       const [assetA, assetB] = position.symbol.split('/');
       const mt5TickerA = getMT5Ticker(assetA);
       const mt5TickerB = getMT5Ticker(assetB);

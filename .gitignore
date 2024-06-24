@@ -30,6 +30,7 @@ bower_components/
 mt5-sdk/dist/
 # TypeScript output directory
 dist/
+mt5-sdk/dist
 
 # Editor-specific files
 *.suo
