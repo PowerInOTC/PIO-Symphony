@@ -91,12 +91,8 @@ export async function defaultAndLiquidation(
     appId: pionResult.result.appId,
     reqId: pionResult.result.reqId,
     requestassetHex: convertToBytes32(`${assetAId}/${assetBId}`),
-    requestPairBid: String(
-      BigInt(pionResult.result.data.params.requestPairBid),
-    ),
-    requestPairAsk: String(
-      BigInt(pionResult.result.data.params.requestPairAsk),
-    ),
+    requestPairBid: String(pionResult.result.data.params.requestPairBid),
+    requestPairAsk: String(pionResult.result.data.params.requestPairAsk),
     requestConfidence: pionResult.result.data.params.requestConfidence,
     requestSignTime: pionResult.result.data.params.requestSignTime,
     requestPrecision: '5',

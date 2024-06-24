@@ -18,6 +18,10 @@ import { startHedgerSafetyCheckClose } from './signers/31settlement/verifyHedger
 import { startSettlementWorker } from './signers/31settlement/sym.31';
 import { startPositionFetching } from './signers/31settlement/cachePositions';
 import { config } from './config';
+import {
+  startBackupOpenSettlementWorker,
+  processBackupOpenSettlementWorker,
+} from './signers/22OpenQuoteFill/sym.22.backup';
 
 async function index(): Promise<void> {
   try {
@@ -83,7 +87,20 @@ async function index(): Promise<void> {
       }
     }
 
-    if (hedgeConfig.hedgerSafetyCheck || hedgeConfig.settlementWorker) {
+    if (hedgeConfig.backupSettlementWorker) {
+      try {
+        await startBackupOpenSettlementWorker(token);
+        await processBackupOpenSettlementWorker(token);
+      } catch (error) {
+        console.error('Error in Hedger Safety Check:', error);
+      }
+    }
+
+    if (
+      hedgeConfig.hedgerSafetyCheck ||
+      hedgeConfig.settlementWorker ||
+      hedgeConfig.backupSettlementWorker
+    ) {
       try {
         console.log('Cache Positions');
         console.log(config.activeChainId);

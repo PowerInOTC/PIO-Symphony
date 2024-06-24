@@ -16,11 +16,6 @@ export async function getPionSignatureWithRetry(
   retryInterval = 500,
   timeout = 10000,
 ): Promise<PionResult> {
-  console.log('config.isPionLive:', config.isPionLive);
-  console.log('typeof config.isPionLive:', typeof config.isPionLive);
-  console.log('config.isPionLive === false:', config.isPionLive === false);
-  console.log('!config.isPionLive:', !config.isPionLive);
-
   if (config.isPionLive === false) {
     console.log('Using mock Pion response');
     const mockPionValues = {

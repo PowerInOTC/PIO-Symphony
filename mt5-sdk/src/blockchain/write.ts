@@ -358,7 +358,7 @@ export async function acceptCloseQuote(
       address: network.contracts.PionerV1Close as Address,
       abi: PionerV1Close.abi,
       functionName: 'acceptCloseQuote',
-      args: [BigInt(bCloseQuoteId), BigInt(amount)],
+      args: [bCloseQuoteId, amount],
       account: account,
     });
     const result = await wallet.writeContract(

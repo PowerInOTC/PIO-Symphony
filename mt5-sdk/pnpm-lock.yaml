@@ -6,11 +6,11 @@ settings:
 
 dependencies:
   '@pionerfriends/api-client':
-    specifier: ^1.0.54
-    version: 1.0.54(@types/node@20.14.8)(typescript@5.5.2)
+    specifier: ^1.0.56
+    version: 1.0.56(@types/node@20.14.8)(typescript@5.5.2)
   '@pionerfriends/blockchain-client':
-    specifier: ^1.0.54
-    version: 1.0.54(@types/node@20.14.8)
+    specifier: ^1.0.56
+    version: 1.0.56(@types/node@20.14.8)
   '@types/node':
     specifier: ^20.11.25
     version: 20.14.8
@@ -27,8 +27,8 @@ dependencies:
     specifier: ~5.7.15
     version: 5.7.15
   ccxt:
-    specifier: ^4.3.50
-    version: 4.3.50
+    specifier: ^4.3.51
+    version: 4.3.51
   dotenv:
     specifier: ~16.4.5
     version: 16.4.5
@@ -1179,15 +1179,15 @@ packages:
       fastq: 1.17.1
     dev: true
 
-  /@pionerfriends/api-client@1.0.54(@types/node@20.14.8)(typescript@5.5.2):
-    resolution: {integrity: sha512-f9Jkdja5n62dJJVvaHTXBY2Kdg3STO8RjGOUYQPWV6NsvSfxN6LLEshlzXW3S9twrdhNOdZUaYTRWU4IePRL0A==}
+  /@pionerfriends/api-client@1.0.56(@types/node@20.14.8)(typescript@5.5.2):
+    resolution: {integrity: sha512-Lw+KRjW2Dz/JynHZ1zzNOMm1WX1OePr4zSRYyWlNhr8XDSNkLVOGld9806wrxdECRYz/4ik4S6Warqvn75budA==}
     peerDependencies:
       '@types/node': ^20.11.25
     dependencies:
       '@types/node': 20.14.8
       axios: 1.7.2
       isomorphic-ws: 5.0.0(ws@8.17.1)
-      viem: 2.16.1(typescript@5.5.2)
+      viem: 2.16.2(typescript@5.5.2)
       ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
@@ -1197,8 +1197,8 @@ packages:
       - zod
     dev: false
 
-  /@pionerfriends/blockchain-client@1.0.54(@types/node@20.14.8):
-    resolution: {integrity: sha512-y2HhnGlCyPBkqgVLGJjVxw9mtu+Wg4MfMDz9pvrRpPVj1w1jKmMBafgQ8VEZE1ewLSfKUxJMzOM+UWd5mKBaVw==}
+  /@pionerfriends/blockchain-client@1.0.56(@types/node@20.14.8):
+    resolution: {integrity: sha512-WnSOH5zjTxuK/gWTVUCHBM7lRrg5ylZO0H9/4W6i293KDKWV5hLAf1VJaEgdmY+4cPKp6skMGF9bprdAQnwgtA==}
     peerDependencies:
       '@types/node': ^20.11.25
     dependencies:
@@ -1914,8 +1914,8 @@ packages:
     resolution: {integrity: sha512-bMg2vmr8XBsbL6Lr0UHXy/21m84FTxDLWn2FSqMd5PrlbMxwJlQnC2YWYxVgp66PZE+BBNF2jYQUBKCo1FDeZg==}
     dev: true
 
-  /ccxt@4.3.50:
-    resolution: {integrity: sha512-76IrjuN00XeC+51M0JkAnN+aRWaQYigOGDUNmU9MJW57cq9pVqB5tHYhm137pLVtWmtm+nRxnn7FGjE/qDVugg==}
+  /ccxt@4.3.51:
+    resolution: {integrity: sha512-5rHEzW/e95QbQIurflrgSLqs43KsLl7rORbKmf3P+Q3Ns45lIJfuQW6qKvRGV/fVG80oug9zW1KUgkpTUDMhqg==}
     engines: {node: '>=15.0.0'}
     hasBin: true
     requiresBuild: true
@@ -4468,8 +4468,8 @@ packages:
       - zod
     dev: false
 
-  /viem@2.16.1(typescript@5.5.2):
-    resolution: {integrity: sha512-rmgXcxif740m2ARqPFoiXRHkljXhsruCZgRXf6XuS6n+Lymy7X2ma5vuzBw3mDKiA2BmxjbyJC4Wxi7kaIwHhw==}
+  /viem@2.16.2(typescript@5.5.2):
+    resolution: {integrity: sha512-qor3v1cJFR3jcPtcJxPbKfKURAH2agNf2IWZIaSReV6teNLERiu4Sr7kbqpkIeTAEpiDCVQwg336M+mub1m+pg==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
