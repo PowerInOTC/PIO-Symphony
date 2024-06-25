@@ -32,9 +32,6 @@ async function fetchCacheData(pair: string): Promise<CacheData> {
     }
   }
 
-  console.warn(
-    `Unable to retrieve prices for pair: ${pair}. Setting bid and ask to 0.`,
-  );
   return { bid: 0, ask: 0 };
 }
 
@@ -47,7 +44,6 @@ function startOrUpdatePair(pair: string, expirationTime: number): void {
 
 async function getTripartyLatestPrice(pair: string): Promise<CacheData> {
   if (!verifySymbols(pair)) {
-    console.warn(`Invalid pair: ${pair}. Returning bid and ask as 0.`);
     return { bid: 0, ask: 0 };
   }
 
@@ -62,11 +58,6 @@ async function getTripartyLatestPrice(pair: string): Promise<CacheData> {
 
   const cacheData = await fetchCacheData(pair);
   pairCache[pair].cached = cacheData;
-
-  if (cacheData.bid === 0 && cacheData.ask === 0) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return getTripartyLatestPrice(pair);
-  }
 
   return cacheData;
 }
@@ -104,18 +95,11 @@ async function updateCacheData(): Promise<void> {
               const ask = parseFloat(ask1) / parseFloat(ask2);
               pairCache[pair].cached = { bid, ask };
             } else {
-              console.warn(
-                `Unable to retrieve prices for pair: ${pair}. Setting bid and ask to 0.`,
-              );
               pairCache[pair].cached = { bid: 0, ask: 0 };
             }
           }
         }
       } else {
-        /*
-        console.error(
-          'Error retrieving prices: response or response.data is undefined',
-        );*/
         for (const pair in pairCache) {
           if (pairCache[pair].expiration > currentTime) {
             pairCache[pair].cached = { bid: 0, ask: 0 };
@@ -123,10 +107,6 @@ async function updateCacheData(): Promise<void> {
         }
       }
     } catch (error) {
-      /*
-      console.error('Error updating cache data:', error);
-      */
-
       if (
         typeof error === 'object' &&
         error !== null &&
@@ -134,18 +114,12 @@ async function updateCacheData(): Promise<void> {
         typeof error.error === 'string' &&
         error.error.includes('String must contain at least 64 character(s)')
       ) {
-        console.info('Invalid token. Reloading token and retrying...');
         token = await getToken(0);
         await updatePrices(retryCount);
       } else if (retryCount < 5) {
-        console.info(`Retrying updateCacheData (attempt ${retryCount + 1})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await updatePrices(retryCount + 1);
       } else {
-        /*
-        console.error('Max retry attempts reached. Skipping cache update.');
-        */
-        // Set default values for cached data when max retry attempts are reached
         for (const pair in pairCache) {
           if (pairCache[pair].expiration > currentTime) {
             pairCache[pair].cached = { bid: 0, ask: 0 };

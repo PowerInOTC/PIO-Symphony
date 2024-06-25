@@ -68,8 +68,6 @@ export async function defaultAndLiquidation(
   const pionResponse = await getPionSignatureWithRetry(
     assetAId,
     assetBId,
-    String(price),
-    String(price),
     String(5),
     String(Date.now() + 1000 * 5),
     token,

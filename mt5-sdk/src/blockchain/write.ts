@@ -46,6 +46,7 @@ export async function mintFUSD(
     console.log(`[Blockchain] [mintFUSD] : ${e}`);
   }
 }
+
 export async function deposit(
   amount: string,
   accountId: number,
@@ -53,27 +54,48 @@ export async function deposit(
 ) {
   try {
     const { account, wallet, address } = getAccountData(accountId, chainId);
-    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+
+    const client = web3Clients[Number(chainId)];
+
+    // Get the latest nonce, including pending transactions
+    const nonce = await client.getTransactionCount({
       address: address as `0x${string}`,
-    });
-    const request = await web3Clients[Number(chainId)].simulateContract({
-      address: networks[chainId as unknown as NetworkKey].contracts
-        .PionerV1Compliance as Address,
-      abi: PionerV1Compliance.abi,
-      functionName: 'deposit',
-      args: [parseUnits(amount, 0)],
-      account: account,
+      blockTag: 'pending',
     });
 
-    const transactionParameters = {
-      ...request.request,
-      nonce: nonce,
-    };
-    return await wallet.writeContract(
-      transactionParameters as unknown as WriteContractParameters,
-    );
+    const contractAddress = networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1Compliance as Address;
+
+    const { request } = await client.simulateContract({
+      address: contractAddress,
+      abi: PionerV1Compliance.abi,
+      functionName: 'deposit',
+      args: [
+        parseUnits(amount, 0),
+        '1',
+        '0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8',
+      ],
+      account,
+    });
+
+    const hash = await wallet.writeContract({
+      address: contractAddress,
+      abi: PionerV1Compliance.abi,
+      functionName: 'deposit',
+      args: [
+        parseUnits(amount, 0),
+        '1',
+        '0xd0dDF915693f13Cf9B3b69dFF44eE77C901882f8',
+      ],
+      account,
+      chain: client.chain,
+      nonce,
+    });
+
+    return hash;
   } catch (e) {
-    console.log(`[Blockchain] [deposit] : ${e}`);
+    console.error('Deposit error:', e);
+    throw e;
   }
 }
 export async function withdraw(

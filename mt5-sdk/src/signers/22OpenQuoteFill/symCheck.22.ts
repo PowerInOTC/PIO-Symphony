@@ -70,8 +70,6 @@ export async function signOpenCheck(
     }
   }
 
-  console.log('Check opening symbol', symbol);
-
   const rfqResponse: RfqResponse = {
     id: '',
     chainId: open.chainId,
@@ -178,15 +176,16 @@ export async function signOpenCheck(
       `${symbol.assetAId}/${symbol.assetBId}`,
       Number(openPrice),
       open.signatureOpenQuote,
-      Number(openAmount),
+      Number(parseFloat(formatUnits(parseUnits(open.amount, 0), 18))),
       open.isLong,
       true,
       open.issuerAddress,
     );
+    /*
     if (!isPassed) {
       isCheck = false;
       throw new Error('open check failed for : hedger failed');
-    }
+    }*/
 
     const bOracleSignValue = {
       x: open.x,

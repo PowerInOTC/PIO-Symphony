@@ -30,7 +30,7 @@ export const config = {
 
   hedgerId: Number(process.env.HEDGER_ID) || 0,
   isDevMode: process.env.DEV_MODE || false,
-  isPionLive: process.env.IS_PION_LIVE || false,
+  isPionLive: process.env.IS_PION_LIVE || true,
   verifyHedgerOpenRefreshRate: 20000,
   verifyHedgerCloseRefreshRate: 20000,
   '22RefreshRate': 20000,

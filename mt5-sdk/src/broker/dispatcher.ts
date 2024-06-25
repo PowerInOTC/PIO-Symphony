@@ -165,6 +165,11 @@ async function manageSymbolInventory(
   broker: string,
 ): Promise<boolean> {
   const hexString = getFirst12Characters(hash);
+  const mt5Pair = await getMT5Ticker(pair);
+  if (mt5Pair) {
+    pair = mt5Pair;
+  }
+
   switch (broker) {
     case 'mt5.ICMarkets':
       try {

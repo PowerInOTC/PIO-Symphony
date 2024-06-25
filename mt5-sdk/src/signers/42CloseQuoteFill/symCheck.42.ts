@@ -14,6 +14,7 @@ import {
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { closeQuoteSignValueType } from '../../blockchain/types';
 import { minAmountSymbol } from '../../broker/minAmount';
+import { formatUnits, parseUnits } from 'viem';
 
 export async function signCloseCheck(close: signedCloseQuoteResponse) {
   let isCheck = true;
@@ -52,7 +53,7 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
       pair,
       Number(close.price),
       close.signatureOpenQuote,
-      Number(close.amount),
+      Number(parseFloat(formatUnits(parseUnits(close.amount, 0), 18))),
       close.isLong,
       false,
       close.issuerAddress,

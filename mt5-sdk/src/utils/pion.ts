@@ -7,8 +7,6 @@ import { AxiosResponse, AxiosRequestConfig } from 'axios';
 export async function getPionSignatureWithRetry(
   assetAId: string,
   assetBId: string,
-  bid: string,
-  ask: string,
   confidence: string,
   expiryTimestamp: string,
   token: string,
@@ -16,6 +14,7 @@ export async function getPionSignatureWithRetry(
   retryInterval = 500,
   timeout = 10000,
 ): Promise<PionResult> {
+  /*
   if (config.isPionLive === false) {
     console.log('Using mock Pion response');
     const mockPionValues = {
@@ -87,7 +86,7 @@ export async function getPionSignatureWithRetry(
       },
     };
     return mockData as unknown as PionResult;
-  }
+  }*/
   const price = await getTripartyLatestPrice(`${assetAId}/${assetBId}`);
   //console.log('Triparty price:', price);
 

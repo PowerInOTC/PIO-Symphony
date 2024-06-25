@@ -17,8 +17,8 @@
     "lint": "eslint \"./**/*.ts\" --fix && npx prettier --write \"./**/*.ts\""
   },
   "dependencies": {
-    "@pionerfriends/api-client": "^1.0.56",
-    "@pionerfriends/blockchain-client": "^1.0.56",
+    "@pionerfriends/api-client": "^1.0.58",
+    "@pionerfriends/blockchain-client": "^1.0.58",
     "async-lock": "~1.4.1",
     "axios": "~1.6.8",
     "axios-cache-interceptor": "~1.5.3",
@@ -30,7 +30,7 @@
     "pino": "~8.21.0",
     "pino-pretty": "~11.0.0",
     "redis": "~4.6.14",
-    "turbo": "^2.0.4",
+    "turbo": "^2.0.5",
     "viem": "~2.10.11",
     "web3": "4.8.0"
   },
@@ -39,8 +39,8 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
-    "@typescript-eslint/eslint-plugin": "^7.13.1",
-    "@typescript-eslint/parser": "^7.13.1",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.14.1",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",

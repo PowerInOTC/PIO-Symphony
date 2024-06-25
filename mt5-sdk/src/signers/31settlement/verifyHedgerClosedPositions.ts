@@ -7,6 +7,7 @@ import { config } from '../../config';
 import { getOpenPositions, Position } from '../../broker/dispatcher';
 import { PositionResponse } from '@pionerfriends/api-client';
 import { isNoHedgeAddress } from '../../utils/check';
+import { formatUnits, parseUnits } from 'viem';
 
 class HedgerSafetyCheck {
   private localClosedPositions: { [key: string]: number } = {};
@@ -34,7 +35,7 @@ class HedgerSafetyCheck {
       position.symbol,
       parseFloat(position.mtm),
       position.signatureOpenQuote,
-      Number(position.amount),
+      Number(parseFloat(formatUnits(parseUnits(position.amount, 0), 18))),
       isLong,
       false,
       '0x0000000000000000000000000000000000000000',

@@ -73,10 +73,8 @@ export async function getMintFUSD(accountId: number, chainId: string) {
   return balance;
 }
 
-export async function getbOracle(
-  bOracleId: string,
-  chainId: string,
-): Promise<BOracle> {
+export async function getbOracle(bOracleId: string, chainId: string) {
+  //: Promise<BOracle>
   const oracle = await web3Clients[Number(chainId)].readContract({
     address: networks[chainId as unknown as NetworkKey].contracts
       .PionerV1View as Address,
@@ -85,5 +83,18 @@ export async function getbOracle(
     args: [bOracleId],
   });
   console.log('bOracleId', oracle);
-  return oracle as BOracle;
+  //return oracle as BOracle;
+}
+
+export async function getBContract(bContractId: string, chainId: string) {
+  //: Promise<BContract>
+  const oracle = await web3Clients[Number(chainId)].readContract({
+    address: networks[chainId as unknown as NetworkKey].contracts
+      .PionerV1View as Address,
+    abi: PionerV1View.abi,
+    functionName: 'getContract',
+    args: [bContractId],
+  });
+  console.log('bOracleId', oracle);
+  //return oracle as BOracle;
 }

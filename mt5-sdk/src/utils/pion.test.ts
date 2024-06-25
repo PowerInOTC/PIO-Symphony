@@ -27,8 +27,6 @@ describe('pionTest', () => {
     const pionResult = await getPionSignatureWithRetry(
       assetAId,
       assetBId,
-      price,
-      price,
       quantity,
       expiryTimestamp,
       token,

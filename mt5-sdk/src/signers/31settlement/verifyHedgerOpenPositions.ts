@@ -7,6 +7,7 @@ import { config } from '../../config';
 import { getOpenPositions, Position } from '../../broker/dispatcher';
 import { getPositions, PositionResponse } from '@pionerfriends/api-client';
 import { isNoHedgeAddress } from '../../utils/check';
+import { parseUnits, formatUnits } from 'viem';
 
 class HedgerSafetyCheck {
   private hedger: Hedger;
@@ -33,7 +34,7 @@ class HedgerSafetyCheck {
       position.symbol,
       parseFloat(position.mtm),
       position.signatureOpenQuote,
-      Number(position.amount),
+      Number(parseFloat(formatUnits(parseUnits(position.amount, 0), 18))),
       isLong,
       true,
       '0x0000000000000000000000000000000000000000', // noHedgeList doesn't apply in this case.
@@ -48,8 +49,6 @@ class HedgerSafetyCheck {
     const cachedPositions = await getCachedPositions();
 
     for (const position of cachedPositions) {
-
-      
       const [assetA, assetB] = position.symbol.split('/');
       const mt5TickerA = getMT5Ticker(assetA);
       const mt5TickerB = getMT5Ticker(assetB);
