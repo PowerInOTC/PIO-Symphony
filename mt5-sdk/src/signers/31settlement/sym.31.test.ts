@@ -1,6 +1,10 @@
 import { fetchPositions, getCachedPositions } from './cachePositions';
 import { getPionSignature } from '@pionerfriends/api-client';
-import { updatePriceAndDefault } from '../../blockchain/write';
+import {
+  updatePriceAndDefault,
+  updatePricePion,
+  settle,
+} from '../../blockchain/write';
 import { getToken } from '../../utils/init';
 import { PionResult, pionSignType } from '../../blockchain/types';
 import { config } from '../../config';
@@ -8,6 +12,7 @@ import { getPionSignatureWithRetry } from '../../utils/pion';
 import { convertToBytes32 } from '../../utils/ethersUtils';
 import { ethers } from 'ethers';
 import { parseUnits, formatUnits } from 'viem';
+import { childSend } from 'bullmq';
 
 describe('pionTest', () => {
   jest.setTimeout(30000);
@@ -62,18 +67,19 @@ describe('pionTest', () => {
     };
     console.log('priceSignature:', priceSignature);
 
-    const bContractId = '1';
+    const bOracleId = '1';
     const accountId = 0;
     const chainId = config.activeChainId;
 
-    const tx = await updatePriceAndDefault(
+    const tx = await updatePricePion(
       priceSignature,
-      bContractId,
+      bOracleId,
       accountId,
       chainId,
     );
-    //console.log('tx:', tx);
+    console.log('tx:', tx);
 
+    //const tx = await settle(bOracleId, accountId, chainId);
     expect(pionResult).toBeDefined();
     expect(tx).toBeDefined();
     expect(pionResult.success).toBeTruthy();

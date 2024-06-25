@@ -1,6 +1,10 @@
 import { manageSymbolInventory } from './dispatcher';
 import { getBrokerFromAsset } from '../config/configRead';
 import { isNoHedgeAddress } from '../utils/check';
+import { isPositionOpen } from '../broker/utils';
+import { getOpenPositions, Position } from '../broker/dispatcher';
+import { getMT5Ticker } from '../config/configRead';
+import { getFirst12Characters } from '../broker/utils';
 
 export class Hedger {
   private async openPositions(
@@ -12,26 +16,53 @@ export class Hedger {
     brokerA: string,
     brokerB: string,
   ): Promise<boolean> {
-    const tx1 = await manageSymbolInventory(
+    const mt5PairA = await getMT5Ticker(assetA);
+    const mt5PairB = await getMT5Ticker(assetB);
+    let tx1 = false,
+      tx2 = false;
+    if (mt5PairA) {
+      assetA = mt5PairA;
+    }
+    if (mt5PairB) {
+      assetB = mt5PairB;
+    }
+    const openPositions = await getOpenPositions('mt5.ICMarkets');
+    const isAOpenned = await isPositionOpen(
+      openPositions,
       assetA,
-      amount,
       bContractId,
       isLong,
-      true,
-      brokerA,
     );
-    console.log(`Opened position for ${assetA}`);
-
-    const tx2 = await manageSymbolInventory(
+    const isBOpenned = await isPositionOpen(
+      openPositions,
       assetB,
-      amount,
       bContractId,
       !isLong,
-      true,
-      brokerB,
     );
-    console.log(`Opened position for ${assetB}`);
 
+    if (!isAOpenned) {
+      tx1 = await manageSymbolInventory(
+        assetA,
+        amount,
+        bContractId,
+        isLong,
+        true,
+        brokerA,
+      );
+    }
+    console.log(`Opened position for ${assetA}`);
+
+    if (!isBOpenned) {
+      tx2 = await manageSymbolInventory(
+        assetB,
+        amount,
+        bContractId,
+        !isLong,
+        true,
+        brokerB,
+      );
+      console.log(`Opened position for ${assetB}`);
+    }
     return tx1 && tx2;
   }
 
@@ -77,10 +108,9 @@ export class Hedger {
     counterparty: string,
   ): Promise<boolean> {
     try {
-      console.log(`Hedging ${pair} for ${counterparty}`);
+      bContractId = getFirst12Characters(bContractId);
 
       if (await isNoHedgeAddress(counterparty)) {
-        console.log('No hedge for this address');
         return true;
       }
 
@@ -116,17 +146,14 @@ export class Hedger {
             );
 
         if (!success) {
-          console.log('Issue with position management');
           return false;
         }
 
         return true;
       } catch (error) {
-        console.error('Error managing symbol inventory:', error);
         throw error;
       }
     } catch (error) {
-      console.error('Error in hedge:', error);
       throw error;
     }
   }

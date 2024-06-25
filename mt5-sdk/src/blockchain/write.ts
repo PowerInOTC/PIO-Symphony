@@ -6,6 +6,7 @@ import {
   PionerV1Default,
   PionerV1Wrapper,
   PionerV1Close,
+  PionerV1Oracle,
   NetworkKey,
   networks,
 } from '@pionerfriends/blockchain-client';
@@ -227,7 +228,7 @@ export async function settle(
       transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
-    console.log(`[Blockchain] [settleClose] : ${e}`);
+    console.log(`[Blockchain] [settle] : ${e}`);
   }
 }
 
@@ -409,7 +410,7 @@ export async function updatePriceAndDefault(
         .PionerV1Wrapper as Address,
       abi: PionerV1Wrapper.abi,
       functionName: 'wrapperUpdatePriceAndDefault',
-      args: [priceSignature, bContractId],
+      args: [priceSignature, parseUnits(bContractId, 0)],
       account: account,
     });
     const transactionParameters = {
@@ -421,5 +422,36 @@ export async function updatePriceAndDefault(
     );
   } catch (e) {
     console.log(`[Blockchain] [updatePriceAndDefault] : ${e}`);
+  }
+}
+
+export async function updatePricePion(
+  priceSignature: any,
+  bOracleId: string,
+  accountId: number,
+  chainId: string,
+) {
+  try {
+    const { account, wallet, address } = getAccountData(accountId, chainId);
+    const nonce = await web3Clients[Number(chainId)].getTransactionCount({
+      address: address as `0x${string}`,
+    });
+    const request = await web3Clients[Number(chainId)].simulateContract({
+      address: networks[chainId as unknown as NetworkKey].contracts
+        .PionerV1Oracle as Address,
+      abi: PionerV1Oracle.abi,
+      functionName: 'updatePricePion',
+      args: [priceSignature, bOracleId],
+      account: account,
+    });
+    const transactionParameters = {
+      ...request.request,
+      nonce: nonce,
+    };
+    return await wallet.writeContract(
+      transactionParameters as unknown as WriteContractParameters,
+    );
+  } catch (e) {
+    console.log(`[Blockchain] [updatePricePion] : ${e}`);
   }
 }
