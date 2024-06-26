@@ -128,6 +128,7 @@ export async function processCloseQuotes(token: string): Promise<void> {
 
           if (quotes) {
             for (const quote of quotes) {
+              console.log(`Adding quote to queue: ${JSON.stringify(quote)}`);
               await signedCloseQueue.add('signedClose', quote);
             }
           }

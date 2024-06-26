@@ -275,7 +275,7 @@ export function getPairConfig(
 
   if (!rowA || !rowB) {
     throw new Error(
-      'Notional row not found for the specified side and leverage',
+      `Notional row not found for ${tickerA}/${tickerB}, isLong : ${side}, ${leverage}x, ${notional}$`,
     );
   }
 

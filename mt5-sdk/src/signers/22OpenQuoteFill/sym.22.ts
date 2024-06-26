@@ -116,6 +116,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
           console.log(`${quotes} `);
           if (quotes) {
             for (const quote of quotes) {
+              console.log(`Adding quote to queue: ${JSON.stringify(quote)}`);
               await signedOpenQueue.add('signedOpen', quote);
             }
           }

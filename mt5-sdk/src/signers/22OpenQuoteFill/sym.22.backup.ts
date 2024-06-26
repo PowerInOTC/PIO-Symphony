@@ -60,6 +60,7 @@ export function startBackupOpenSettlementWorker(token: string): void {
         //console.log(bOracleSignValue, openQuoteSignValue);
 
         try {
+          console.log('[backup]');
           const isFilled = await settleOpen(
             bOracleSignValue,
             open.signatureBoracle,

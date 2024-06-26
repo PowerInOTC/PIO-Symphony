@@ -218,6 +218,8 @@ export async function signOpenCheck(
       nonce: open.nonceOpenQuote,
     };
     try {
+      console.log('[settleOpen');
+
       const isFilled = await settleOpen(
         bOracleSignValue,
         open.signatureBoracle,

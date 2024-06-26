@@ -40,7 +40,7 @@ class HedgerSafetyCheck {
       '0x0000000000000000000000000000000000000000', // noHedgeList doesn't apply in this case.
     );
     if (!isPassed) {
-      console.log('Hedger failed');
+      //console.log('Hedger failed');
     }
   }
 

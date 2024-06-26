@@ -50,7 +50,7 @@ export class Hedger {
         brokerA,
       );
     }
-    console.log(`Opened position for ${assetA}`);
+    //console.log(`Opened position for ${assetA}`);
 
     if (!isBOpenned) {
       tx2 = await manageSymbolInventory(
@@ -61,7 +61,7 @@ export class Hedger {
         true,
         brokerB,
       );
-      console.log(`Opened position for ${assetB}`);
+      //console.log(`Opened position for ${assetB}`);
     }
     return tx1 && tx2;
   }

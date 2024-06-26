@@ -1,5 +1,3 @@
-import { fetchPositions, getCachedPositions } from './cachePositions';
-import { getPionSignature } from '@pionerfriends/api-client';
 import {
   updatePriceAndDefault,
   updatePricePion,
@@ -10,9 +8,8 @@ import { PionResult, pionSignType } from '../../blockchain/types';
 import { config } from '../../config';
 import { getPionSignatureWithRetry } from '../../utils/pion';
 import { convertToBytes32 } from '../../utils/ethersUtils';
-import { ethers } from 'ethers';
 import { parseUnits, formatUnits } from 'viem';
-import { childSend } from 'bullmq';
+import { getbOracle, getBContract } from '../../blockchain/read'; // Replace with the actual path
 
 describe('pionTest', () => {
   jest.setTimeout(30000);
@@ -67,17 +64,19 @@ describe('pionTest', () => {
     };
     console.log('priceSignature:', priceSignature);
 
-    const bOracleId = '1';
+    const bOracleId = '0';
     const accountId = 0;
     const chainId = config.activeChainId;
 
-    const tx = await updatePricePion(
+    const tx = await updatePriceAndDefault(
       priceSignature,
       bOracleId,
       accountId,
       chainId,
     );
     console.log('tx:', tx);
+    await getbOracle(bOracleId, chainId);
+    await getBContract(bOracleId, chainId);
 
     //const tx = await settle(bOracleId, accountId, chainId);
     expect(pionResult).toBeDefined();

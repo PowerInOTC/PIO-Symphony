@@ -61,7 +61,7 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
   }
 
   if (isCheck === false) {
-    throw new Error('hedger failed');
+    //throw new Error('hedger failed');
   }
 
   return isCheck;
