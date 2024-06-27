@@ -1,5 +1,4 @@
-import { PionResult } from '../blockchain/types';
-import { getPionSignature } from '@pionerfriends/api-client';
+import { getPionSignature, PionResult } from '@pionerfriends/api-client';
 import { getTripartyLatestPrice } from '../broker/tripartyPrice';
 import { config } from '../config';
 import { AxiosResponse, AxiosRequestConfig } from 'axios';

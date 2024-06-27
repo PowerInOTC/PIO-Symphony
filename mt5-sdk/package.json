@@ -17,13 +17,13 @@
     "lint": "eslint \"./**/*.ts\" --fix && npx prettier --write \"./**/*.ts\""
   },
   "dependencies": {
-    "@pionerfriends/api-client": "^1.0.59",
-    "@pionerfriends/blockchain-client": "^1.0.59",
+    "@pionerfriends/api-client": "^1.0.66",
+    "@pionerfriends/blockchain-client": "^1.0.66",
     "async-lock": "~1.4.1",
     "axios": "~1.6.8",
     "axios-cache-interceptor": "~1.5.3",
     "bullmq": "~5.7.15",
-    "ccxt": "^4.3.52",
+    "ccxt": "^4.3.53",
     "dotenv": "~16.4.5",
     "ethers": "~5.7.2",
     "node-cache": "~5.1.2",

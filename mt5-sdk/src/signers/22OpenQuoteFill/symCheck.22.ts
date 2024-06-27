@@ -50,7 +50,7 @@ export async function signOpenCheck(
   }
 
   if (open.isLong) {
-    if (tripartyLatestPrice.ask < Number(openPrice) * (1 + 0.0001)) {
+    if (tripartyLatestPrice.ask > Number(openPrice) * (1 + 0.0001)) {
       isCheck = false;
       throw new Error(
         `open check failed : ask : ${tripartyLatestPrice.ask} > price ${Number(openPrice) * (1 + 0.0001)}`,
@@ -60,7 +60,7 @@ export async function signOpenCheck(
     }
   }
   if (!open.isLong) {
-    if (tripartyLatestPrice.bid > Number(openPrice) * (1 - 0.0001)) {
+    if (tripartyLatestPrice.bid < Number(openPrice) * (1 - 0.0001)) {
       isCheck = false;
       throw new Error(
         `open check failed : bid : ${tripartyLatestPrice.bid} < price ${Number(openPrice) * (1 - 0.0001)}`,

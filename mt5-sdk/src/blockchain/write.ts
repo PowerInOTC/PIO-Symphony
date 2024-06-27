@@ -212,6 +212,7 @@ export async function settle(
     const nonce = await web3Clients[Number(chainId)].getTransactionCount({
       address: address as `0x${string}`,
     });
+
     const request = await web3Clients[Number(chainId)].simulateContract({
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Default as Address,
@@ -224,6 +225,7 @@ export async function settle(
       ...request.request,
       nonce: nonce,
     };
+
     return await wallet.writeContract(
       transactionParameters as unknown as WriteContractParameters,
     );
@@ -421,7 +423,7 @@ export async function updatePriceAndDefault(
       transactionParameters as unknown as WriteContractParameters,
     );
   } catch (e) {
-    console.log(`[Blockchain] [updatePriceAndDefault] : ${e}`);
+    console.log(`[Blockchain] [updatePriceAndDefault1] : ${e}`);
   }
 }
 

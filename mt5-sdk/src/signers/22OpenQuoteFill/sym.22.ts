@@ -26,11 +26,11 @@ export function startSignedOpenWorker(token: string): void {
     async (job: Job<signedWrappedOpenQuoteResponse>) => {
       try {
         const quote: signedWrappedOpenQuoteResponse = job.data;
-        console.log(`Processing quote: ${JSON.stringify(quote)}`);
+        //console.log(`Processing quote: ${JSON.stringify(quote)}`);
 
         const positionKey = `${quote.signatureOpenQuote}`;
         if (processedPositions.has(positionKey)) {
-          console.log(`Skipping duplicate position: ${positionKey}`);
+          //console.log(`Skipping duplicate position: ${positionKey}`);
           return;
         }
 
@@ -116,7 +116,7 @@ export async function processOpenQuotes(token: string): Promise<void> {
           console.log(`${quotes} `);
           if (quotes) {
             for (const quote of quotes) {
-              console.log(`Adding quote to queue: ${JSON.stringify(quote)}`);
+              //console.log(`Adding quote to queue: ${JSON.stringify(quote)}`);
               await signedOpenQueue.add('signedOpen', quote);
             }
           }

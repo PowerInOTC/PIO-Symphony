@@ -1,7 +1,8 @@
 // settlementWorker.ts
 import { fetchPositions, getCachedPositions } from './cachePositions';
 import { updatePriceAndDefault } from '../../blockchain/write';
-import { PionResult, pionSignType } from '../../blockchain/types';
+import { getPionSignature, PionResult } from '@pionerfriends/api-client';
+import { pionSignType } from '../../blockchain/types';
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { getPionSignatureWithRetry } from '../../utils/pion';
 import { convertToBytes32 } from '../../utils/ethersUtils';

@@ -4,7 +4,8 @@ import {
   settle,
 } from '../../blockchain/write';
 import { getToken } from '../../utils/init';
-import { PionResult, pionSignType } from '../../blockchain/types';
+import { getPionSignature, PionResult } from '@pionerfriends/api-client';
+import { pionSignType } from '../../blockchain/types';
 import { config } from '../../config';
 import { getPionSignatureWithRetry } from '../../utils/pion';
 import { convertToBytes32 } from '../../utils/ethersUtils';
@@ -53,7 +54,11 @@ describe('pionTest', () => {
         parseUnits(pionResult.result.data.signParams[5].value, 0),
         18,
       ),
-      requestSignTime: pionResult.result.data.signParams[6].value,
+      requestSignTime: String(
+        Math.floor(
+          parseFloat(pionResult.result.data.signParams[6].value) / 1000,
+        ) - 100,
+      ),
       requestPrecision: formatUnits(
         parseUnits(pionResult.result.data.signParams[7].value, 0),
         18,
@@ -64,9 +69,17 @@ describe('pionTest', () => {
     };
     console.log('priceSignature:', priceSignature);
 
-    const bOracleId = '0';
+    const bOracleId = '1';
     const accountId = 0;
     const chainId = config.activeChainId;
+    await getbOracle(bOracleId, chainId);
+    await getBContract(bOracleId, chainId);
+    const tx1 = await updatePricePion(
+      priceSignature,
+      bOracleId,
+      accountId,
+      chainId,
+    );
 
     const tx = await updatePriceAndDefault(
       priceSignature,
@@ -74,11 +87,11 @@ describe('pionTest', () => {
       accountId,
       chainId,
     );
+
     console.log('tx:', tx);
     await getbOracle(bOracleId, chainId);
     await getBContract(bOracleId, chainId);
 
-    //const tx = await settle(bOracleId, accountId, chainId);
     expect(pionResult).toBeDefined();
     expect(tx).toBeDefined();
     expect(pionResult.success).toBeTruthy();
