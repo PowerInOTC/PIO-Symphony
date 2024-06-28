@@ -17,8 +17,8 @@
     "lint": "eslint \"./**/*.ts\" --fix && npx prettier --write \"./**/*.ts\""
   },
   "dependencies": {
-    "@pionerfriends/api-client": "^1.0.66",
-    "@pionerfriends/blockchain-client": "^1.0.66",
+    "@pionerfriends/api-client": "^1.0.67",
+    "@pionerfriends/blockchain-client": "^1.0.67",
     "async-lock": "~1.4.1",
     "axios": "~1.6.8",
     "axios-cache-interceptor": "~1.5.3",

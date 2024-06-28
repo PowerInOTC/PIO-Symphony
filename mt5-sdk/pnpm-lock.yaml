@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@pionerfriends/api-client':
-        specifier: ^1.0.66
-        version: 1.0.66(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)
+        specifier: ^1.0.67
+        version: 1.0.67(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)
       '@pionerfriends/blockchain-client':
-        specifier: ^1.0.66
-        version: 1.0.66(@types/node@20.14.9)
+        specifier: ^1.0.67
+        version: 1.0.67(@types/node@20.14.9)
       '@types/node':
         specifier: ^20.11.25
         version: 20.14.9
@@ -547,13 +547,13 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@pionerfriends/api-client@1.0.66':
-    resolution: {integrity: sha512-b9O9CA7ffdQCQm1WGyO3TbhdVD2qCfaEmEbhR4TTLlNK6YOoEi8TBLlh70mO/osTMeDWREXmYhddtvpW9UKdvw==}
+  '@pionerfriends/api-client@1.0.67':
+    resolution: {integrity: sha512-V66wvgxwYb/HKJPnLPq9Po9cHWwpKXhmmbilhHgJtI9e3FwlJpKTF+f59LCECIybvkZnVSfdzNXkcrtPU2ZSAw==}
     peerDependencies:
       '@types/node': ^20.11.25
 
-  '@pionerfriends/blockchain-client@1.0.66':
-    resolution: {integrity: sha512-r6/oO4RRgBlLzyDDK3pk0vX1ayzhbrHfXzflUhVF5jZjI3rLZE5LtWl/85onBwVlmt/d/XW4mrjDoYN23hrk/w==}
+  '@pionerfriends/blockchain-client@1.0.67':
+    resolution: {integrity: sha512-13dhBOM6yaWAsNZOy1GTEkCf4Y1a6pUf05nE5hxMtFKSoF1MAtNAUNaP6ImEGb648Ypm0cH2yBRIv4F5zCDEcA==}
     peerDependencies:
       '@types/node': ^20.11.25
 
@@ -3215,7 +3215,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
-  '@pionerfriends/api-client@1.0.66(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)':
+  '@pionerfriends/api-client@1.0.67(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)':
     dependencies:
       '@types/node': 20.14.9
       axios: 1.7.2
@@ -3229,7 +3229,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@pionerfriends/blockchain-client@1.0.66(@types/node@20.14.9)':
+  '@pionerfriends/blockchain-client@1.0.67(@types/node@20.14.9)':
     dependencies:
       '@types/node': 20.14.9
       ethers: 6.13.1

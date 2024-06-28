@@ -18,42 +18,16 @@ const signedCloseQueue = new Queue('signedClose', {
   },
 });
 
-const processedPositions: Set<string> = new Set();
-
 export function startCloseQuotesWorker(token: string): void {
   new Worker(
     'signedClose',
     async (job: Job<signedCloseQuoteResponse>) => {
       try {
         const quote: signedCloseQuoteResponse = job.data;
-        console.log(`Processing quote: ${JSON.stringify(quote)}`);
-
-        const positionKey = `${quote.signatureClose}`;
-        if (processedPositions.has(positionKey)) {
-          console.log(`Skipping duplicate position: ${positionKey}`);
-          return;
-        }
-
-        const closeQuoteSignValueType: closeQuoteSignValueType = {
-          bContractId: String(quote.chainId),
-          price: quote.price,
-          amount: quote.amount,
-          limitOrStop: String(quote.limitOrStop),
-          expiry: String(quote.expiry),
-          authorized: quote.authorized,
-          nonce: quote.nonce,
-        };
+        //console.log(`Processing quote: ${JSON.stringify(quote)}`);
 
         const fill = await signCloseCheck(quote);
-        if (fill) {
-          settleClose(
-            closeQuoteSignValueType,
-            quote.signatureClose,
-            1,
-            String(quote.chainId),
-          );
-          processedPositions.add(positionKey);
-        }
+        console.log(`Close Quote Filled ?: ${fill}`);
       } catch (error) {
         console.error(`Error processing job: ${error}`);
       }
@@ -128,7 +102,7 @@ export async function processCloseQuotes(token: string): Promise<void> {
 
           if (quotes) {
             for (const quote of quotes) {
-              console.log(`Adding quote to queue: ${JSON.stringify(quote)}`);
+              //console.log(`Adding quote to queue: ${JSON.stringify(quote)}`);
               await signedCloseQueue.add('signedClose', quote);
             }
           }

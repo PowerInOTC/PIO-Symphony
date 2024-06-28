@@ -66,7 +66,7 @@ describe('OpenQuoteButton', () => {
       signatureCloseHash: '',
       emitTime: String(Date.now()),
       messageState: 1,
-      assetHex: convertToBytes32('forex.EURUSD/forex.USDCHF'),
+      assetHex: convertToBytes32('forex.GBPUSD/forex.EURUSD'),
       signatureOpenQuote:
         '0x183b89f96bb187e91b8d4a30b26b1ce09db83743329058ad83eab6e2ef3e80f6',
       signatureOpenQuoteHash: '',

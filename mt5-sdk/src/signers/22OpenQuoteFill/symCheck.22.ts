@@ -29,6 +29,11 @@ export async function signOpenCheck(
     config.privateKeys?.split(',')[config.hedgerId],
   );
   const hedger = new Hedger();
+  open.price === '0' ? (open.price = '1') : open.price;
+  open.price === 'Infinity' ? (open.amount = '1000000') : open.amount;
+  open.amount === '0' ? (open.amount = '1') : open.amount;
+  open.amount === 'Infinity' ? (open.amount = '1000000') : open.amount;
+  open.interestRate === '0' ? (open.interestRate = '1') : open.interestRate;
 
   let isCheck = true;
   const openPrice = formatUnits(parseUnits(open.price, 0), 18);

@@ -77,7 +77,9 @@ async function minAmountSymbol(proxyPair: string): Promise<number> {
   const broker1 = getBrokerFromAsset(proxyTicker1);
   const broker2 = getBrokerFromAsset(proxyTicker2);
   if (!broker1 || !broker2) {
-    console.error('Invalid broker for minAmountSymbol');
+    console.error(
+      `Invalid broker for minAmountSymbol : ${proxyTicker1} : ${broker1} / ${proxyTicker2} : ${broker2}`,
+    );
     return 0;
   }
 

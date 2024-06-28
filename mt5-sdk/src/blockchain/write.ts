@@ -411,7 +411,7 @@ export async function updatePriceAndDefault(
       address: networks[chainId as unknown as NetworkKey].contracts
         .PionerV1Wrapper as Address,
       abi: PionerV1Wrapper.abi,
-      functionName: 'wrapperUpdatePriceAndDefault',
+      functionName: 'wrapperUpdatePriceAndDefault1',
       args: [priceSignature, parseUnits(bContractId, 0)],
       account: account,
     });

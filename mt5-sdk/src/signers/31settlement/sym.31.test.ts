@@ -74,12 +74,13 @@ describe('pionTest', () => {
     const chainId = config.activeChainId;
     await getbOracle(bOracleId, chainId);
     await getBContract(bOracleId, chainId);
+    /*
     const tx1 = await updatePricePion(
       priceSignature,
       bOracleId,
       accountId,
       chainId,
-    );
+    );*/
 
     const tx = await updatePriceAndDefault(
       priceSignature,

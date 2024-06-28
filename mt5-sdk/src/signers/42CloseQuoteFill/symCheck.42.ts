@@ -15,27 +15,96 @@ import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { closeQuoteSignValueType } from '../../blockchain/types';
 import { minAmountSymbol } from '../../broker/minAmount';
 import { formatUnits, parseUnits } from 'viem';
+import { settleClose } from '../../blockchain/write';
 
 export async function signCloseCheck(close: signedCloseQuoteResponse) {
   let isCheck = true;
   const hedger = new Hedger();
+  close.price = formatUnits(parseUnits(close.price, 0), 18);
+  close.limitOrStop = formatUnits(parseUnits(close.limitOrStop, 0), 18);
+  close.amount = formatUnits(parseUnits(close.amount, 0), 18);
+  //check stop price > limitPrice for long
+  isCheck =
+    close.limitOrStop !== '0' &&
+    close.price <= close.limitOrStop &&
+    close.isLong
+      ? true
+      : false;
+  //check stop price < limitPrice for long
+  isCheck =
+    close.limitOrStop !== '0' &&
+    close.price >= close.limitOrStop &&
+    close.isLong
+      ? true
+      : false;
 
   const symbol = extractSymbolFromAssetHex(close.assetHex);
+  console.log(`symbol : ${symbol.assetAId}/${symbol.assetBId}`);
   const pair = `${symbol.assetAId}/${symbol.assetBId}`;
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${symbol.assetAId}/${symbol.assetBId}`,
   );
   /** Test price + spread is profitable for hedger  */
+  console.log(
+    `tripartyLatestPrice : ${tripartyLatestPrice.bid} / ${tripartyLatestPrice.ask}`,
+    `close price : ${close.price}`,
+    `close isLong : ${close.isLong}`,
+    `close amount : ${close.amount}`,
+    `close amount : ${close.limitOrStop}`,
+    `close signatureOpenQuote : ${close.signatureOpenQuote}`,
+    `close signatureOpenQuoteHash : ${close.signatureOpenQuoteHash}`,
+    `close close.assetHex : ${close.assetHex}`,
+  );
+
   if (close.isLong) {
-    if (Number(tripartyLatestPrice.ask) <= Number(close.price) * (1 + 0.0001)) {
-      isCheck = false;
-      throw new Error('close price is too low');
+    if (
+      close.limitOrStop !== '0' &&
+      Number(tripartyLatestPrice.bid) >= Number(close.limitOrStop)
+    ) {
+      if (
+        Number(tripartyLatestPrice.bid) >=
+        Number(close.price) * (1 - 0.0001)
+      ) {
+        isCheck = false;
+        console.log(
+          `close price is too low : ${Number(tripartyLatestPrice.ask)} / ${Number(close.price)}`,
+        );
+      }
+    } else {
+      if (
+        Number(tripartyLatestPrice.bid) >=
+        Number(close.price) * (1 - 0.0001)
+      ) {
+        isCheck = false;
+        console.log(
+          `close price is too low : ${Number(tripartyLatestPrice.ask)} / ${Number(close.price)}`,
+        );
+      }
     }
-  }
-  if (!close.isLong) {
-    if (Number(tripartyLatestPrice.bid) >= Number(close.price) * (1 - 0.0001)) {
-      isCheck = false;
-      throw new Error('close price is too high');
+  } else {
+    if (
+      close.limitOrStop !== '0' &&
+      Number(tripartyLatestPrice.ask) <= Number(close.limitOrStop)
+    ) {
+      if (
+        Number(tripartyLatestPrice.ask) <=
+        Number(close.price) * (1 + 0.0001)
+      ) {
+        isCheck = false;
+        console.log(
+          `close price is too low : ${Number(tripartyLatestPrice.ask)} / ${Number(close.price)}`,
+        );
+      }
+    } else {
+      if (
+        Number(tripartyLatestPrice.ask) <=
+        Number(close.price) * (1 + 0.0001)
+      ) {
+        isCheck = false;
+        console.log(
+          `close price is too high : ${Number(tripartyLatestPrice.bid)} / ${Number(close.price)}`,
+        );
+      }
     }
   }
 
@@ -43,13 +112,13 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
   const minAmount = await minAmountSymbol(pair);
   if (Number(close.amount) < Number(minAmount)) {
     isCheck = false;
-    throw new Error(
+    console.log(
       `Close amount is too low : ${Number(close.amount)} / ${Number(minAmount)}`,
     );
   }
 
   if (isCheck) {
-    isCheck = await hedger.hedge(
+    hedger.hedge(
       pair,
       Number(close.price),
       close.signatureOpenQuote,
@@ -60,9 +129,28 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
     );
   }
 
-  if (isCheck === false) {
-    //throw new Error('hedger failed');
+  if (!isCheck) {
+    return isCheck;
   }
+
+  const closeQuoteSignValueType: closeQuoteSignValueType = {
+    bContractId: close.chainId.toString(),
+    price: close.price,
+    amount: close.amount,
+    limitOrStop: close.limitOrStop.toString(),
+    expiry: close.expiry.toString(),
+    authorized: close.authorized,
+    nonce: close.nonce,
+  };
+
+  const tx = await settleClose(
+    closeQuoteSignValueType,
+    close.signatureClose,
+    0,
+    String(close.chainId),
+  );
+
+  console.log(`Close Quote tx : ${tx}`);
 
   return isCheck;
 }
