@@ -16,7 +16,12 @@ async function settlementWorker(token: string): Promise<void> {
 
     // Settle & liquidate if IM is lacking
     for (const position of cachedPositions) {
-      console.log('position1:', position.state, position.entry, position.mtm);
+      console.log(
+        'Settle Check:',
+        position.state,
+        position.entry,
+        position.mtm,
+      );
       const { id, imA, imB, entryPrice, mtm, symbol, amount } = position;
       const imAValue = parseFloat(imA);
       const imBValue = parseFloat(imB);
@@ -24,16 +29,13 @@ async function settlementWorker(token: string): Promise<void> {
       const { bid, ask } = await getTripartyLatestPrice(symbol);
       const lastPriceValue = bid * 0.5 + ask * 0.5 * parseFloat(amount);
 
-      const upnl =
-        (lastPriceValue - entryPriceValue) * Math.max(imAValue, imBValue);
+      const percChange = (lastPriceValue - entryPriceValue) / entryPriceValue;
 
-      if (imAValue * 0.8 < -upnl || imBValue * 0.8 < -upnl) {
+      if (imAValue * 0.8 < -percChange || imBValue * 0.8 < -percChange) {
         console.log(`Position ${id} has reached the threshold!`);
         await defaultAndLiquidation(
           position.bContractId,
           position.symbol,
-          lastPriceValue,
-          String(config.activeChainId),
           token,
         );
       }
@@ -58,53 +60,61 @@ export function startSettlementWorker(token: string) {
 }
 
 export async function defaultAndLiquidation(
-  bContractId: string,
+  bOracleId: string,
   assetHex: string,
-  price: number,
-  chainId: string,
   token: string,
 ) {
   const [assetAId, assetBId]: string[] = assetHex.split('/');
 
-  const pionResponse = await getPionSignatureWithRetry(
+  const confidence = '5';
+  const expiryTimestamp = String(Date.now() + 1000 * 100);
+  const options = {
+    requestPrecision: '5',
+    requestConfPrecision: '5',
+    maxTimestampDiff: '600',
+    timeout: '10000',
+  };
+
+  const pionResult = await getPionSignatureWithRetry(
     assetAId,
     assetBId,
-    String(5),
-    String(Date.now() + 1000 * 5),
+    confidence,
+    expiryTimestamp,
     token,
-    {
-      requestPrecision: '5',
-      requestConfPrecision: '5',
-      maxTimestampDiff: '0',
-      timeout: '10000',
-    },
+    options,
   );
 
-  if (!pionResponse) {
-    throw new Error('Failed to get Pion signature');
-  }
-
-  const pionResult: PionResult = pionResponse as PionResult;
-
   const priceSignature: pionSignType = {
-    appId: pionResult.result.appId,
-    reqId: pionResult.result.reqId,
+    appId: pionResult.result.data.signParams[0].value,
+    reqId: pionResult.result.data.signParams[1].value,
     requestassetHex: convertToBytes32(`${assetAId}/${assetBId}`),
-    requestPairBid: String(pionResult.result.data.params.requestPairBid),
-    requestPairAsk: String(pionResult.result.data.params.requestPairAsk),
-    requestConfidence: pionResult.result.data.params.requestConfidence,
-    requestSignTime: pionResult.result.data.params.requestSignTime,
-    requestPrecision: '5',
+    requestPairBid: pionResult.result.data.signParams[3].value,
+    requestPairAsk: pionResult.result.data.signParams[4].value,
+    requestConfidence: formatUnits(
+      parseUnits(pionResult.result.data.signParams[5].value, 0),
+      18,
+    ),
+    requestSignTime: String(
+      Math.floor(
+        parseFloat(pionResult.result.data.signParams[6].value) / 1000,
+      ) - 100,
+    ),
+    requestPrecision: formatUnits(
+      parseUnits(pionResult.result.data.signParams[7].value, 0),
+      18,
+    ),
     signature: pionResult.result.signatures[0].signature,
-    owner: '0x237A6Ec18AC7D9693C06f097c0EEdc16518d7c21',
-    nonce: '0x1365a32bDd33661a3282992D1C334D5aB2faaDc7',
+    owner: pionResult.result.signatures[0].owner,
+    nonce: pionResult.result.data.init.nonceAddress,
   };
+  const accountId = config.hedgerId;
+  const chainId = config.activeChainId;
 
   const tx = await updatePriceAndDefault(
     priceSignature,
-    bContractId,
-    0,
+    bOracleId,
+    accountId,
     chainId,
   );
-  console.log('tx:', tx);
+  console.log('tx settle:', tx);
 }

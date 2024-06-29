@@ -69,7 +69,7 @@ describe('pionTest', () => {
     };
     console.log('priceSignature:', priceSignature);
 
-    const bOracleId = '1';
+    const bOracleId = '2';
     const accountId = 0;
     const chainId = config.activeChainId;
     await getbOracle(bOracleId, chainId);

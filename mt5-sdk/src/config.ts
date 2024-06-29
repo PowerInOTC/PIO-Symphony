@@ -28,7 +28,7 @@ export const config = {
   apiBaseUrl: process.env.API_BASE_URL || '',
   azureMt5AuthToken: process.env.AZURE_MT5_IDENTIFICATION_TOKEN || '',
 
-  hedgerId: Number(process.env.HEDGER_ID) || 0,
+  hedgerId: Number(process.env.HEDGER_ID) || 3,
   isDevMode: process.env.DEV_MODE || false,
   isPionLive: process.env.IS_PION_LIVE || true,
   verifyHedgerOpenRefreshRate: 20000,

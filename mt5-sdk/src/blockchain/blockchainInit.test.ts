@@ -9,12 +9,12 @@ export async function initAccount(id: number) {
   const amount = parseUnits('100000000', 18);
   let hash;
 
+  hash = await mintFUSD(amount.toString(), id, config.activeChainId);
   // Mint FUSD
   const prevBalance: string = (await getMintFUSD(
     id,
     config.activeChainId,
   )) as string;
-  hash = await mintFUSD(amount.toString(), id, config.activeChainId);
   if (hash) {
     await web3Clients[Number(config.activeChainId)].waitForTransactionReceipt({
       hash,
