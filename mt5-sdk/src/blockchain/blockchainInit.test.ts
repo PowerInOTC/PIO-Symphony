@@ -62,6 +62,13 @@ export async function initAccount(id: number) {
 
 describe('initAccount', () => {
   test('should initialize account correctly', async () => {
+    await initAccount(0);
+    await initAccount(config.hedgerId);
+    await initAccount(1);
+    await initAccount(2);
+    await initAccount(0);
+    await initAccount(1);
+    await initAccount(2);
     const {
       prevBalance,
       nextBalance,
@@ -69,7 +76,7 @@ describe('initAccount', () => {
       nextAllowance,
       prevDepositBalance,
       nextDepositBalance,
-    } = await initAccount(0);
+    } = await initAccount(config.hedgerId);
 
     // Verify mint balance
     expect(BigInt(nextBalance)).toBeGreaterThan(BigInt(prevBalance));

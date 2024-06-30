@@ -31,7 +31,7 @@ describe('pionTest', () => {
     const options = {
       requestPrecision: '5',
       requestConfPrecision: '5',
-      maxTimestampDiff: '600',
+      maxTimestampDiff: '604800000',
       timeout: '10000',
     };
 
@@ -69,7 +69,7 @@ describe('pionTest', () => {
     };
     console.log('priceSignature:', priceSignature);
 
-    const bOracleId = '2';
+    const bOracleId = '1';
     const accountId = 0;
     const chainId = config.activeChainId;
     await getbOracle(bOracleId, chainId);

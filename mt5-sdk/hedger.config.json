@@ -2,7 +2,7 @@
   "rfqProcess": true,
   "signedOpenWorker": true,
   "closeQuotesWorker": true,
-  "settlementWorker": true,
+  "settlementWorker": false,
   "hedgerSafetyCheck": true,
   "backupSettlementWorker": true
 }

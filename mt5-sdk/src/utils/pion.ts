@@ -11,7 +11,7 @@ export async function getPionSignatureWithRetry(
   token: string,
   options: Record<string, string>,
   retryInterval = 500,
-  timeout = 10000,
+  timeout = 100000,
 ): Promise<PionResult> {
   /*
   if (config.isPionLive === false) {
@@ -94,6 +94,17 @@ export async function getPionSignatureWithRetry(
 
   while (attempts < maxRetries) {
     try {
+      console.log(
+        'Fetching Pion signature...',
+        assetAId,
+        assetBId,
+        String(price.bid),
+        String(price.ask),
+        confidence,
+        expiryTimestamp,
+        token,
+        options,
+      );
       const pionResponse = await getPionSignature(
         assetAId,
         assetBId,
@@ -104,7 +115,8 @@ export async function getPionSignatureWithRetry(
         token,
         options,
       );
-      //console.log('Pion response:', pionResponse);
+
+      console.log('Pion response:', pionResponse);
 
       if (pionResponse?.data?.success) {
         return pionResponse.data as PionResult;

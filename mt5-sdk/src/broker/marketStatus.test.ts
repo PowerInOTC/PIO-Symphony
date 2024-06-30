@@ -3,6 +3,7 @@
 import axios from 'axios';
 import { getMarketStatus, MarketStatusResponse } from './marketStatus';
 import { getToken } from '../utils/init';
+import { config } from '../config';
 
 jest.mock('axios');
 
@@ -24,7 +25,7 @@ describe('getMarketStatus', () => {
 
     (axios.get as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-    const token = await getToken(0);
+    const token = await getToken(config.hedgerId);
 
     // Test pair1
     const result1 = await getMarketStatus(token, pair1);

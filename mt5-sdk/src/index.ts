@@ -26,13 +26,7 @@ import {
 async function index(): Promise<void> {
   try {
     console.log('Start');
-    const token = await getToken(0);
-    /* Test init ***
-    await getToken(1);
-    await getToken(2);
-    await getToken(3);
-    /**************/
-    console.log(token);
+    const token = await getToken(config.hedgerId);
 
     const hedgeConfig = JSON.parse(
       fs.readFileSync('hedger.config.json', 'utf-8'),

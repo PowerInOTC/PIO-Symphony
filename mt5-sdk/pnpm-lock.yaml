@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@pionerfriends/api-client':
-        specifier: ^1.0.73
-        version: 1.0.73(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)
+        specifier: ^1.0.75
+        version: 1.0.75(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)
       '@pionerfriends/blockchain-client':
-        specifier: ^1.0.73
-        version: 1.0.73(@types/node@20.14.9)
+        specifier: ^1.0.76
+        version: 1.0.76(@types/node@20.14.9)
       '@types/node':
         specifier: ^20.11.25
         version: 20.14.9
@@ -547,13 +547,13 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@pionerfriends/api-client@1.0.73':
-    resolution: {integrity: sha512-E7DQDWsjJPKRfKzUfJAyu9gmrsnMXazIdt5qccjJxbBCK9VaO9MayEbXwEKnOgR/GJDYd1Np449hmIvOqIr2bA==}
+  '@pionerfriends/api-client@1.0.75':
+    resolution: {integrity: sha512-MSLVnGKomAxmBnkyNT4DdciDAVk9LHanSz6M+fNR1h5xTQWW0TCVUmEcOstARuBVmT1PEIhWH7/BYG4cJ98gSA==}
     peerDependencies:
       '@types/node': ^20.11.25
 
-  '@pionerfriends/blockchain-client@1.0.73':
-    resolution: {integrity: sha512-2LFIIW/TfqbnmYqXjQrQS+GZIXBrY1T0n6iFfEZL+Uz2ugZQwgUQbwq7Geqf7rBFwnCKwv2l6ZQbuI4f8WAOaw==}
+  '@pionerfriends/blockchain-client@1.0.76':
+    resolution: {integrity: sha512-wNec0jtEzrt4h4l9AvVHn1lQcKGJp63+B8ThiP+8ZcufwLYMaajJvr7BRyJt3LCLzsL+pMQBN/LFAY2sfv0U6Q==}
     peerDependencies:
       '@types/node': ^20.11.25
 
@@ -2298,8 +2298,8 @@ packages:
       typescript:
         optional: true
 
-  viem@2.16.4:
-    resolution: {integrity: sha512-5Dk8BUCUymVJRETeU4rNHhTIj+VtBEWBKU0veJ7URtLPltO8wY0/OaUQeN77OeMhmy/l1z0Gbrm9CEURgE06Iw==}
+  viem@2.16.5:
+    resolution: {integrity: sha512-QDESALYDyLSP+pIr7adH3QPZ+3is16aOVMXXZE0X1GVbgL7PDMZQ8xIF1X/B1hgyqkBl2HhMpUaq6ksUdBV/YA==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
@@ -3215,12 +3215,12 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
-  '@pionerfriends/api-client@1.0.73(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)':
+  '@pionerfriends/api-client@1.0.75(@types/node@20.14.9)(typescript@5.5.2)(zod@3.23.8)':
     dependencies:
       '@types/node': 20.14.9
       axios: 1.7.2
       isomorphic-ws: 5.0.0(ws@8.17.1)
-      viem: 2.16.4(typescript@5.5.2)(zod@3.23.8)
+      viem: 2.16.5(typescript@5.5.2)(zod@3.23.8)
       ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
@@ -3229,7 +3229,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@pionerfriends/blockchain-client@1.0.73(@types/node@20.14.9)':
+  '@pionerfriends/blockchain-client@1.0.76(@types/node@20.14.9)':
     dependencies:
       '@types/node': 20.14.9
       ethers: 6.13.1
@@ -5199,7 +5199,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  viem@2.16.4(typescript@5.5.2)(zod@3.23.8):
+  viem@2.16.5(typescript@5.5.2)(zod@3.23.8):
     dependencies:
       '@adraffy/ens-normalize': 1.10.0
       '@noble/curves': 1.4.0

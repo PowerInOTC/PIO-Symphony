@@ -61,11 +61,11 @@ describe('fetchPositions', () => {
     );
 
     //console.log('activeOpenQuotes', activeOpenQuotes?.data);
-    console.log('activeCloseQuotes', activeCloseQuotes?.data);
+    //console.log('activeCloseQuotes', activeCloseQuotes?.data);
     //console.log('activePositions', activePositions?.data);
 
     //console.log('openQuotes', openQuotes?.data);
     //console.log('closeQuotes', closeQuotes?.data);
-    //console.log('positions', positions?.data);
+    console.log('positions', positions?.data);
   }, 30000); // Increased timeout to allow for the API call
 });

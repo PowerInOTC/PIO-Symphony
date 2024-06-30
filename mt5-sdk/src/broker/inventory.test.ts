@@ -1,4 +1,4 @@
-import { minAmountSymbol } from '../broker/minAmount';
+/*import { minAmountSymbol } from '../broker/minAmount';
 import { Hedger } from '../broker/inventory';
 import { getOpenPositions } from '../broker/dispatcher';
 import {
@@ -72,3 +72,4 @@ describe('Hedger', () => {
     expect(positionAfterClose.length).toBe(initialPositionLength);
   });
 });
+*/

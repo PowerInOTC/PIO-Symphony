@@ -11,6 +11,9 @@ import { networks, NetworkKey } from '@pionerfriends/blockchain-client';
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { Hedger } from '../../broker/inventory';
 import { settleOpen } from '../../blockchain/write';
+import { isValidHedgeAmount } from '../../broker/utils';
+import { minAmountSymbol } from '../../broker/minAmount';
+
 import {
   BOracleSignValueType,
   openQuoteSignValueType,
@@ -39,8 +42,14 @@ export async function signOpenCheck(
   const openPrice = formatUnits(parseUnits(open.price, 0), 18);
   const openAmount: string = formatUnits(parseUnits(open.amount, 0), 18);
   let acceptPrice = String(openPrice);
-
   const symbol = extractSymbolFromAssetHex(open.assetHex);
+
+  const minAmount = await minAmountSymbol(
+    `${symbol.assetAId}/${symbol.assetBId}`,
+  );
+  isCheck = await isValidHedgeAmount(Number(open.amount), minAmount, minAmount);
+  console.log('isCheck', isCheck);
+
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${symbol.assetAId}/${symbol.assetBId}`,
   );

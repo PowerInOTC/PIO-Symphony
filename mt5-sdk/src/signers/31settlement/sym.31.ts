@@ -16,21 +16,16 @@ async function settlementWorker(token: string): Promise<void> {
 
     // Settle & liquidate if IM is lacking
     for (const position of cachedPositions) {
-      console.log(
-        'Settle Check:',
-        position.state,
-        position.entry,
-        position.mtm,
-      );
-      const { id, imA, imB, entryPrice, mtm, symbol, amount } = position;
-      const imAValue = parseFloat(imA);
-      const imBValue = parseFloat(imB);
-      const entryPriceValue = parseFloat(entryPrice) * parseFloat(amount);
+      let { id, imA, imB, entryPrice, mtm, symbol, amount } = position;
+      const imAValue = parseFloat(formatUnits(imA, 18));
+      const imBValue = parseFloat(formatUnits(imB, 18));
+      entryPrice = parseFloat(formatUnits(imB, 18));
+      amount = parseFloat(formatUnits(amount, 18));
+      const entryPriceValue = entryPrice * amount;
       const { bid, ask } = await getTripartyLatestPrice(symbol);
-      const lastPriceValue = bid * 0.5 + ask * 0.5 * parseFloat(amount);
+      const lastPriceValue = (bid * 0.5 + ask * 0.5) * amount;
 
-      const percChange = (lastPriceValue - entryPriceValue) / entryPriceValue;
-
+      const percChange = (entryPriceValue - lastPriceValue) / entryPriceValue;
       if (imAValue * 0.8 < -percChange || imBValue * 0.8 < -percChange) {
         console.log(`Position ${id} has reached the threshold!`);
         await defaultAndLiquidation(
@@ -43,7 +38,10 @@ async function settlementWorker(token: string): Promise<void> {
   } catch (error) {
     console.error('Error checking positions:', error);
   } finally {
-    setTimeout(() => settlementWorker(token), 10000);
+    setTimeout(
+      () => settlementWorker(token),
+      config.verifyHedgerCloseRefreshRate,
+    );
   }
 }
 
@@ -67,13 +65,23 @@ export async function defaultAndLiquidation(
   const [assetAId, assetBId]: string[] = assetHex.split('/');
 
   const confidence = '5';
-  const expiryTimestamp = String(Date.now() + 1000 * 100);
+  const expiryTimestamp = String(604800000);
   const options = {
     requestPrecision: '5',
     requestConfPrecision: '5',
     maxTimestampDiff: '600',
     timeout: '10000',
   };
+
+  console.log(
+    'assetAId:',
+    assetAId,
+    assetBId,
+    confidence,
+    expiryTimestamp,
+    token,
+    options,
+  );
 
   const pionResult = await getPionSignatureWithRetry(
     assetAId,
@@ -83,6 +91,7 @@ export async function defaultAndLiquidation(
     token,
     options,
   );
+  console.log('pionResult:', pionResult);
 
   const priceSignature: pionSignType = {
     appId: pionResult.result.data.signParams[0].value,
@@ -107,6 +116,8 @@ export async function defaultAndLiquidation(
     owner: pionResult.result.signatures[0].owner,
     nonce: pionResult.result.data.init.nonceAddress,
   };
+  console.log('priceSignature:', priceSignature);
+
   const accountId = config.hedgerId;
   const chainId = config.activeChainId;
 

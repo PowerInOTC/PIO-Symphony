@@ -13,6 +13,7 @@ import { config } from '../../config';
 import RfqChecker, { ErrorObject } from './symCheck.12';
 import { getTripartyLatestPrice } from '../../broker/tripartyPrice';
 import { minAmountSymbol } from '../../broker/minAmount';
+import { calculateOptimalPairTrading } from '../../broker/utils';
 
 const rfqQueue = new Queue('rfq', {
   connection: {
@@ -107,7 +108,12 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${rfq.assetAId}/${rfq.assetBId}`,
   );
-  //console.log(`${checkRFQ.assetAId}/${checkRFQ.assetBId}`, tripartyLatestPrice);
+  const tripartyLatestPrice2 = await getTripartyLatestPrice(
+    `forex.EURUSD/${rfq.assetBId}`,
+  );
+  const tripartyLatestPrice1 = await getTripartyLatestPrice(
+    `${rfq.assetAId}/forex.EURUSD`,
+  );
 
   const minAmount = await minAmountSymbol(`${rfq.assetAId}/${rfq.assetBId}`);
 

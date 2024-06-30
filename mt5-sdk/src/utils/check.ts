@@ -34,7 +34,7 @@ export function isValidInterestRate(
 }
 
 export async function isMarketOpen(pair: string) {
-  const token = await getToken(0);
+  const token = await getToken(config.hedgerId);
   if (!token) {
     return false;
   }
