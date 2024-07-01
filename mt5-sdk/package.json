@@ -23,14 +23,9 @@
     "axios": "~1.6.8",
     "axios-cache-interceptor": "~1.5.3",
     "bullmq": "~5.7.15",
-    "ccxt": "^4.3.54",
     "dotenv": "~16.4.5",
     "ethers": "~5.7.2",
-    "node-cache": "~5.1.2",
-    "pino": "~8.21.0",
-    "pino-pretty": "~11.0.0",
     "redis": "~4.6.14",
-    "turbo": "^2.0.6",
     "viem": "~2.10.11",
     "web3": "4.8.0"
   },
@@ -48,5 +43,6 @@
     "prettier": "^3.3.2",
     "ts-jest": "^29.1.5",
     "typescript": "^5.5.2"
-  }
+  },
+  "packageManager": "pnpm@9.4.0+sha512.f549b8a52c9d2b8536762f99c0722205efc5af913e77835dbccc3b0b0b2ca9e7dc8022b78062c17291c48e88749c70ce88eb5a74f1fa8c4bf5e18bb46c8bd83a"
 }

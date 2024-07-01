@@ -26,7 +26,12 @@ async function settlementWorker(token: string): Promise<void> {
       const lastPriceValue = (bid * 0.5 + ask * 0.5) * amount;
 
       const percChange = (entryPriceValue - lastPriceValue) / entryPriceValue;
-      if (imAValue * 0.8 < -percChange || imBValue * 0.8 < -percChange) {
+      console.log(percChange, imAValue, imBValue);
+
+      if (
+        imAValue * 0.8 < -percChange / 100 ||
+        imBValue * 0.8 < -percChange / 100
+      ) {
         console.log(`Position ${id} has reached the threshold!`);
         await defaultAndLiquidation(
           position.bContractId,
@@ -65,7 +70,7 @@ export async function defaultAndLiquidation(
   const [assetAId, assetBId]: string[] = assetHex.split('/');
 
   const confidence = '5';
-  const expiryTimestamp = String(604800000);
+  const expiryTimestamp = String(Date.now() + 1000 * 100);
   const options = {
     requestPrecision: '5',
     requestConfPrecision: '5',
@@ -74,7 +79,7 @@ export async function defaultAndLiquidation(
   };
 
   console.log(
-    'assetAId:',
+    'test31:',
     assetAId,
     assetBId,
     confidence,
@@ -91,7 +96,6 @@ export async function defaultAndLiquidation(
     token,
     options,
   );
-  console.log('pionResult:', pionResult);
 
   const priceSignature: pionSignType = {
     appId: pionResult.result.data.signParams[0].value,

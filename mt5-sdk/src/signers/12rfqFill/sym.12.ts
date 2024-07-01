@@ -108,14 +108,8 @@ const rfqToQuote = async (rfq: RfqResponse): Promise<QuoteRequest> => {
   const tripartyLatestPrice = await getTripartyLatestPrice(
     `${rfq.assetAId}/${rfq.assetBId}`,
   );
-  const tripartyLatestPrice2 = await getTripartyLatestPrice(
-    `forex.EURUSD/${rfq.assetBId}`,
-  );
-  const tripartyLatestPrice1 = await getTripartyLatestPrice(
-    `${rfq.assetAId}/forex.EURUSD`,
-  );
-
   const minAmount = await minAmountSymbol(`${rfq.assetAId}/${rfq.assetBId}`);
+  console.log('minAmount', minAmount);
 
   return {
     chainId: rfq.chainId,

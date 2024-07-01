@@ -18,7 +18,7 @@ import { formatUnits, parseUnits } from 'viem';
 import { settleClose } from '../../blockchain/write';
 
 export async function signCloseCheck(close: signedCloseQuoteResponse) {
-  console.log(`signCloseCheck : ${JSON.stringify(close)}`);
+  //console.log(`signCloseCheck : ${JSON.stringify(close)}`);
   let isCheck = true;
   const hedger = new Hedger();
   const closeTemp = JSON.parse(JSON.stringify(close));
@@ -109,7 +109,6 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
       `Close amount is too low : ${Number(closeTemp.amount)} / ${Number(minAmount)}`,
     );
   }
-  console.log(`2 ${isCheck}`);
 
   if (isCheck) {
     hedger.hedge(
@@ -136,9 +135,6 @@ export async function signCloseCheck(close: signedCloseQuoteResponse) {
     authorized: close.authorized,
     nonce: close.nonce,
   };
-  console.log(
-    `closeQuoteSignValueType : ${JSON.stringify(closeQuoteSignValueType)}`,
-  );
 
   const tx = await settleClose(
     closeQuoteSignValueType,

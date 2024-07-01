@@ -95,6 +95,7 @@ async function minAmountSymbol(proxyPair: string): Promise<number> {
     getMinAmountForSymbol(proxyTicker1, broker1),
     getMinAmountForSymbol(proxyTicker2, broker2),
   ]);
+  console.log(minAmount1, minAmount2);
 
   return calculateOptimalPairTrading(minAmount1, minAmount2);
 }
